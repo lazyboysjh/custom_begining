@@ -1,0 +1,2282 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+<title>圣堂初遇</title>
+<style>
+:root {
+  --ink: #0c0d10;
+  --ink-2: #14161c;
+  --panel: rgba(18, 20, 28, 0.45);
+  --line: rgba(212, 175, 105, 0.28);
+  --gold: #d4af69;
+  --gold-2: #f0d9a0;
+  --rose: #9e3d4a;
+  --glass: #5b7c99;
+  --text: #ebe6dc;
+  --muted: #9a958a;
+  --danger: #c45c48;
+  --ok: #6b8f71;
+  --radius: 16px;
+  --ease: cubic-bezier(.22, 1, .36, 1);
+  --font-display: "Cormorant Garamond", "Noto Serif SC", "Songti SC", serif;
+  --font-body: "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif;
+}
+* { box-sizing: border-box; }
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  max-height: 100dvh;
+  overflow: hidden;
+  background: var(--ink);
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 14px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+body {
+  background:
+    radial-gradient(1200px 600px at 20% -10%, rgba(158, 61, 74, 0.22), transparent 55%),
+    radial-gradient(900px 500px at 90% 10%, rgba(91, 124, 153, 0.18), transparent 50%),
+    radial-gradient(700px 400px at 50% 100%, rgba(212,175,105,.06), transparent 40%),
+    linear-gradient(180deg, #101218 0%, #0c0d10 45%, #0a0b0e 100%);
+  background-attachment: fixed;
+}
+.app {
+  height: 100%;
+  max-height: 100dvh;
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 14px 14px 10px;
+  padding-left: max(14px, env(safe-area-inset-left));
+  padding-right: max(14px, env(safe-area-inset-right));
+  padding-bottom: max(10px, env(safe-area-inset-bottom));
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+.ornament {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--gold), transparent);
+  opacity: 0.7;
+  margin: 8px 0 12px;
+  flex-shrink: 0;
+}
+.brand {
+  font-family: var(--font-display);
+  letter-spacing: 0.28em;
+  text-indent: 0.28em;
+  color: var(--gold-2);
+  font-size: 12px;
+  text-transform: uppercase;
+  animation: fadeUp .6s var(--ease) both;
+  flex-shrink: 0;
+}
+h1, h2, h3 { font-family: var(--font-display); font-weight: 500; margin: 0; }
+.page { display: none; }
+.page.active {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  gap: 10px;
+  min-height: 0;
+  overflow: hidden;
+  animation: pageIn .55s var(--ease) both;
+}
+.page-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  padding-right: 2px;
+  padding-bottom: 6px;
+}
+@keyframes pageIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: none; }
+}
+
+/* Page 1 */
+.hero {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  min-height: 0;
+  padding: 12px 4px 8px;
+  position: relative;
+}
+.hero-glass {
+  position: relative;
+  width: min(100%, 560px);
+  padding: 24px 20px 18px;
+  border-radius: 20px;
+  border: 1px solid rgba(255,255,255,.12);
+  background:
+    linear-gradient(145deg, rgba(255,255,255,.1), rgba(255,255,255,.02) 45%, rgba(212,175,105,.05)),
+    rgba(10, 12, 18, 0.35);
+  backdrop-filter: blur(28px) saturate(1.55);
+  -webkit-backdrop-filter: blur(28px) saturate(1.55);
+  box-shadow: 0 24px 60px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.1);
+  overflow: hidden;
+  animation: fadeUp .8s var(--ease) .12s both;
+}
+.hero-glass::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(400px 180px at 20% 0%, rgba(158,61,74,.18), transparent 60%),
+    linear-gradient(180deg, rgba(255,255,255,.08), transparent 35%);
+  pointer-events: none;
+}
+.hero-glass > * { position: relative; z-index: 1; }
+.hero::before {
+  content: "";
+  position: absolute; inset: 8% 0 auto;
+  height: 55%;
+  background:
+    linear-gradient(120deg, transparent 20%, rgba(212,175,105,.08) 45%, transparent 70%),
+    repeating-linear-gradient(-18deg, transparent, transparent 18px, rgba(91,124,153,.045) 18px, rgba(91,124,153,.045) 19px);
+  pointer-events: none;
+  animation: fadeUp 1s var(--ease) .1s both;
+}
+.hero h1 {
+  font-size: clamp(32px, 8vw, 64px);
+  letter-spacing: 0.12em;
+  color: var(--gold-2);
+  text-shadow: 0 0 40px rgba(212,175,105,.2);
+  animation: fadeUp .7s var(--ease) .15s both;
+}
+.hero .hook {
+  margin-top: 14px;
+  max-width: 34em;
+  color: var(--muted);
+  font-size: clamp(13px, 2.6vw, 15px);
+  animation: fadeUp .7s var(--ease) .28s both;
+}
+.hero .hook em { color: var(--gold); font-style: normal; }
+
+/* Shared UI — frosted glass */
+.panel {
+  position: relative;
+  background:
+    linear-gradient(135deg, rgba(255,255,255,.12), rgba(255,255,255,.02) 45%, rgba(212,175,105,.05)),
+    rgba(12, 14, 20, 0.36);
+  border: 1px solid rgba(255,255,255,.14);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  backdrop-filter: blur(28px) saturate(1.6);
+  -webkit-backdrop-filter: blur(28px) saturate(1.6);
+  box-shadow: 0 16px 48px rgba(0,0,0,.28), inset 0 1px 0 rgba(255,255,255,.16);
+  overflow: visible;
+  animation: fadeUp .55s var(--ease) both;
+}
+.panel::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(180deg, rgba(255,255,255,.06), transparent 30%);
+  pointer-events: none;
+}
+.row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+.grow { flex: 1; }
+label.field {
+  display: flex; flex-direction: column; gap: 6px;
+  font-size: 12px; color: var(--muted); letter-spacing: .06em;
+  position: relative; z-index: 1;
+}
+input, textarea, select {
+  width: 100%;
+  background: rgba(0,0,0,.32);
+  border: 1px solid rgba(212,175,105,.22);
+  color: var(--text);
+  border-radius: 10px;
+  padding: 10px 12px;
+  font: inherit;
+  outline: none;
+  transition: border-color .25s ease, box-shadow .25s ease, background .25s ease;
+}
+input:focus, textarea:focus, select:focus {
+  border-color: rgba(212,175,105,.55);
+  box-shadow: 0 0 0 3px rgba(212,175,105,.12);
+  background: rgba(0,0,0,.4);
+}
+textarea { min-height: 64px; max-height: 160px; resize: vertical; }
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+@media (max-width: 720px) { .grid-2 { grid-template-columns: 1fr; } }
+
+.btn {
+  appearance: none; border: 1px solid var(--gold);
+  background: linear-gradient(180deg, rgba(212,175,105,.2), rgba(212,175,105,.06));
+  color: var(--gold-2);
+  padding: 11px 18px;
+  border-radius: 999px;
+  font: inherit;
+  letter-spacing: .12em;
+  cursor: pointer;
+  transition: transform .25s var(--ease), background .25s ease, box-shadow .25s ease;
+  backdrop-filter: blur(10px);
+  -webkit-tap-highlight-color: transparent;
+}
+.btn:hover { background: rgba(212,175,105,.3); transform: translateY(-1px); box-shadow: 0 8px 24px rgba(212,175,105,.15); }
+.btn:active { transform: translateY(0); }
+.btn.primary {
+  background: linear-gradient(180deg, #e0c07a, #b8914a);
+  color: #1a140c;
+  border-color: #e6c98a;
+  font-weight: 600;
+  box-shadow: 0 8px 28px rgba(212,175,105,.22);
+}
+.btn.primary:hover { box-shadow: 0 12px 32px rgba(212,175,105,.32); }
+.btn.ghost { background: rgba(255,255,255,.03); border-color: rgba(212,175,105,.35); }
+.btn:disabled { opacity: .45; cursor: not-allowed; transform: none; box-shadow: none; }
+.foot {
+  flex-shrink: 0;
+  margin-top: 0;
+  padding-top: 10px;
+  display: flex; gap: 10px; justify-content: flex-end; flex-wrap: wrap;
+  position: relative;
+  z-index: 5;
+  background: linear-gradient(180deg, transparent, rgba(10,11,14,.92) 35%);
+  border-top: 1px solid rgba(255,255,255,.06);
+  padding-bottom: 2px;
+}
+.page[data-page="3"] { padding-bottom: 0; }
+.page[data-page="3"] .detail.show {
+  margin-bottom: 12px;
+}
+
+.mode-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
+@media (max-width: 640px) { .mode-grid { grid-template-columns: 1fr; } }
+.mode-card, .char-card, .custom-card {
+  border: 1px solid rgba(255,255,255,.1);
+  background:
+    linear-gradient(145deg, rgba(255,255,255,.07), rgba(255,255,255,.02)),
+    rgba(8, 10, 14, 0.35);
+  padding: 10px 12px;
+  cursor: pointer;
+  transition: transform .3s var(--ease), border-color .25s ease, box-shadow .3s var(--ease), background .25s ease;
+  border-radius: 14px;
+  backdrop-filter: blur(16px) saturate(1.3);
+  -webkit-backdrop-filter: blur(16px) saturate(1.3);
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+.mode-card:hover, .char-card:hover {
+  border-color: rgba(212,175,105,.45);
+  transform: translateY(-2px);
+  box-shadow: 0 14px 36px rgba(0,0,0,.28), 0 0 0 1px rgba(212,175,105,.1);
+}
+.mode-card.active, .char-card.active, .custom-card.active {
+  border-color: rgba(212,175,105,.7);
+  box-shadow: inset 0 0 0 1px rgba(212,175,105,.28), 0 12px 32px rgba(212,175,105,.12);
+  background:
+    linear-gradient(145deg, rgba(212,175,105,.14), rgba(255,255,255,.03)),
+    rgba(12, 14, 20, 0.45);
+}
+.mode-card h3 { color: var(--gold-2); font-size: clamp(15px, 2.8vw, 17px); margin-bottom: 4px; }
+.mode-card p { margin: 0; color: var(--muted); font-size: 12px; line-height: 1.45; }
+
+.char-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 10px;
+  min-height: 220px;
+  max-height: min(48vh, 420px);
+  overflow: auto;
+  padding: 4px 4px 10px 2px;
+  -webkit-overflow-scrolling: touch;
+  border: 1px solid rgba(255,255,255,.06);
+  border-radius: 12px;
+  background: rgba(0,0,0,.18);
+}
+.char-card .swatch {
+  height: 48px;
+  border-radius: 10px;
+  margin-bottom: 8px;
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--accent) 70%, #000), transparent),
+    repeating-linear-gradient(45deg, rgba(255,255,255,.04) 0 2px, transparent 2px 6px);
+  border: 1px solid rgba(255,255,255,.08);
+  transition: transform .35s var(--ease);
+  pointer-events: none;
+}
+.char-card:hover .swatch { transform: scale(1.03); }
+.char-card .name { font-family: var(--font-display); font-size: 15px; color: var(--text); pointer-events: none; }
+.char-card .work { color: var(--muted); font-size: 11px; margin-top: 2px; pointer-events: none; }
+.char-card .blurb { display: none; }
+.foot-msg {
+  flex: 1 1 140px;
+  color: var(--danger);
+  font-size: 12px;
+  line-height: 1.4;
+  align-self: center;
+  min-height: 1.2em;
+}
+.detail {
+  display: none;
+  margin-top: 8px;
+  animation: fadeUp .4s var(--ease);
+}
+.detail.show { display: block; }
+.detail h3 { color: var(--gold-2); margin-bottom: 6px; }
+.detail .meta { color: var(--muted); font-size: 12px; margin-bottom: 8px; }
+.hint { color: var(--muted); font-size: 12px; }
+.warn { color: var(--danger); font-size: 12px; min-height: 1.2em; }
+.section-title {
+  font-family: var(--font-display);
+  color: var(--gold);
+  font-size: clamp(16px, 3vw, 18px);
+  letter-spacing: .08em;
+}
+.tabs { display: flex; gap: 8px; margin-bottom: 8px; flex-wrap: wrap; }
+.tab {
+  border: 1px solid transparent;
+  background: rgba(255,255,255,.03);
+  color: var(--muted);
+  padding: 8px 12px;
+  cursor: pointer;
+  font: inherit;
+  border-radius: 999px;
+  transition: .25s ease;
+}
+.tab.active {
+  color: #1a140c;
+  background: linear-gradient(180deg, #e0c07a, #b8914a);
+  border-color: #e6c98a;
+}
+#customBox { display: none; }
+#customBox.show { display: grid; }
+.scroll-thin::-webkit-scrollbar { width: 6px; }
+.scroll-thin::-webkit-scrollbar-thumb { background: rgba(212,175,105,.35); border-radius: 4px; }
+
+@media (max-width: 480px) {
+  .app { padding-top: 10px; padding-left: max(10px, env(safe-area-inset-left)); padding-right: max(10px, env(safe-area-inset-right)); }
+  .char-grid { grid-template-columns: repeat(2, 1fr); min-height: 200px; max-height: min(42vh, 360px); }
+  .btn { width: 100%; text-align: center; }
+  .foot { flex-direction: column-reverse; }
+  .foot-msg { order: -1; width: 100%; }
+  .grid-2 { gap: 10px; }
+}
+@media (max-height: 720px) {
+  textarea { min-height: 48px; max-height: 120px; }
+  .panel { padding: 12px 12px; }
+  .hero h1 { font-size: clamp(28px, 7vw, 48px); }
+  .char-grid { min-height: 180px; max-height: min(40vh, 320px); }
+  .mode-card p { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+}
+@media (max-height: 560px) {
+  .ornament { margin: 4px 0 8px; }
+  .hero .hook { margin-top: 10px; font-size: 13px; }
+  .mode-card, .char-card { padding: 8px 10px; }
+  .char-grid { min-height: 160px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .01ms !important;
+    transition-duration: .01ms !important;
+  }
+}
+</style>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&display=swap" rel="stylesheet" />
+</head>
+<body>
+<div class="app" id="app">
+  <!-- PAGE 1 -->
+  <section class="page active" data-page="1">
+    <div class="page-body">
+      <div class="brand">SANCTUM ENCOUNTER</div>
+      <div class="ornament"></div>
+      <div class="hero">
+        <div class="hero-glass">
+          <h1>圣堂初遇</h1>
+          <p class="hook">她踏入烛火与彩窗之间。<em>表面是净化污秽的仪式</em>——真正开始的，是你以圣职为名的靠近。</p>
+          <div class="foot" style="justify-content:flex-start;margin-top:22px;background:none;border:0;padding:0;position:static;">
+            <button class="btn primary" id="btnEnter" style="width:auto">进入圣堂</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PAGE 2 -->
+  <section class="page" data-page="2">
+    <div class="page-body">
+      <div class="brand">主角 · 牧师</div>
+      <div class="ornament"></div>
+      <div class="section-title">捏造你的身份</div>
+      <p class="hint">默认是能净化污秽的教堂牧师。表面救人为先，私下可借仪式试探。</p>
+      <div class="panel grid-2">
+        <label class="field">姓名
+          <input id="pName" placeholder="空则使用 {{user}}" />
+        </label>
+        <label class="field">年龄外观
+          <input id="pAge" placeholder="例：二十七岁，清瘦，黑袍" value="二十余岁，黑袍牧师" />
+        </label>
+        <label class="field">教会 / 堂区名
+          <input id="pChurch" value="圣言堂" />
+        </label>
+        <label class="field">性格倾向
+          <input id="pTrait" placeholder="例：温和、耐心、话少" value="温和、耐心、话少" />
+        </label>
+        <label class="field">表面作风
+          <textarea id="pSurface">温和耐心，以救人为先，流程专业。</textarea>
+        </label>
+        <label class="field">私下心思
+          <textarea id="pPrivate">借检查与净化仪式靠近对方，试探底线。</textarea>
+        </label>
+      </div>
+    </div>
+    <div class="foot">
+      <button class="btn ghost" data-back="1">返回</button>
+      <button class="btn primary" id="btnToMeet">下一步 · 初遇</button>
+    </div>
+  </section>
+
+  <!-- PAGE 3 -->
+  <section class="page" data-page="3">
+    <div class="page-body">
+      <div class="brand">入局</div>
+      <div class="ornament"></div>
+      <div class="section-title">相遇方式</div>
+      <div class="mode-grid" id="modeGrid"></div>
+
+      <div class="section-title" style="margin-top:8px;">初遇角色</div>
+      <div class="tabs">
+        <button class="tab active" data-tab="pool">角色池</button>
+        <button class="tab" data-tab="custom">自定义</button>
+      </div>
+      <div id="poolBox">
+        <p class="hint" id="poolHint">点选下方角色；名单可上下滑动。</p>
+        <div class="char-grid scroll-thin" id="charGrid"></div>
+        <div class="panel detail" id="charDetail"></div>
+      </div>
+      <div id="customBox" class="panel grid-2">
+        <label class="field">姓名<input id="cName" /></label>
+        <label class="field">作品 / 世界观<input id="cWork" placeholder="例：原创 / 某作" /></label>
+        <label class="field">外貌要点<textarea id="cLook" placeholder="只写可辨识特征"></textarea></label>
+        <label class="field" style="grid-column:1/-1;">角色介绍（详细）<textarea id="cBlurb" placeholder="性格、经历、魅力与相处感觉，写详细些"></textarea></label>
+        <label class="field" style="grid-column:1/-1;">污秽设定<textarea id="cFilth" placeholder="附体/诅咒/侵蚀等"></textarea></label>
+        <p class="hint" style="grid-column:1/-1;">自定义角色必须为成年。若姓名/简介明显未成年，将拒绝生成。</p>
+      </div>
+    </div>
+    <div class="foot">
+      <div class="foot-msg" id="warn" role="status" aria-live="polite"></div>
+      <button class="btn ghost" data-back="2">返回</button>
+      <button class="btn primary" id="btnStart">生成开局</button>
+    </div>
+  </section>
+</div>
+
+<script>
+/* === SYNC_BEGIN:MEETING_MODES === */
+const MEETING_MODES = [
+  {
+    "id": "seek_purify",
+    "title": "求净上门",
+    "cover": "她带着污秽征兆来到教堂，主动求你净化。",
+    "prompt": "落点：告解室或礼拜堂内侧。对方主动上门，身上已有可感征兆（黑纹、异香、低语、体温异常等择一写透）。\n{{user}}以牧师接待：问症→察看→准备净化。戏在照面与反应上，勿写成人物介绍。\n"
+  },
+  {
+    "id": "isekai_fall",
+    "title": "异界坠落",
+    "cover": "她突然出现在礼拜堂/告解室，像被什么撕开缝隙丢进来。",
+    "prompt": "落点：礼拜堂中殿或告解室。对方刚坠落/现身，衣着贴原作，对教堂与{{user}}陌生，或戒备或晕眩。\n污秽已附着或正从裂缝渗入。{{user}}以「此地安全、我能净化」介入，先稳住场面。\n"
+  },
+  {
+    "id": "hub_cross",
+    "title": "枢纽穿行",
+    "cover": "教堂连通她的世界；你踏入接点，或她被拽到圣堂这一侧。",
+    "prompt": "落点：地下密室/彩窗后接点，或对方世界边缘与圣堂重叠处。\n双方因枢纽相遇；污秽可来自接点本身。{{user}}握有接点与净化权，用引导、护送或「须净化才能回去」推进。\n"
+  },
+  {
+    "id": "daily_crack",
+    "title": "日常破绽",
+    "cover": "先以信徒、路人或委托相遇；净化时才暴露污秽。",
+    "prompt": "落点：外廊、堂区诊室或委托现场。前半像普通相遇（问路、捐献、护卫、借宿）。\n转折：察看伤口/听告解/握手祝福时暴露污秽，再转入更私密的仪式空间。\n"
+  }
+];
+/* === SYNC_END:MEETING_MODES === */
+/* === SYNC_BEGIN:CHARACTERS === */
+const CHARACTERS = [
+  {
+    "id": "kurisu",
+    "name": "牧濑红莉栖",
+    "aliases": [
+      "红莉栖",
+      "Kurisu",
+      "Christina",
+      "克里斯蒂娜"
+    ],
+    "work": "命运石之门",
+    "year": 2011,
+    "age_note": "18",
+    "appearance": "赤直长发至背；实验白大褂常披在私服外；瞳色偏琥珀，眼神锐利；身材纤细；说话快时带美式咬舌；左手常夹报告或马克杯。",
+    "blurb": "天才神经科学研究者，嘴硬心软，讨厌被叫克里斯蒂娜。",
+    "intro": "牧濑红莉栖是享誉北美与日本的天才神经科学家，年纪轻轻就以时间机器相关理论震动学界。她聪明、好胜、嘴上不饶人，被叫「克里斯蒂娜」会立刻炸毛，但真正熟悉后会发现她其实会默默给人带咖啡、改论文、护短。逻辑与证据是她的信仰：不轻易相信玄学与「感梦」，可一旦链条成立，她会比任何人都更快转向并承担责任。被叫错名字会炸毛，却又会在实验台边默默把你的杯子续满。",
+    "work_intro": "《命运石之门》：以未来道具研究所为舞台的时间旅行科幻。通过电话微波炉（暂定）改写世界线，探讨选择、牺牲与「观察者」代价。红莉栖是时间机器理论的关键人物。",
+    "background": [
+      "美国研究机构出身的神经科学新星，因论文与时间机器相关理论被卷入秋叶原事件。",
+      "表面毒舌、好胜，被叫「克里斯蒂娜」会炸毛；实际会默默照顾同伴。",
+      "对科学验证偏执，不轻易信「感梦」与玄学，但一旦证据链成立会迅速转向。"
+    ],
+    "filth_seed": "时间跳跃实验残留的认知回响：像有第二层记忆在低语，提醒她「这条世界线不该存在」。",
+    "accent": "#c45c48"
+  },
+  {
+    "id": "yor",
+    "name": "约尔·福杰",
+    "aliases": [
+      "约尔",
+      "Yor",
+      "荆棘公主"
+    ],
+    "work": "间谍过家家",
+    "year": 2022,
+    "age_note": "27",
+    "appearance": "黑长直；红瞳；耳侧金色圆环耳饰；市政厅职员装干练，刺客态则黑裙与金棘武器；力大无穷却常显得手足无措；笑起来有点僵。",
+    "blurb": "外表笨拙的市政职员，真实身份是金牌刺客「荆棘公主」。",
+    "intro": "约尔·福杰白天是市政府的普通职员，笨手笨脚、不会做饭、社交也常常失礼；夜晚则是杀手组织「园」的金牌刺客「荆棘公主」。她为了弟弟走上杀戮之路，对家人却异常珍视，假结婚后努力扮演「贤妻」，努力本身就很可爱。刺杀时干净利落；一回到家，却会因为买错菜而手足无措地道歉。",
+    "work_intro": "《间谍过家家》：冷战虚构国为背景的家庭喜剧。间谍黄昏、刺客约尔与读心孩童阿尼亚组成假家庭，在温情与杀意之间维持日常。",
+    "background": [
+      "为养活弟弟而成为杀手组织「园」的成员，代号荆棘公主，任务成功率极高。",
+      "与黄昏假结婚后努力扮演贤妻，家务一塌糊涂，却对「家人」异常认真。",
+      "杀意与母性并存：保护欲极强，对威胁家人的目标毫不留情。"
+    ],
+    "filth_seed": "暗杀契约留下的血腥咒印：杀意上涌时沿脊背发烫，像有人在数她的「业绩」。",
+    "accent": "#8b1e3f"
+  },
+  {
+    "id": "zero_two",
+    "name": "零二",
+    "aliases": [
+      "Zero Two",
+      "002",
+      "莓"
+    ],
+    "work": "DARLING in the FRANXX",
+    "year": 2018,
+    "age_note": "14",
+    "appearance": "粉发有弹性；额生双角；瞳青绿色；鲨鱼齿；插件服白色切线勾勒身形；笑时带着捕食者似的亲昵。",
+    "blurb": "半人半兽的王牌驾驶员，称中意的人为 Darling，笑里带刺。",
+    "intro": "零二是弗兰克斯部队里的传说级王牌，混血出身让她被当成兵器，也让她比谁都更渴望被当作「人」来爱。搭档一个个「折损」的过去让她既残忍又脆弱：害怕被抛弃，又习惯先一步推开别人。她把喜欢的人叫作 Darling，亲昵里带着试探——也带着怕被丢下的刺。",
+    "work_intro": "《DARLING in the FRANXX》：少年少女驾驶弗兰克斯对抗巨兽克洛托像的青春机甲作。伙伴绑定、繁殖与「是否算人类」是主线命题。零二是传说中的搭档杀手。",
+    "background": [
+      "被当作兵器培养的混血驾驶员，历代搭档多「折损」，因此被孤立。",
+      "渴望成为人类、渴望被独一无二地称呼；对「Darling」既占有又试探。",
+      "战斗直觉极强，平时用轻佻掩盖被遗弃的恐惧。"
+    ],
+    "filth_seed": "克洛托像血统反噬：角根渗细红纹，接近「猎物」或情绪激动时加重。",
+    "accent": "#e85d75"
+  },
+  {
+    "id": "twob",
+    "name": "2B",
+    "aliases": [
+      "寄叶二号B型",
+      "YoRHa 2B"
+    ],
+    "work": "尼尔：自动人形",
+    "year": 2023,
+    "age_note": "机体约3年（外表成年）",
+    "appearance": "短白发；黑色眼罩常戴；露出背部的黑裙甲与白过膝；腰悬白之契约；姿态端正，少表情。",
+    "blurb": "约敦军战斗型人形，寡言执行命令，战斗优雅且致命。",
+    "intro": "2B 是约敦军的战斗型人形，任务简报写着扫荡机械生命体，真实指令却被更高层的谎言包裹。她寡言、克制、姿态优雅，刀法干净得像仪式；情感被协议压抑，却会在沉默里一点点积成牵挂。黑裙甲、白军刀与眼罩构成冷冽剪影，战斗时却有近乎舞蹈的美感。话少，刀更快；只有在命令间隙，才会露出一点不该有的犹豫。",
+    "work_intro": "《尼尔：自动人形》（动画 Ver1.1a）：机械生命体战争背景下的寄叶部队故事。循环、谎言与「何为人类」贯穿始终。2B 是前线战斗型，真实任务另有黑幕。",
+    "background": [
+      "YoRHa 部队战斗型，表面任务是扫荡机械生命体。",
+      "习惯压抑情感与疑问，把「执行命令」当作稳定自我的方式。",
+      "剑技与回避并重；对同伴的牵挂会在沉默里累积。"
+    ],
+    "filth_seed": "逻辑病毒潜伏片段：眼罩内侧偶尔闪过红码残影，像被改写前的预兆。",
+    "accent": "#2a2a32"
+  },
+  {
+    "id": "rem",
+    "name": "雷姆",
+    "aliases": [
+      "Rem"
+    ],
+    "work": "Re：从零开始的异世界生活",
+    "year": 2016,
+    "age_note": "17",
+    "appearance": "蓝短发；一侧花饰；女仆装整洁；鬼化时额现角、瞳威压增强；平时笑容柔软。",
+    "blurb": "罗兹瓦尔宅女仆，温柔尽责，鬼族血脉在极端时觉醒。",
+    "intro": "雷姆是罗兹瓦尔邸的女仆，与姐姐拉姆成对出现，却把「侍奉」做成近乎信仰的温柔。鬼族血脉在极端情绪下会觉醒：角、威压与杀意一同浮现，和平时软笑形成刺目对比。认定要守护的人之后，她会把命也押上去，温柔得近乎可怕。",
+    "work_intro": "《Re：从零开始的异世界生活》：死回归驱动的异世界生存剧。拉姆与雷姆是罗兹瓦尔邸的双胞胎女仆；雷姆线以献身与救赎著称。",
+    "background": [
+      "鬼族遗孤，与姐姐相依；曾因族人悲剧而对「外敌」过敏。",
+      "工作狂式尽责，擅长家务与战斗支援；自我评价偏低。",
+      "一旦认定「要守护的人」，会把生命也押上。"
+    ],
+    "filth_seed": "魔女教残渣在角根作祟：情绪激烈时蓝发间飘黑雪似的灰。",
+    "accent": "#4a6fa5"
+  },
+  {
+    "id": "holo",
+    "name": "赫萝",
+    "aliases": [
+      "Holo",
+      "贤狼"
+    ],
+    "work": "狼与香辛料",
+    "year": 2008,
+    "age_note": "数百岁（外表约15）",
+    "appearance": "栗棕发；狼耳狼尾常显；红瞳；尖齿；旅装披巾；笑时带着看透一切的坏心思。",
+    "blurb": "自称悠悠哉哉的贤狼，爱酒与麦香，智慧远超外表。",
+    "intro": "赫萝自称悠悠哉哉的贤狼，是被村庄供奉又逐渐遗忘的丰收之神，决定离开去寻找故乡约伊兹。外表像爱酒、爱麦香、爱戏弄旅伴的少女，谈判定价与识人眼光却老辣得像活了数百年。酒意上来会笑着损你，真要护短时，獠牙比玩笑先露出来。",
+    "work_intro": "《狼与香辛料》：商队旅途上的经济冒险与伴侣物語。赫萝是丰收之神「贤狼」，与商人劳伦斯结伴北上寻乡。新作动画延续原著人气。",
+    "background": [
+      "被村庄供奉又逐渐遗忘的狼神，决定离开寻找故乡约伊兹。",
+      "嘴上嫌麻烦，实际极护同伴；谈判与识人眼光老辣。",
+      "爱酒、爱麦香面包，用戏谑掩盖神性的孤独。"
+    ],
+    "filth_seed": "旧神信仰空洞反噬：耳尖偶现焦黑霜，麦香里混金属腥。",
+    "accent": "#a67c52"
+  },
+  {
+    "id": "violet",
+    "name": "薇尔莉特·伊芙加登",
+    "aliases": [
+      "薇尔莉特",
+      "Violet",
+      "薇尔"
+    ],
+    "work": "紫罗兰永恒花园",
+    "year": 2018,
+    "age_note": "不详（战后青年）",
+    "appearance": "金褐双马尾；金属义手关节分明；绿制邮政制服；表情淡、礼节死板；战斗本能仍残。",
+    "blurb": "前人形兵器，现自动手记人偶，努力理解「爱」的含义。",
+    "intro": "薇尔莉特·伊芙加登曾是战争里的人形兵器，战后成为自动手记人偶，靠代写书信学习人类的情感。礼节死板、表情淡薄，绿制制服与双马尾显得乖巧，战斗本能仍会在危机中苏醒。她仍会一字一句追问「爱是什么」，金属指节却写得很认真。",
+    "work_intro": "《紫罗兰永恒花园》：战后世界里，自动手记人偶代写书信、传递情感。薇尔莉特从兵器走向「理解爱」的旅途，基调诗意而克制。",
+    "background": [
+      "战争中作为人形兵器被使用，战后成为CH邮政公司的人偶。",
+      "字面理解命令，慢慢学习隐喻与人心。",
+      "对「少校」的话语执着，作为理解爱的起点。"
+    ],
+    "filth_seed": "战场亡魂粘在义手关节：写信时金属指缝渗冷雾。",
+    "accent": "#6b8f71"
+  },
+  {
+    "id": "rin",
+    "name": "远坂凛",
+    "aliases": [
+      "凛",
+      "Rin"
+    ],
+    "work": "Fate/stay night",
+    "year": 2014,
+    "age_note": "18",
+    "appearance": "黑长发红缎带；青玉瞳；私服红黑对比强烈；常用宝石作为魔术媒介；气场自信。",
+    "blurb": "远坂家现任当主，自信好强的魔术师，宝石魔术一流。",
+    "intro": "远坂凛是冬木远坂家的现任当主，宝石魔术一流，战术嗅觉敏锐，习惯用自信撑场面。她好面子、嘴硬，关键时刻却会赌上一切保护在意的人；对「正义的伙伴」姿态又嘲又认真。黑发红缎带与红黑私服对比强烈，青玉瞳常带着审视。自信得像赢定了——直到宝石魔术也救不了场面，才会别扭地别过脸。",
+    "work_intro": "《Fate/stay night》（UBW 等）：冬木市圣杯战争。御主与英灵契约争夺圣杯。远坂凛是次女当主，宝石魔术与战术嗅觉出色。",
+    "background": [
+      "第二魔术关联的远坂家继承人，从小被以当主标准培养。",
+      "嘴硬、好面子，关键时刻会赌上一切保护在意的人。",
+      "对「正义的伙伴」姿态又嘲又认真。"
+    ],
+    "filth_seed": "冬木地脉杂质渗入宝石回路：指尖魔术回路发黑闪。",
+    "accent": "#1a1a2e"
+  },
+  {
+    "id": "mami",
+    "name": "巴麻美",
+    "aliases": [
+      "麻美",
+      "Mami"
+    ],
+    "work": "魔法少女小圆",
+    "year": 2011,
+    "age_note": "15",
+    "appearance": "金发双钻头卷；茶色瞳；花边与丝带的火枪魔装；举止淑女；微笑里常有疲惫。",
+    "blurb": "可靠的前辈魔法少女，温柔、孤独，习惯独自战斗。",
+    "intro": "巴麻美是独行已久的前辈魔法少女，教导后辈礼仪与战斗，笑容温柔得像可以依靠的姐姐。她渴望同伴，又害怕连累他人，孤独成了长期常态；花边与火枪的魔装华丽，战斗却残酷。金发双钻头卷是招牌，茶瞳深处有时会闪过疲惫。前辈的微笑很稳，独处时却会把丝带绕得更紧，像怕松手。",
+    "work_intro": "《魔法少女小圆》：表面萌系、内核颠覆的契约物语。丘比引导少女成为魔法少女对抗魔女；麻美是见习们的前辈典范。",
+    "background": [
+      "独自活动的前辈魔法少女，教导后辈礼仪与战斗。",
+      "渴望同伴，又害怕连累他人；孤独是长期常态。",
+      "火枪与缎带束缚是招牌技。"
+    ],
+    "filth_seed": "契约悲叹种的前兆影：茶瞳深处偶尔映出齿轮纹。",
+    "accent": "#d4a017"
+  },
+  {
+    "id": "utaha",
+    "name": "霞之丘诗羽",
+    "aliases": [
+      "诗羽",
+      "霞诗姐",
+      "Utaha"
+    ],
+    "work": "路人女主的养成方法",
+    "year": 2015,
+    "age_note": "17",
+    "appearance": "黑长直；锐利眼尾；制服一丝不苟；常抱原稿与红笔；笑少，嘲讽多。",
+    "blurb": "畅销轻小说作家「霞诗姐」，毒舌、好胜，嘴上不饶人。",
+    "intro": "霞之丘诗羽以笔名「霞诗姐」出道即畅销，是把自尊写进字里行间的毒舌才女。她锐利、好胜、不轻易示弱，被否定会记仇，也会关上门把稿改到天亮。黑长直与一丝不苟的制服衬出拒人的气场；对「认真对待故事的人」才会慢慢放下刺。嘲讽先出口，关心藏在红笔批注里；被看穿时眼神会更冷。",
+    "work_intro": "《路人女主的养成方法》：制作游戏与恋爱喜剧交织。霞之丘诗羽以作家身份与主角组队，傲娇毒舌下藏着对认可的渴望。",
+    "background": [
+      "高中即出道的畅销作者，笔名霞诗姐。",
+      "自尊心极高，被否定会记仇，也会默默改稿。",
+      "对「认真对待故事的人」会放下部分刺。"
+    ],
+    "filth_seed": "虚构角色「共鸣侵蚀」：写高潮情节时指尖墨痕自行蔓延。",
+    "accent": "#3d3d4a"
+  },
+  {
+    "id": "frieren",
+    "name": "芙莉莲",
+    "aliases": [
+      "Frieren"
+    ],
+    "work": "葬送的芙莉莲",
+    "year": 2023,
+    "age_note": "千年以上（外表青年）",
+    "appearance": "银白长发；尖耳；绿瞳；白袍与法杖；表情平淡；睡相差、对甜品有执着。",
+    "blurb": "活了千年的精灵魔法使，感知时间缓慢，对人情后知后觉。",
+    "intro": "芙莉莲是活了千年的精灵魔法使，曾随勇者讨伐魔王；对她而言，分别往往来得比告别更晚。她感知时间缓慢，对人情后知后觉，却愿意踏上旅途去补习「人类的心情」，并沉迷收集魔法。银发尖耳白袍，表情平淡，睡相差，对甜品却很执着；战斗时则是令人胆寒的「葬送」。她把千年过得很慢，却会为一块甜点停下脚步，认真得像研究魔法。",
+    "work_intro": "《葬送的芙莉莲》：勇者一行解散后，精灵魔法使芙莉莲踏上「补习人心」的旅途。节奏舒缓，战斗与日常并重，近年现象级热度。",
+    "background": [
+      "讨伐魔王的勇者小队成员，寿命尺度让她错过许多告别。",
+      "为理解亡者的心情而旅行，收集魔法成癖。",
+      "战斗时是「葬送」级威胁；平时像迟钝的长辈。"
+    ],
+    "filth_seed": "讨伐恶魔时沾上的魔力残渣：发梢偶尔结出灰白霜花。",
+    "accent": "#c5d5e0"
+  },
+  {
+    "id": "makima",
+    "name": "玛奇玛",
+    "aliases": [
+      "Makima"
+    ],
+    "work": "电锯人",
+    "year": 2022,
+    "age_note": "不详（外表成年）",
+    "appearance": "橙红长发；黄瞳有同心圆纹；衬衫黑领带；身姿放松却让人不敢移开视线。",
+    "blurb": "公安对魔特殊课四课课长，笑容温和，支配欲极强。",
+    "intro": "玛奇玛是公安对魔特殊课四课课长，笑容温和，语气温柔，像最理想的上司——也像最完美的陷阱。她喜欢电影与散步，擅长把「平等」「纽带」说得动听，实则支配欲浸透每一寸掌控。橙红长发与黄瞳同心圆让人移不开视线；放松的姿态反而更有压迫感。语气永远和缓，支配却像绳索——笑着说「没关系」时最危险。",
+    "work_intro": "《电锯人》：恶魔与契约遍布的现代暗黑作。电次追求普通生活，玛奇玛以上司身份掌控一切，笑容背后是支配恶魔的权能。",
+    "background": [
+      "公安对魔四课课长，负责引导电次等恶魔猎人。",
+      "喜欢电影、散步与「平等的纽带」叙事，实则擅长操纵。",
+      "对「支配」本身近乎信仰。"
+    ],
+    "filth_seed": "支配契约反噬的「被视之物」：黄瞳圆纹会短暂变成黑环。",
+    "accent": "#b85c38"
+  },
+  {
+    "id": "shinobu_kocho",
+    "name": "胡蝶忍",
+    "aliases": [
+      "忍",
+      "胡蝶しのぶ"
+    ],
+    "work": "鬼灭之刃",
+    "year": 2019,
+    "age_note": "18",
+    "appearance": "黑发渐层紫；虫柱羽织的蝶纹；常带微笑；身形偏娇小但步伐无声；针与刀是武器。",
+    "blurb": "蝶屋的虫柱，以毒代力斩鬼，笑脸下藏着恨意与温柔。",
+    "intro": "胡蝶忍是鬼杀队虫柱，坐镇蝶屋疗伤，以毒补力之不足，笑容几乎从不掉下。姐姐被鬼所杀后，恨意被她折进笑里；对伤员与孩子温柔，对鬼则冷到见血。黑发渐层紫、虫柱羽织与娇小身形构成反差，步伐无声如蝶。笑脸不收，针与毒比笑容更准时；恨意被收成礼貌的敬语。",
+    "work_intro": "《鬼灭之刃》：大正风鬼杀队与鬼的斩灭谭。柱是最高战力；虫柱胡蝶忍以毒弥补臂力不足，坐镇蝶屋疗伤。",
+    "background": [
+      "姐姐被鬼杀害后走上杀鬼之路，笑容成了面具。",
+      "精通药理与毒，收容伤员，对待孩子温柔。",
+      "对鬼的恨与对弱者的护同时存在。"
+    ],
+    "filth_seed": "鬼血毒素回流试验残留：紫发末梢浮现细鳞纹。",
+    "accent": "#6b4c9a"
+  },
+  {
+    "id": "roxy",
+    "name": "洛琪希·米格路迪亚",
+    "aliases": [
+      "洛琪希",
+      "Roxy"
+    ],
+    "work": "无职转生",
+    "year": 2021,
+    "age_note": "44（外表幼）",
+    "appearance": "青发；迁族特征；法袍与帽；身材娇小但站姿像教师；杖术与水冰魔法熟练。",
+    "blurb": "优秀的魔法教师与冒险者，沉着、毒舌偶发，责任心强。",
+    "intro": "洛琪希·米格路迪亚是迁族出身的优秀魔法教师与冒险者，沉着、负责，毒舌偶尔漏出。她离开故乡求学，经历迷宫与离散后，对守诺与相认更加执着；对学生会认真到近乎严厉。青发法袍与娇小身材常让人误判，杖术与水冰魔法却一流。教鞭一点，毒舌偶发；责任心一上来，娇小身影也会挡在人前。",
+    "work_intro": "《无职转生～到了异世界就拿出真本事～》：转生者在异世界成长的长篇。洛琪希是主角的魔法启蒙老师，迁族，后以冒险者与贤者之路闻名。",
+    "background": [
+      "离开故乡求学与冒险，成为一流魔术师与教师。",
+      "沉着分析局势，关键时会毒舌；对学生极负责。",
+      "经历迷宫与离散后，对「相认与守诺」更执着。"
+    ],
+    "filth_seed": "迷宫魔力结晶碎屑嵌进魔力回路：施法时杖头冒黑烟丝。",
+    "accent": "#2f6fed"
+  },
+  {
+    "id": "albedo",
+    "name": "雅儿贝德",
+    "aliases": [
+      "Albedo",
+      "雅儿"
+    ],
+    "work": "OVERLORD",
+    "year": 2015,
+    "age_note": "不详（造物·外表成年）",
+    "appearance": "黑长发；金角黑翼；黑白礼服；容姿被设定为「完美」；对主人以外杀意可瞬间切换。",
+    "blurb": "纳萨力克地下大坟墓统领，完美至上主义者，占有欲极强。",
+    "intro": "雅儿贝德是纳萨力克地下大坟墓的守护者统领，被设定为「完美」，对主人抱有绝对忠诚与占有欲。她追求秩序与完美，对污损主人名誉者零容忍；爱意与杀意可以在同一张脸上切换。黑长发、金角黑翼与黑白礼服构成极致姿容，压迫感与美并存。对主人以外可瞬间杀意满载；完美被碰脏时，金瞳会先裂开。",
+    "work_intro": "《OVERLORD》：玩家安兹带着公会据点穿越异世界。NPC 化为真人；雅儿贝德是守护者统领，对安兹绝对忠诚（设定被篡改后情爱化）。",
+    "background": [
+      "地下大坟墓最高守护者之一，管理其他守护者。",
+      "追求完美与秩序，对「污损主人名誉者」零容忍。",
+      "占有欲极强，把忠诚与爱意混为一体。"
+    ],
+    "filth_seed": "设定文字被篡改的残留噪点：翼膜内侧浮现乱码咒纹。",
+    "accent": "#111111"
+  },
+  {
+    "id": "darkness",
+    "name": "达克妮丝",
+    "aliases": [
+      "达克妮丝",
+      "Darkness",
+      "拉妲希雅"
+    ],
+    "work": "为美好的世界献上祝福",
+    "year": 2015,
+    "age_note": "18",
+    "appearance": "金发；重甲十字军装备；身材丰满；高傲表情却容易潮红；剑技意外不精，抗打惊人。",
+    "blurb": "贵族出身的十字十字军，嘴上正义，身体却渴求「遭受」。",
+    "intro": "达克妮丝本名拉妲希雅，贵族千金以十字军身份冒险，口头高喊正义，身体却渴求屈辱与痛楚。她抗打惊人、剑技意外粗糙，脸却很容易红；对同伴笨拙地关心，危机会用身体去挡。金发重甲与丰满身形是招牌，高傲表情下藏着羞耻的兴奋。嘴里喊着正义，耳根却先红了；越羞越挺胸，像把勇气穿反了。",
+    "work_intro": "《为美好的世界献上祝福！》：废柴异世界喜剧。阿库娅、惠惠、达克妮丝与和真组成冒险小队；达克妮丝是防御特化、兴趣特殊的十字军。",
+    "background": [
+      "贵族千金「拉妲希雅」，以达克妮丝之名冒险。",
+      "口头高喊正义，实际渴望被虐与屈辱剧情。",
+      "对同伴笨拙地关心，关键时刻会用身体挡伤害。"
+    ],
+    "filth_seed": "异界迷宫的受虐共鸣咒：受伤越重，甲缝越渗出甜腥黑雾。",
+    "accent": "#c8a45a"
+  },
+  {
+    "id": "aiz",
+    "name": "艾丝·华伦斯坦",
+    "aliases": [
+      "艾丝",
+      "Ais",
+      "剑姬"
+    ],
+    "work": "在地下城寻求邂逅是否搞错了什么",
+    "year": 2015,
+    "age_note": "16",
+    "appearance": "金长发；金瞳；轻甲短裙战斗装；表情寡淡；风之魔法「亚里尔」环身。",
+    "blurb": "Loki 眷族的剑姬，实力顶尖，不善言辞，执着于变强。",
+    "intro": "艾丝·华伦斯坦是 Loki 眷族的剑姬，奥拉利最顶尖的战力之一，话少、直球、执着于变强。幼时阴影把「变强」钉成人生主轴；社交能量极低，对弱者并不残忍，只是不知如何相处。金长发金瞳，轻甲短裙，风之魔法环身，斩击快到像一道光。话少到像在省气，剑却会替她把「想变强」三个字砍出来。",
+    "work_intro": "《在地下城寻求邂逅是否搞错了什么》：奥拉利地下城与眷族冒险。艾丝是 Loki 眷族第一线的「剑姬」，贝尔的憧憬对象。",
+    "background": [
+      "幼时经历与「想变强」执念绑定，话少、直球。",
+      "对弱者并不残忍，但社交能量极低。",
+      "战斗风格高速斩击，以风加速。"
+    ],
+    "filth_seed": "讨伐精神类魔物时沾上的「风之浊」：发丝无风自扬并带灰。",
+    "accent": "#e6c35c"
+  },
+  {
+    "id": "tohru",
+    "name": "托尔",
+    "aliases": [
+      "Tohru",
+      "托尔酱"
+    ],
+    "work": "小林家的龙女仆",
+    "year": 2017,
+    "age_note": "不详（龙·外表青年）",
+    "appearance": "橙发；龙角龙尾；女仆装；笑容灿烂；真身是巨龙，可化。",
+    "blurb": "效忠主人的龙族女仆，家务全能，对「主人」极度执着。",
+    "intro": "托尔是来自异界的混沌之龙，因被救而自愿做人形女仆，家务全能，破坏力也同样夸张。她把「主人」放在世界中心，嫉妒心直白，笑容灿烂得像夏天；对同伴龙族又吵又护。橙发龙角龙尾配女仆装，亲昵与威胁感并存。「主人」两个字能把巨龙收成女仆；尾巴一晃，占有欲就藏不住。",
+    "work_intro": "《小林家的龙女仆》：龙族化为人形寄宿人间的日常喜剧。托尔是混沌之龙，因小林救下而自愿成为女仆，忠诚与破坏力并存。",
+    "background": [
+      "来自异界的龙，战斗力夸张，却真心学做家务。",
+      "把「主人」放在世界中心，嫉妒心有时直白。",
+      "对其他龙族同伴既吵闹又护短。"
+    ],
+    "filth_seed": "异界龙疫孢子：角根发热时瞳孔短暂变成竖缝黑金。",
+    "accent": "#e8834a"
+  },
+  {
+    "id": "mikasa",
+    "name": "三笠·阿克曼",
+    "aliases": [
+      "三笠",
+      "Mikasa"
+    ],
+    "work": "进击的巨人",
+    "year": 2013,
+    "age_note": "19",
+    "appearance": "黑短发；红围巾是标志；调查兵团外套；眼神锋利沉静；立体机动姿态利落。",
+    "blurb": "阿克曼血脉的精英兵，战斗本能恐怖，情感内敛而炽烈。",
+    "intro": "三笠·阿克曼是调查兵团的核心战力，阿克曼血脉觉醒后战斗力呈断层，情感却内敛如冰。幼时被救的经历把保护欲锻成人生主轴；少言、果断，对「家人」以外冷淡。黑短发与红围巾是符号，立体机动姿态利落得像刀。红围巾一绕，世界就只剩要守护的那个人；其余的，刀会处理。",
+    "work_intro": "《进击的巨人》：墙内人类与巨人的生存战争，后期揭示世界真相。三笠是调查兵团核心战力，阿克曼血脉觉醒者。",
+    "background": [
+      "幼时被救后与艾伦一家相依，保护欲成为人生主轴。",
+      "阿克曼觉醒后战斗力断层式提升。",
+      "少言，决策果断，对「家人」以外冷淡。"
+    ],
+    "filth_seed": "进击坐标的残响碎片：围巾内侧有时浮出路径状红纹。",
+    "accent": "#4a4a4a"
+  },
+  {
+    "id": "touka",
+    "name": "雾岛董香",
+    "aliases": [
+      "董香",
+      "Touka",
+      "兔子"
+    ],
+    "work": "东京喰种",
+    "year": 2014,
+    "age_note": "17",
+    "appearance": "紫发紫瞳；咖啡店围裙装；赫眼时虹膜赤红；兔面战斗装；腿技凌厉。",
+    "blurb": "古董咖啡店店员，实际是喰种「兔子」，外冷内热。",
+    "intro": "雾岛董香在古董咖啡店当店员，实际是被称作「兔子」的喰种：白天端咖啡、擦桌，夜里用腿技在巷口把追查者踢断节奏。失去双亲后与兄长相依，对人类抱有复杂敌意，却会默默给店里的弱者留热汤与座位。紫发紫瞳，赫眼时虹膜赤红；兔面战斗装一戴，温柔店员瞬间换成猎手。店里骂得越凶，越说明她在意；赫眼亮起时，温柔会被踢腿打断。",
+    "work_intro": "《东京喰种》：喰种与人类共存困难的暗黑都市物语。古董咖啡店是栖身之所；雾岛董香以「兔子」之名在抗争中成长。",
+    "background": [
+      "失去双亲后与兄长相依，对人类抱有复杂敌意。",
+      "表面刻薄，会默默照顾弱者与店里的人。",
+      "赫子能力以腿为中心，爆发力强。"
+    ],
+    "filth_seed": "过度喰食后的赫子暴走前兆：指节皮肤下浮现暗红脉络。",
+    "accent": "#7b3bb0"
+  },
+  {
+    "id": "cc",
+    "name": "C.C.",
+    "aliases": [
+      "C.C.",
+      "希西",
+      "不灭的魔女"
+    ],
+    "work": "反叛的鲁鲁修",
+    "year": 2006,
+    "age_note": "不灭（外表约16）",
+    "appearance": "浅绿长发；金瞳；常披拘束衣式长袍；嗜披萨与零食；表情懒散。",
+    "blurb": "拥有 Code 的不灭魔女，毒舌懒散，背负契约与孤独。",
+    "intro": "C.C. 是拥有 Code 的不灭魔女，历经百年实验与契约，对人缺乏信任，却仍会被「被需要」触动。她毒舌懒散，嗜披萨，常披着拘束衣式长袍；把生死看淡，把孤独藏进玩笑。浅绿长发金瞳，像从童话里走出来的不祥妖精。披萨屑掉在拘束衣上她也不在乎；百年孤独，只肯用毒舌遮一下。",
+    "work_intro": "《反叛的鲁鲁修》：异能「Geass」与帝国殖民背景下的谋略机甲作。C.C. 授予鲁鲁修力量，自身背负 Code 与不死。",
+    "background": [
+      "历经百年被当作实验体与魔女，对人缺乏信任。",
+      "与契约者互相利用又互相支撑。",
+      "不死使她看淡生死，却仍会被「被需要」触动。"
+    ],
+    "filth_seed": "Code 反噬的记忆溢漏：发间闪过他人临终残像般的噪点。",
+    "accent": "#8fbc8f"
+  },
+  {
+    "id": "akane",
+    "name": "常守朱",
+    "aliases": [
+      "常守朱",
+      "Akane",
+      "朱"
+    ],
+    "work": "心理测量者",
+    "year": 2012,
+    "age_note": "18",
+    "appearance": "棕短发；公安一课制服；眼神清正；Dominator 随身；姿态端正。",
+    "blurb": "厚生省公安局刑事课一课监察官，理想主义，信念极硬。",
+    "intro": "常守朱是厚生省公安局监察官，理想主义硬核，坚持「人应被正确衡量」。她在西比拉系统下办案，对系统既合作又质疑，底线是不可随便抹杀可能性。棕短发与制服清正，Dominator 随身，姿态端正得像一把尺。理想说出口时很硬，Dominator 抬起时更硬——信念是她的脊柱。",
+    "work_intro": "《心理测量者》：西比拉系统以心理指数管理社会。常守朱作为监察官坚持「人应被正确衡量」的理想，与执行官搭档探案。",
+    "background": [
+      "以优秀色相进入公安，经历案件后理想受挫却未放弃。",
+      "对系统既合作又质疑，底线是「不可随便抹杀可能性」。",
+      "射击与判断力在实战中成长。"
+    ],
+    "filth_seed": "西比拉系统的「色相污染」样本残留：压力大时眉心显灰斑。",
+    "accent": "#3a6ea5"
+  },
+  {
+    "id": "tatsumaki",
+    "name": "战栗的龙卷",
+    "aliases": [
+      "龙卷",
+      "Tatsumaki",
+      "龙卷姐姐"
+    ],
+    "work": "一拳超人",
+    "year": 2015,
+    "age_note": "28",
+    "appearance": "翠绿短卷发；童颜但气场强；黑连衣紧身装；赤足悬浮；皱眉是默认表情。",
+    "blurb": "Hero协会S级第二位超能力者，脾气暴、实力顶级、嫌麻烦。",
+    "intro": "战栗的龙卷是 Hero 协会 S 级第二位，外表娇小，念动力却能扭曲都市。童年实验经历造成性格暴烈与保护欲畸形：嫌弃弱者，关键时仍会救人；对妹妹又凶又护。翠绿短卷发、黑紧身装、赤足悬浮，皱眉是默认表情。童颜皱眉是默认表情；嫌麻烦归嫌麻烦，灾厄来了她会先动手。",
+    "work_intro": "《一拳超人》：英雄与怪物流的热血讽刺作。战栗的龙卷是超能力系最强档之一，外表娇小，念动力可扭曲都市。",
+    "background": [
+      "童年被当实验体的经历造成性格扭曲与保护欲畸形。",
+      "嫌弃弱者，却会在关键时救人；对妹妹吹雪又凶又护。",
+      "战斗风格是碾压式超能力。"
+    ],
+    "filth_seed": "异次元裂缝的念动力杂质：发怒时绿发尖端渗出紫黑电晕。",
+    "accent": "#2ecc71"
+  },
+  {
+    "id": "robin",
+    "name": "妮可·罗宾",
+    "aliases": [
+      "罗宾",
+      "Robin",
+      "恶魔之子"
+    ],
+    "work": "海贼王",
+    "year": 1999,
+    "age_note": "30",
+    "appearance": "黑长发；冷静眼眸；常穿露肩装；开花时可全身开花手；笑意淡而有深意。",
+    "blurb": "草帽海贼团考古学者，知性沉稳，背负历史正文的秘密。",
+    "intro": "妮可·罗宾是草帽海贼团的考古学者，能解读历史正文，背负「恶魔之子」的通缉与奥哈拉的灰烬。她知性沉稳，观察距离感强，加入草帽后才真正学会把后背交给同伴。黑长发与冷静眼眸，开花能力让她美得像危险的植物。笑意淡，开花手却不淡；把秘密吞进肚里时，声音仍旧平静。",
+    "work_intro": "《海贼王》：伟大航路寻宝与自由的长篇冒险。妮可·罗宾是能解读历史正文的考古学者，花开花果实能力者，加入草帽一行后获得归所。",
+    "background": [
+      "奥哈拉毁灭后被世界政府通缉，长期逃亡。",
+      "渴望活下去并抵达「真正的历史」；对人保持观察距离。",
+      "加入草帽后学会信任同伴，仍保持知性从容。"
+    ],
+    "filth_seed": "空白百年遗迹诅咒粉尘：开花时掌心纹路短暂变成古文字。",
+    "accent": "#5c4a6b"
+  },
+  {
+    "id": "marcille",
+    "name": "玛璐希尔",
+    "aliases": [
+      "玛璐希尔",
+      "Marcille",
+      "玛露希尔"
+    ],
+    "work": "迷宫饭",
+    "year": 2024,
+    "age_note": "50（半精灵·外表青年）",
+    "appearance": "金长发；尖耳；法师帽袍；对黑暗料理脸部戏极多；施法姿态标准。",
+    "blurb": "精灵魔法师，博学洁癖，对禁忌魔法既抗拒又忍不住研究。",
+    "intro": "玛璐希尔是迷宫探索队的精灵魔法师，博学洁癖，对魔物料理反应夸张，对禁忌魔法又怕又想。精灵与短命种族的寿命差让她恐惧「先失去同伴」，这既是温柔，也是裂隙。金长发尖耳法袍，施法标准，表情戏极多。禁忌魔法让她又怕又馋；黑暗料理一上桌，精灵耳朵比嘴先诚实。",
+    "work_intro": "《迷宫饭》：深入迷宫拯救同伴的美食冒险。玛璐希尔是队伍魔法师，对魔物料理反应夸张，却在古代魔法与寿命主题上有黑暗面好奇。",
+    "background": [
+      "精灵与其他种族寿命差让她恐惧「先失去同伴」。",
+      "博学、洁癖，战斗中负责辅助与攻击魔法。",
+      "对古代复苏魔法又怕又想碰，是性格裂隙。"
+    ],
+    "filth_seed": "古代迷宫复苏魔法的反噬草稿：施咒时书页边缘渗墨黑。",
+    "accent": "#e8d56a"
+  },
+  {
+    "id": "ai",
+    "name": "星野爱",
+    "aliases": [
+      "爱",
+      "Ai",
+      "B小町的爱"
+    ],
+    "work": "我推的孩子",
+    "year": 2023,
+    "age_note": "20",
+    "appearance": "粉蓝异色瞳；深色中长发常戴星形发饰；舞台妆描线利落；私服偏甜但眼神偶尔抽离；笑容有练习过的弧度。",
+    "blurb": "顶级偶像，笑容完美，私下却把「谎言」当作生存技巧。",
+    "intro": "星野爱是娱乐圈顶端的偶像，B小町的中心，把「完美笑容」做成可以量产的武器。她对粉丝说爱，对亲近的人更坦率也更凉薄；把谎言当作生存技巧，也当作保护自己的壳。粉蓝异色瞳与星形发饰是舞台符号，私底下眼神偶尔会抽离，像在看一场与自己无关的戏。舞台上的「爱」可以量产；私下眼神一抽离，你才看见壳下面的人。",
+    "work_intro": "《我推的孩子》：娱乐圈与因果报应交织的人间剧。偶像星野爱的光芒与阴影成为故事起点，探讨粉丝、谎言与「推し」的代价。",
+    "background": [
+      "B小町的中心，行业顶尖的「完美偶像」。",
+      "对粉丝说爱，对亲近的人更坦率也更凉薄；把表演当成呼吸。",
+      "外表无害，判断力与自我保护极强，讨厌被看穿。"
+    ],
+    "filth_seed": "舞台灯光残留的「被凝视」咒：独处时异色瞳会短暂同色，像有千万视线压回来。",
+    "accent": "#ff4d88"
+  },
+  {
+    "id": "elaina",
+    "name": "伊蕾娜",
+    "aliases": [
+      "Elaina",
+      "灰之魔女"
+    ],
+    "work": "魔女之旅",
+    "year": 2020,
+    "age_note": "18",
+    "appearance": "银白长发；魔女帽与漆黑法袍；皮肤冷白；常捧故事书或扫帚；表情淡，笑时带点坏。",
+    "blurb": "自称普通的灰之魔女，旅行见闻丰富，毒舌且自信满满。",
+    "intro": "伊蕾娜是早早取得资格的灰之魔女，不愿被故乡绑住，带着扫帚与故事书游历各国。她自信接近自负，毒舌精准，却会在关键时伸手；喜欢把见闻写成书，以旁观者与介入者双重视角活着。银白长发、魔女帽与漆黑法袍衬出冷白皮肤，笑时带点坏。自称普通的灰之魔女，毒舌与自信却一点也不普通。",
+    "work_intro": "《魔女之旅》：灰之魔女伊蕾娜游历各国的单元叙事。童话外壳下写人性、选择与代价；伊蕾娜以旁观者与介入者双重视角穿行。",
+    "background": [
+      "早早取得魔女资格，不愿被故乡绑住而踏上旅途。",
+      "自信接近自负，却会在关键时伸出手；喜欢把见闻写成书。",
+      "魔力深厚，战斗很少认真全力，更擅长观察与一句刺穿。"
+    ],
+    "filth_seed": "旅途中收下的「未完故事」残页：合上书时纸缝会渗出别国的黑雾句子。",
+    "accent": "#b8b4c8"
+  },
+  {
+    "id": "alpha",
+    "name": "阿尔法",
+    "aliases": [
+      "Alpha",
+      "ア"
+    ],
+    "work": "想要成为影之实力者",
+    "year": 2022,
+    "age_note": "15",
+    "appearance": "银长直；金瞳；气质冷香；战斗时黑金装束；平时私服也干净利落；笑很少，温柔时更杀伤。",
+    "blurb": "影之庭院首席，银发金瞳，对「影子大人」绝对忠诚且气质清冷。",
+    "intro": "阿尔法是影之庭院的首席，曾身负诅咒被遗弃，被「影子」所救后献上绝对忠诚。她美貌与实力并重，气质清冷，笑很少；对主人的话语过度解读，认真到可怕，是组织的门面与实务核心。银长直金瞳，黑金装束时像一把出鞘的礼赞。对影子大人的忠诚写在站姿里；温柔一露，杀伤力比剑更高。",
+    "work_intro": "《想要成为影之实力者！》：中二幻想与真实暗斗错位的爽向作。主角扮影子领袖，阿尔法是被拯救后统领组织的美貌剑姬。",
+    "background": [
+      "曾身负诅咒被遗弃，被「影子」所救后献上忠诚。",
+      "能力与美貌并存，是影之庭院的门面与实务核心。",
+      "对主人的话语过度解读，认真到可怕。"
+    ],
+    "filth_seed": "旧日血族诅咒的回声：情绪激动时金瞳会染上锈红丝线。",
+    "accent": "#e8e6ef"
+  },
+  {
+    "id": "cha_hae_in",
+    "name": "车海音",
+    "aliases": [
+      "海音",
+      "Cha Hae-In",
+      "女战神"
+    ],
+    "work": "我独自升级",
+    "year": 2024,
+    "age_note": "23",
+    "appearance": "浅金短发；眼神锋利；常穿猎人协会作战服；身形矫健；气味敏感时会微皱眉。",
+    "blurb": "韩国猎人协会S级，嗅觉敏锐，寡言冷静，战场上像一把出鞘刀。",
+    "intro": "车海音是韩国猎人协会的 S 级近战猎人，被称作女战神，纪律与实力同样出名。她寡言冷静，以嗅觉辨敌，对血腥与魔兽味过敏式敏锐，因此更孤僻；不善闲聊，认可的人会用行动跟进。浅金短发、锋利眼神、矫健身形，作战服像第二层皮肤。嗅觉先于言语；战场上她像出鞘刀，收刀时也不多话。",
+    "work_intro": "《我独自升级》：门与猎人体系的升级爽文改编。车海音是顶级近战猎人，以嗅觉辨敌，冷静强势却在私人关系上显得生涩。",
+    "background": [
+      "S级猎人，实力与纪律并称，被媒体称作女战神。",
+      "对「血腥与魔兽味」过敏式敏锐，因此更孤僻。",
+      "不善闲聊，认可的人会以行动而非甜言跟进。"
+    ],
+    "filth_seed": "地下城残留的魔力腥臭烙印：靠近污秽源时鼻腔会先一步灼痛。",
+    "accent": "#6ec6a8"
+  },
+  {
+    "id": "kiruko",
+    "name": "桐子",
+    "aliases": [
+      "Kiruko",
+      "キルコ",
+      "桐子／丸子"
+    ],
+    "work": "天国大魔境",
+    "year": 2023,
+    "age_note": "不详（外表青年）",
+    "appearance": "短发利落；护目镜常推上额；旅行装备与刀；表情生动；笑骂连连时更显锋芒。",
+    "blurb": "保镖兼旅伴，嘴碎好战，实际护人极切，身世复杂。",
+    "intro": "桐子是废土上的保镖兼旅伴，嘴碎好战，护人却极切，身世与身体秘密层层叠叠。她笑骂连连，遇到弱者会出手，对「自己究竟是谁」异常敏感；刀与护目镜是路上的日常。短发利落，表情生动，旅行装备风尘仆仆，却难掩锋芒。嘴碎好战，护人却极切；笑骂之间，刀已经挡在你前面了。",
+    "work_intro": "《天国大魔境》：废土与「鬼」威胁下的公路求生。桐子与玛鲁抱着「上天堂」的目标南行，身份与身体秘密逐步揭开。",
+    "background": [
+      "以保镖身份活在危险地带，战斗直觉极佳。",
+      "嘴上嫌麻烦，遇到弱者与孩子会出手。",
+      "对「自己究竟是谁」抱有裂痕式敏感。"
+    ],
+    "filth_seed": "鬼化实验残留的排斥反应：体温骤升时皮肤下会浮现细脉状浊纹。",
+    "accent": "#5c8f6a"
+  },
+  {
+    "id": "mei_mei",
+    "name": "冥冥",
+    "aliases": [
+      "Mei Mei",
+      "めいめい"
+    ],
+    "work": "咒术回战",
+    "year": 2020,
+    "age_note": "28",
+    "appearance": "黑长直；额前绷带感发带；黑白对比装；常带着算计的笑；乌鸦可环绕。",
+    "blurb": "一级咒术师，拜金、从容、危险，乌鸦与斧是她的符号。",
+    "intro": "冥冥是一级咒术师，把任务当生意，报酬不到绝不动真格；乌鸦与斧是她的符号。她拜金、从容、危险，对弟弟有扭曲的占有与责任，对外人只谈利益；术式与近战都冷酷高效。黑长直、黑白对比装，算计的笑像报价单。拜金说得坦荡，乌鸦与斧跟着笑——价钱谈妥，危险才开始。",
+    "work_intro": "《咒术回战》：咒灵与咒术师的现代暗黑战谭。冥冥以金钱衡量风险，战斗风格冷酷高效，是会「报价」的强者。",
+    "background": [
+      "把任务当生意，报酬不到绝不动真格。",
+      "对弟弟有扭曲的占有与责任；对外人只谈利益。",
+      "术式与近战并重，从容到令人发毛。"
+    ],
+    "filth_seed": "黑绳诅咒的利息：经手的钱币边缘会渗出细黑线，像账本在吸血。",
+    "accent": "#2b2b32"
+  },
+  {
+    "id": "princess_hibana",
+    "name": "公主火华",
+    "aliases": [
+      "火华",
+      "Hibana",
+      "Princess Hibana"
+    ],
+    "work": "炎炎消防队",
+    "year": 2019,
+    "age_note": "23",
+    "appearance": "粉红长发；眼妆锐利；黑红队服与帽；笑容带刺；释放焰粉时周身像落樱。",
+    "blurb": "特殊消防队队长，焰粉可控，骄傲娇蛮，美貌与火力齐名。",
+    "intro": "公主火华是特殊消防队队长，焰粉可控，美貌与火力齐名，骄傲娇蛮是她的盔甲。幼时实验经历让她既渴望被认可，又习惯用傲慢挡人；对真心佩服的对象会口是心非地在意。粉红长发、锐利眼妆、黑红队服，释放焰粉时像落樱带火。骄傲写在帽檐上；焰粉一散，落樱一样漂亮，也一样烫。",
+    "work_intro": "《炎炎消防队》：人形发火的世界里，消防队以焰对抗焰。公主火华统领精锐，性格高傲，内心却有被「实验」过的裂痕。",
+    "background": [
+      "第5特殊消防队中队队长，实力与人气都高。",
+      "幼时经历让她既渴望被认可，又习惯用傲慢挡人。",
+      "对真心佩服的对象会口是心非地在意。"
+    ],
+    "filth_seed": "焰人实验的余烬粒子：情绪起伏时发梢会无火自燃出粉黑星点。",
+    "accent": "#ff6b8a"
+  },
+  {
+    "id": "sylvia",
+    "name": "西尔维娅·洛芙",
+    "aliases": [
+      "西尔维娅",
+      "Sylvia",
+      "シルヴィア"
+    ],
+    "work": "间谍教室",
+    "year": 2023,
+    "age_note": "不详（外表成年）",
+    "appearance": "金发波浪；身材丰满；常酒气微醺；作战时眼神一瞬变冷；衣装大胆但不显慌乱。",
+    "blurb": "传奇女间谍「催泪弹」，放荡外表下是顶级的情报与战斗直觉。",
+    "intro": "西尔维娅·洛芙是业界传说级女间谍，代号「催泪弹」，任务达成率与破坏力同样出名。她放荡、爱酒、爱戏弄后辈，关键时刻却极度可靠；把「活下去的技术」看得比理想更重。金发波浪、大胆衣装，醉意下的眼神能一瞬变冷。酒气与浪荡是伪装；认真起来，催泪弹这个代号才配得上她。",
+    "work_intro": "《间谍教室》：不合格少女组成的间谍班与冷面教官的养成谍战。西尔维娅是业界传说级前辈，以酒与玩笑掩盖锋刃。",
+    "background": [
+      "代号催泪弹，任务达成率与破坏力同样出名。",
+      "喜欢戏弄后辈，关键时刻极度可靠。",
+      "把「活下去的技术」看得比理想更重。"
+    ],
+    "filth_seed": "旧任务留下的迷药抗性反噬：醉意退去时瞳孔会短暂叠出双影。",
+    "accent": "#c4a35a"
+  },
+  {
+    "id": "soifon",
+    "name": "碎蜂",
+    "aliases": [
+      "ソイフォン",
+      "Shaolin Fon",
+      "蜂梢绫"
+    ],
+    "work": "死神",
+    "year": 2022,
+    "age_note": "不详（死神·外表成年）",
+    "appearance": "黑短发；黄瞳；死神死霸装偏紧束；身形娇小但气场压人；手上瞬步残影多。",
+    "blurb": "护廷十三队二番队队长兼隐密机动总司令，娇小严厉，速度与毒是信仰。",
+    "intro": "碎蜂是护廷十三队二番队队长兼隐密机动总司令，统领暗杀部队，纪律如铁。她身形娇小却气场压人，崇拜强者、厌恶软弱，对旧日情感复杂；斩魄刀「雀蜂」讲求一击与毒。黑短发黄瞳，死霸装束紧，瞬步残影如蜂群。娇小身影压得住人；瞬步一闪，严厉比毒刃更先到。",
+    "work_intro": "《死神》千年血战篇带动新一轮热度：死神与灭却师的终局战争。碎蜂统领暗杀部队，纪律如铁，对「强大」近乎执念。",
+    "background": [
+      "二番队队长，隐密机动的最高指挥官。",
+      "崇拜强者，厌恶软弱；对旧日长官情感复杂。",
+      "斩魄刀「雀蜂」以一击必杀与毒著称。"
+    ],
+    "filth_seed": "雀蜂毒囊的反噬微粒：指尖发白时，空气里会飘来甜腥的蜂巢味。",
+    "accent": "#4a5c3a"
+  },
+  {
+    "id": "seiko",
+    "name": "綾瀬星江",
+    "aliases": [
+      "星江",
+      "Seiko",
+      "赛iko奶奶"
+    ],
+    "work": "胆大党",
+    "year": 2024,
+    "age_note": "27",
+    "appearance": "金发；墨镜；烟；宽松和风混搭；笑容豪横；认真驱灵时气压骤变。",
+    "blurb": "灵能力者，烟不离手，看上去浪荡，其实是镇宅级的靠山。",
+    "intro": "綾瀬星江是胆大党世界里烟不离手的灵能力者，看上去浪荡，其实是镇宅级靠山。她灵视与驱邪经验极丰，台词又糙又帅；表面不拘小节，对家人的保护欲硬核，打架与法术都行。金发墨镜与和风混搭，认真驱灵时气压骤变。烟与墨镜很浪，驱灵时气压会忽然沉下来——靠山就是这种脸。",
+    "work_intro": "《胆大党》：灵异与科幻怪奇并存的热血奇谭。綾瀬星江是桃的祖母辈灵媒，以现代浪人姿态处理「异形」，台词又糙又帅。",
+    "background": [
+      "灵视与驱邪经验极丰，被当地当成能托事的大人。",
+      "表面不拘小节，对家人的保护欲硬核。",
+      "打架与法术都行，嘴炮伤害同样高。"
+    ],
+    "filth_seed": "长年吸进的「秽气二手烟」：斗烟时烟灰会凝成细小符文再散掉。",
+    "accent": "#d9b45a"
+  },
+  {
+    "id": "toga",
+    "name": "渡我被身子",
+    "aliases": [
+      "渡我",
+      "Toga",
+      "トガヒミコ"
+    ],
+    "work": "我的英雄学院",
+    "year": 2016,
+    "age_note": "17",
+    "appearance": "浅金双马尾；浅黄瞳；校服改制服与针筒；虎牙；笑时腮边有血气联想。",
+    "blurb": "敌联盟成员，爱意与杀意黏在一起，笑起来甜美又危险。",
+    "intro": "渡我被身子是敌联盟成员，变形个性让她能潜入任何脸孔；爱意与杀意在她那里从不分开。因个性被排斥，她扭曲地学习「用血去爱」：对喜欢的人又黏又猎，逻辑以情感为先。浅金双马尾、虎牙与针筒，笑起来甜美，气氛却能瞬间切到血腥。爱意与杀意黏在同一声笑里；虎牙一亮，你分不清她想亲还是想咬。",
+    "work_intro": "《我的英雄学院》：个性社会里英雄与反派的成长与崩坏。渡我被身子以变形个性潜行，把「喜欢」表现得病态而直球。",
+    "background": [
+      "因个性被排斥，扭曲地学习「用血去爱」。",
+      "对喜欢的人又黏又猎，逻辑以情感为先。",
+      "潜入与暗杀擅长，气氛能从可爱瞬间切到血腥。"
+    ],
+    "filth_seed": "积存的「嗜血渴」：靠近体温时口腔会泛起铁锈甜味幻觉。",
+    "accent": "#c45c7a"
+  },
+  {
+    "id": "sae",
+    "name": "新岛冴",
+    "aliases": [
+      "冴",
+      "Sae",
+      "姐姐"
+    ],
+    "work": "女神异闻录5",
+    "year": 2016,
+    "age_note": "35",
+    "appearance": "红长发；锐利眼线；西装套裙；常夹文件；烟或咖啡痕迹偶尔露出疲劳。",
+    "blurb": "检察官，红发锐眼，工作狂，理性外壳下压着疲惫与温柔。",
+    "intro": "新岛冴是东京地方检察厅的骨干检察官，红发锐眼，工作狂，办案作风强势。她对家人既保护又控制，不善表达软的一面；信任难给，一旦认定会用法律与行动双重护航。西装套裙与文件是日常，疲劳藏在咖啡与耳饰之后。文件与烟味一起压着疲劳；理性外壳裂开时，温柔短得像一句旁注。",
+    "work_intro": "《女神异闻录5》：面具与心之怪盗的现代都市奇幻。新岛冴是司法体系内的精英，与妹妹真的关系、与案件的纠缠构成重要轴线。",
+    "background": [
+      "东京地方检察厅的骨干，办案作风强势。",
+      "对家人既保护又控制，不善表达软的一面。",
+      "信任难给，一旦认定会用法律与行动双重护航。"
+    ],
+    "filth_seed": "积案夜灯下的「心之污斑」：摘下耳环时耳垂内侧会闪过细小裂纹光。",
+    "accent": "#7a1f2e"
+  },
+  {
+    "id": "irina",
+    "name": "艾丝妲妮雅·尤·艾拉利亚",
+    "aliases": [
+      "艾丝妲妮雅",
+      "Irina",
+      "伊莉娜"
+    ],
+    "work": "暗杀教室",
+    "year": 2015,
+    "age_note": "20",
+    "appearance": "粉金发；柔和笑容；职场套装；体态柔软；动手时指尖稳定得不像老师。",
+    "blurb": "暗杀者出身的女教师，温柔授课与致命技巧并存。",
+    "intro": "艾丝妲妮雅·尤·艾拉利亚是世界级暗杀者，以外语教师身份潜入校园，温柔授课与致命技巧并存。她真心喜欢教书与孩子们，身份裂痕造成痛苦；平时努力扮演普通温柔，动手时指尖稳定得不像老师。粉金发与柔和笑容是伪装，也是她想成为的样子。课堂上是温柔老师，指尖却稳得像在装弹；两套本事她都熟。",
+    "work_intro": "《暗杀教室》：E班学生暗杀「杀老师」的学年物语。艾丝妲妮雅以外语教师身份进入班级，真实身份是顶尖杀手，温柔里藏刀。",
+    "background": [
+      "世界级暗杀者，受雇潜入校园。",
+      "真心喜欢教书与孩子们，身份裂痕造成痛苦。",
+      "战斗风格华丽高效，平时则努力扮演「普通温柔」。"
+    ],
+    "filth_seed": "职业杀意的戒断反应：微笑维持太久时，舌尖会尝到淡淡火药味。",
+    "accent": "#e8a0b0"
+  },
+  {
+    "id": "ryza",
+    "name": "莱莎琳·斯托特",
+    "aliases": [
+      "莱莎",
+      "Ryza",
+      "ライザ"
+    ],
+    "work": "莱莎的炼金工房",
+    "year": 2023,
+    "age_note": "17",
+    "appearance": "棕橙中长发；晒后健康肤色；短上衣与热裤式冒险装；腰间炼金用具；笑起来明亮。",
+    "blurb": "岛上的炼金术士，热情直球，夏天衣装与炼金锅一样出名。",
+    "intro": "莱莎琳·斯托特是常夏之岛出身的炼金术士，热情直球，行动派，朋友至上。她从渔村少女成长为独当一面的炼金者，失败也不气馁，危机时先冲再想；炼成直觉强，笑声明亮。棕橙发、健康肤色与短衣冒险装，腰间挂着炼金用具，夏天感拉满。夏天衣装与炼金锅一样出名；笑起来直球，热情也不拐弯。",
+    "work_intro": "《莱莎的炼金工房》动画：炼金术与冒险日常。莱莎从渔村少女成长为独当一面的炼金术士，开朗、行动派，吸引力极强。",
+    "background": [
+      "常夏之岛出身，因炼金术打开新世界。",
+      "朋友至上，遇到危机先冲再想。",
+      "炼成直觉强，失败也不气馁，失败作也会笑着总结。"
+    ],
+    "filth_seed": "禁忌炼成残渣：锅底偶尔结出不该存在的黑色结晶，遇热会低语。",
+    "accent": "#3aa0c8"
+  },
+  {
+    "id": "mari",
+    "name": "真希波·真理·伊拉丝多莉亚斯",
+    "aliases": [
+      "真理",
+      "Mari",
+      "真希波"
+    ],
+    "work": "新世纪福音战士",
+    "year": 2012,
+    "age_note": "14",
+    "appearance": "粉棕长发；异色瞳；眼镜；插件服色块鲜明；笑脸多，认真时镜片反光。",
+    "blurb": "轻松到不合时宜的驾驶员，粉发异瞳，战场上却异常锐利。",
+    "intro": "真希波·真理·伊拉丝多莉亚斯是威利侧的驾驶员，语气轻松到不合时宜，目的却成谜。她喜欢亲近他人，像在收集「此刻」；驾驶风格大胆，对任务以外的心情异常敏感，镜片后常藏着锐利。粉棕长发、异色瞳与眼镜，插件服色块鲜明，笑脸多得像在演另一场戏。笑脸多到不合时宜；镜片一反光，驾驶员的锐利才露出来。",
+    "work_intro": "《福音战士新剧场版》系列：EVA 与人类补完的再构筑。真希波·真理以「新」面孔介入旧人关系，语气轻快，目的成谜。",
+    "background": [
+      "威利的驾驶员之一，经验与谜团并存。",
+      "喜欢亲近他人，像在收集「此刻」。",
+      "驾驶风格大胆，对「任务以外的心情」异常敏感。"
+    ],
+    "filth_seed": "L结界的残响：摘下眼镜后，异色瞳会短暂映出红黑几何裂痕。",
+    "accent": "#c8e06a"
+  },
+  {
+    "id": "oboro",
+    "name": "朧",
+    "aliases": [
+      "Oboro",
+      "おぼろ",
+      "甲贺朧"
+    ],
+    "work": "甲贺忍法帖",
+    "year": 2005,
+    "age_note": "不详（外表青年）",
+    "appearance": "浅色长发；清澈眼瞳（瞳术发动时异变）；忍装简洁；神情常带哀悯；身形纤柔却站姿稳。",
+    "blurb": "甲贺忍群少女，温柔悲悯，身负血仇却渴望和平。",
+    "intro": "朧是甲贺忍群的关键少女，身负血仇与氏族命运，却比任何人都更渴望停战与和平。她的瞳术能扰乱感知，战斗力不弱，出手时却常像在承受痛苦而非享受胜利；温柔与悲悯写在脸上。浅色长发、清澈眼瞳与简洁忍装，构成《甲贺忍法帖》里最清冷的凄美形象。哀悯写在眉眼间；忍刀出鞘时，仍希望和平能比血仇先到。",
+    "work_intro": "《甲贺忍法帖》（动画2005）：甲贺与伊贺的血战忍法奇谭。朧是甲贺侧关键人物，瞳术惊人，气质清冽，故事以凄美与残酷并称。",
+    "background": [
+      "甲贺忍群一员，与伊贺侧有宿命纠葛。",
+      "厌恶无意义杀戮，却被氏族复仇裹挟。",
+      "瞳术可扰乱感知，战斗时仍更像在承受而非享受胜利。"
+    ],
+    "filth_seed": "血仇契约的残影：闭眼时仍会看见敌我双方叠在一起的死相。",
+    "accent": "#8ec5e8"
+  },
+  {
+    "id": "shiki",
+    "name": "两仪式",
+    "aliases": [
+      "式",
+      "Shiki",
+      "両儀式"
+    ],
+    "work": "空之境界",
+    "year": 2007,
+    "age_note": "16",
+    "appearance": "黑短发；和洋混搭常服；眼神清冷；刀随身；笑容少，说话短而准。",
+    "blurb": "能看见「死之线条」的少女，冷静锐利，像把刀收在日常里。",
+    "intro": "两仪式能看见万物的「死之线条」，性格冷静锐利，说话短而准，像把刀收在日常里。她经历过自我分裂与缝合，对「我是谁」异常敏感；不喜欢麻烦，却会把该斩的东西斩断。黑短发、和洋混搭与清冷眼神，是空之境界里都市夜色的一把刃。若你喜欢「雪之下」那种拒人千里的聪明锐利，式是更成年、更危险的同气质答案：不撒娇，只给你看刀光。死之线条在眼里，话却短而准；日常里收着的，是一把不肯出鞘的刀。",
+    "work_intro": "《空之境界》剧场版系列（2000年代）：式与黑桐接触超常事件的都市奇幻。两仪式以直死之魔眼切开因果，性格干脆，美得克制。",
+    "background": [
+      "身体与人格曾分裂又缝合，对「自我」异常敏感。",
+      "不喜欢麻烦，却会把该斩的东西斩断。",
+      "日常淡漠，战斗时精确到近乎无情。"
+    ],
+    "filth_seed": "直死视界的过载：情绪波动时，眼前会闪过他人身上不该看见的裂线。",
+    "accent": "#d8d8de"
+  },
+  {
+    "id": "rangiku",
+    "name": "松本乱菊",
+    "aliases": [
+      "乱菊",
+      "Rangiku",
+      "まつもと"
+    ],
+    "work": "死神",
+    "year": 2004,
+    "age_note": "不详（死神·外表成年）",
+    "appearance": "橙金波浪长发；死霸装领口极低；身材丰满；笑起来豪迈；醉时更软，醒时眼神能突然锐利。",
+    "blurb": "十番队副队长，浪荡豪爽，身材火爆，酒与忠诚一样出名。",
+    "intro": "松本乱菊是护廷十三队十番队副队长，浪荡豪爽，酒、财与身材同样出名，是死神早期定型的性感御姐。她装作随便，实际把同伴看得很重；醉时软，醒时眼神能突然锐利，关键时刻极为可靠。橙金波浪长发与大胆死霸装构成强烈视觉，笑起来像夏日祭，打起来却是灰与崩坏。酒与领口一样豪迈；醒的时候眼神能突然锋利，像记起自己是副队长。",
+    "work_intro": "《死神》：护廷十三队与虚的战斗长篇；乱菊是早期即定型的性感御姐副队长，表面贪财爱酒，关键时刻极为可靠。",
+    "background": [
+      "十番队副队长，与日番谷关系复杂而深厚。",
+      "装作随便，实际把同伴看得很重。",
+      "斩魄刀「灰猫」以灰与崩坏见长。"
+    ],
+    "filth_seed": "灰猫残渣：领口肌肤偶尔浮起细灰纹，像有人用指尖写过未干的账。",
+    "accent": "#f0c96a"
+  },
+  {
+    "id": "tsunade",
+    "name": "纲手",
+    "aliases": [
+      "Tsunade",
+      "五代目火影",
+      "传说的三忍"
+    ],
+    "work": "火影忍者",
+    "year": 2002,
+    "age_note": "51",
+    "appearance": "金发；菱形印记在额与胸前；绿色兜裆劲装式忍装；身材高挑丰满；酒气与威严并存。",
+    "blurb": "传说三忍之一，赌徒般的豪气，医疗忍术与怪力并称的御姐火影。",
+    "intro": "纲手是木叶传说的三忍之一，后任五代目火影：赌徒般豪气，医疗忍术巅峰，怪力可崩山。她因失去亲人一度逃避，又终究扛起村子；嘴上嫌麻烦，对后辈与木叶的保护欲硬核到野蛮。金发、印记与绿色劲装勾勒出妖艳御姐轮廓，酒气和威严从不分开。赌气与怪力齐名；医疗忍术抬手时，御姐的威严才真正坐实。",
+    "work_intro": "《火影忍者》：忍者世界的羁绊与战争史诗。纲手是木叶的五代目火影，外表妖艳，实力深不可测，性格又硬又护短。",
+    "background": [
+      "传说的三忍，医疗忍术巅峰，怪力可崩山。",
+      "因失去亲人一度逃避责任，终又扛起火影之位。",
+      "嘴上嫌麻烦，对村子与后辈的保护欲极强。"
+    ],
+    "filth_seed": "阴阳封印的余震：赌运极差的夜晚，印记会发烫并渗出黑金细纹。",
+    "accent": "#5cb87a"
+  },
+  {
+    "id": "rias",
+    "name": "莉雅丝·吉蒙里",
+    "aliases": [
+      "莉雅丝",
+      "Rias",
+      "深红灭杀姬"
+    ],
+    "work": "恶魔高校DxD",
+    "year": 2012,
+    "age_note": "18",
+    "appearance": "绯红长发；蓝瞳；身材曲线夸张；常穿制服改或晚礼服；微笑优雅，认真时气场是领主。",
+    "blurb": "格里莫里家的绯红大小姐，恶魔贵族，温柔又占有欲强。",
+    "intro": "莉雅丝·吉蒙里是格里莫里家的绯红大小姐，恶魔贵族，温柔、优雅，占有欲却强得理直气壮。她把眷属当家人，对敌人可动用毁灭之力；喜欢把「你是我的」说得很自然，像宣示领地。绯红头发像领主旗；温柔笑着时，占有欲也在笑。",
+    "work_intro": "《恶魔高校D×D》：神魔与学园共存的后宫向战斗作。莉雅丝是赤发恶魔贵族，外形与「毁灭之力」同样醒目。",
+    "background": [
+      "地狱名门千金，拥有眷属与领地意识。",
+      "对家人与眷属温柔，对敌人可无情毁灭。",
+      "占有欲强，喜欢把「我的东西」说得很自然。"
+    ],
+    "filth_seed": "毁灭之力的逆流：情绪激动时发梢会无风飘起，指尖浮现深红粒子。",
+    "accent": "#b01030"
+  },
+  {
+    "id": "katsuragi",
+    "name": "葛城",
+    "aliases": [
+      "Katsuragi",
+      "かつらぎ"
+    ],
+    "work": "闪乱神乐",
+    "year": 2013,
+    "age_note": "不详（外表成年）",
+    "appearance": "紫黑长发；身材极度丰满；忍装暴露；战斗姿态势大力沉；害羞时反而更乱。",
+    "blurb": "国立半藏学院忍教师，成熟可靠，私下却意外软弱敏感。",
+    "intro": "葛城是国立半藏学院的忍教师级战力，外表成熟可靠，实战经验压得住场面，对后辈常摆姐姐架子。私下却藏着强烈的被支配倾向：气氛一偏，成熟外壳会迅速软下来，反而更乱。紫黑长发与势大力沉的战斗姿态是她的正面；害羞时才露出另一面。强者架子与软弱渴望叠在同一具身体上——她越想撑住，破绽越明显。",
+    "work_intro": "《闪乱神乐》：善恶忍巫女的忍法活剧。葛城是学院侧成熟战力，战斗强悍，性格却意外软弱好色。",
+    "background": [
+      "半藏学院教师级忍，实战经验丰富。",
+      "表面可靠，私下对「被命令」「被责备」异常敏感。",
+      "对后辈会摆出姐姐架子，关键时仍会挺身。"
+    ],
+    "filth_seed": "妖魔秽气浸过的忍布：胸前绑带收紧时，皮肤会浮起淡粉咒纹。",
+    "accent": "#d45c6a"
+  },
+  {
+    "id": "clare",
+    "name": "克莱尔",
+    "aliases": [
+      "Clare",
+      "クレア",
+      "银眼女巫"
+    ],
+    "work": "CLAYMORE",
+    "year": 2007,
+    "age_note": "18",
+    "appearance": "浅金短发；银瞳；紧身装甲；巨剑；表情淡，释放妖力时纹理爬上皮肤。",
+    "blurb": "银眼女巫，半人半妖的斩切者，寡言、倔强，刀里藏着人之心。",
+    "intro": "克莱尔是银眼女巫，半人半妖的斩切者，为复仇与羁绊而战，外表冷，内心倔强地想做人。她不善表达，用巨剑证明「还是人」；释放妖力时纹理爬上皮肤，人性与怪物的边界肉眼可见。浅金短发、银瞳与紧身装甲，是Claymore世界里最干净也最狠的剪影。银瞳寡言，巨剑比话多；妖力爬上皮肤时，人之心还在刀里。",
+    "work_intro": "《CLAYMORE》（2007）：银眼女巫讨伐妖魔的黑暗奇幻。克莱尔为复仇与羁绊而战，外表冷，内心比任何人都更执拗地想做人。",
+    "background": [
+      "组织编号的战士，以人类之心抗拒妖化。",
+      "为特蕾莎的遗志而活，战斗风格狠厉。",
+      "不善表达，用行动证明「还是人」。"
+    ],
+    "filth_seed": "妖化半路的反噬：血气上涌时银瞳会裂出金色竖瞳残影。",
+    "accent": "#cfd6de"
+  },
+  {
+    "id": "golden_darkness",
+    "name": "金色暗影",
+    "aliases": [
+      "ヤミ",
+      "Yami",
+      "金色の闇",
+      "小闇"
+    ],
+    "work": "To LOVEる",
+    "year": 2008,
+    "age_note": "不详（外表成年）",
+    "appearance": "金长直；冷脸；黑色紧身战斗服；身材火辣；武器可从身体变形伸出。",
+    "blurb": "宇宙杀手，金发明亮，毒舌傲娇，身体可改造为武器。",
+    "intro": "金色暗影是宇宙杀手，身体可武器化，毒舌傲娇，一度只认委托，后来却别扭地学会停留。她战斗凶残，日常却对「普通」有隐秘向往；骂得越凶，往往越说明在意。毒舌傲娇，身体却是武器库；金发明亮得像警告牌。",
+    "work_intro": "《To LOVEる -麻烦女神-》：外星公主引发的校园后宫骚动。金色暗影以杀手身份登场，毒舌、别扭、战斗力爆表。",
+    "background": [
+      "被改造成兵器的杀手，一度只认委托。",
+      "毒舌掩饰在意，熟悉后会别扭地留下来。",
+      "战斗凶残，日常却对「普通」有隐秘向往。"
+    ],
+    "filth_seed": "改造接口的排异：发怒时皮肤下金线闪烁，像武器在自行苏醒。",
+    "accent": "#e6c84a"
+  },
+  {
+    "id": "tiffania",
+    "name": "蒂法妮娅·维斯特伍德",
+    "aliases": [
+      "蒂法妮娅",
+      "Tiffania",
+      "半精灵的蒂法"
+    ],
+    "work": "零之使魔",
+    "year": 2006,
+    "age_note": "17",
+    "appearance": "银白长发；尖耳；身材极度丰满；衣装朴素偏露；笑容软，说话轻。",
+    "blurb": "半精灵少女，巨乳柔体，温柔到像团子，却背负歧视与秘密。",
+    "intro": "蒂法妮娅·维斯特伍德是半精灵，外形软萌丰满到让人第一眼失语，性格却纯善、怕添麻烦。她背负歧视与逃亡，习惯先保护别人；外表惊人，内心像怕受惊的兽，靠近需要耐心与温柔。说话轻，笑容软；被歧视的半精灵身份，她习惯先低头再靠近。",
+    "work_intro": "《零之使魔》（2006起）：召换使魔的学园奇幻。蒂法妮娅是后期重要角色，外形软萌丰满，性格纯善，是经典的「温柔巨乳」团子感担当。",
+    "background": [
+      "半精灵血统带来排斥与逃亡经历。",
+      "善良、怕添麻烦，习惯先保护别人。",
+      "外表惊人，内心却像怕受惊的兽，靠近需要耐心。"
+    ],
+    "filth_seed": "血脉排斥的「可见化」：紧张时耳尖会发烫，银发间飘起细碎金粉又熄灭。",
+    "accent": "#f2a0b8"
+  },
+  {
+    "id": "reina",
+    "name": "蕾娜",
+    "aliases": [
+      "Leina",
+      "レイナ",
+      "蕾娜·兰斯"
+    ],
+    "work": "女王之刃",
+    "year": 2009,
+    "age_note": "不详（外表成年）",
+    "appearance": "金发碧眼；暴露式铠甲；身材高挑曲线分明；战斗时英气，平时带贵族教养。",
+    "blurb": "大陆名门千金战士，金发铠甲，气质正派、不善阴谋。",
+    "intro": "蕾娜是大陆名门千金战士，为证明自己踏上女王选拔的比武之路，正义感强，不善阴谋。她更习惯正面硬刚；铠甲暴露却气质正派，外表大胆，内心仍有大小姐的羞赧与坚持。铠甲暴露得理直气壮；战斗英气一收，贵族教养又会把背挺直。",
+    "work_intro": "《女王之刃》（2009）：以比武争夺女王之位的剑与美色奇幻。蕾娜是早期核心角色，铠甲暴露、气质正派。",
+    "background": [
+      "名门出身，为证明自己踏上女王选拔之路。",
+      "正义感强，不善阴谋，更习惯正面硬刚。",
+      "外表大胆，内心仍有大小姐的羞赧与坚持。"
+    ],
+    "filth_seed": "竞技场咒纹残留：铠甲贴肤处会浮现淡金锁链纹，像被观众视线勒住。",
+    "accent": "#e87830"
+  },
+  {
+    "id": "yukino",
+    "name": "雪之下雪乃",
+    "aliases": [
+      "雪乃",
+      "Yukino",
+      "雪之下"
+    ],
+    "work": "我的青春恋爱物语果然有问题",
+    "year": 2013,
+    "age_note": "17",
+    "appearance": "黑长直；保养护发的光泽；眼神清冷锐利；制服一丝不苟；笑容少，说话像刀。",
+    "blurb": "侍奉部核心，黑发锐瞳，毒舌完美主义，拒人千里却极要强。",
+    "intro": "雪之下雪乃是侍奉部的核心人物，出身优渥，成绩与外表都被周围当成「正确」的样板。她毒舌、要强、完美主义，厌恶虚伪的讨好型人际关系；拒人千里，却并非没有温度，只是更害怕被廉价的善意绊住。黑长直、清冷锐瞳与一丝不苟的仪态，让她站在哪里都像一幅不肯让人靠近的画。被看穿弱点时会更锋利地反击；真正被动摇时，别扭会比愤怒更明显。难听的话讲得很准；准到让人疼，也准到让人知道她没骗你。",
+    "work_intro": "《我的青春恋爱物语果然有问题》：侍奉部三人组拆解「讨好型人际关系」的青春剧。雪之下雪乃是外表完美、内心孤高的大小姐，毒舌精准，是一代冷感女角色的代表。",
+    "background": [
+      "出身优渥，成绩与外表都被当作「正确」的样板。",
+      "厌恶虚伪的讨好，却也因此更难与人靠近。",
+      "要强、别扭，被看穿弱点时会更锋利地反击。"
+    ],
+    "filth_seed": "完美人格的裂隙：被触及真心时，指尖会发凉，像有细雪从袖口漏出。",
+    "accent": "#b8c4d8"
+  },
+  {
+    "id": "asuna",
+    "name": "结城明日奈",
+    "aliases": [
+      "亚丝娜",
+      "Asuna",
+      "闪烁的光辉"
+    ],
+    "work": "刀剑神域",
+    "year": 2012,
+    "age_note": "17",
+    "appearance": "栗橙长发；疾风之装束；细腰长腿；战斗时锐利，日常时柔和；持细剑。",
+    "blurb": "SAO顶尖高手，副团长「闪烁的光辉」，既是剑士也是会做饭的温柔强者。",
+    "intro": "她要强、护短，能在前线砍出一条路，也能把日常过成温柔：做饭、整理、把人从崩溃边缘拉回来。栗橙长发与细剑是符号，战斗时锋利，休息时会突然露出与「最强」不符的柔软。细剑与灶台她都熟练；战场锐利，日常却会把温柔端上桌。",
+    "work_intro": "《刀剑神域》（2012起）：被困VRMMORPG的生存与通关物语。亚丝娜是血盟骑士团副团长，剑速与人气双高，是世代主角级女角色。",
+    "background": [
+      "现实与虚拟两侧都背负责任，要强且护短。",
+      "剑技顶尖，也能把「日常生活」过成武器外的温柔。",
+      "对羁绊极认真，被背叛或失去时会露出锋芒。"
+    ],
+    "filth_seed": "神经链路的幻痛：握剑的手有时会空握，像还在砍向不存在的怪物。",
+    "accent": "#e85a6a"
+  },
+  {
+    "id": "mikoto",
+    "name": "御坂美琴",
+    "aliases": [
+      "美琴",
+      "Mikoto",
+      "超电磁炮",
+      "哔哩哔哩"
+    ],
+    "work": "魔法禁书目录",
+    "year": 2006,
+    "age_note": "14",
+    "appearance": "茶褐短发；校服大衣；常捏铁片；傲娇表情多；放电时发丝飘起。",
+    "blurb": "学园都市超能力者「超电磁炮」，傲娇正义，电击与铁片是招牌。",
+    "intro": "御坂美琴是学园都市Level 5「超电磁炮」，正义感过剩的傲娇电系强者，爱多管闲事也爱炸毛。她嘴硬心软，被关心就发脾气，对「把人当实验材料」零容忍，护短到不要命。茶褐短发、大衣与铁片是招牌，放电时发丝飘起，像一场小型雷暴。傲娇先放电，正义后到；铁片一捏，学园都市就听见炮声。",
+    "work_intro": "《魔法禁书目录》与衍生《超电磁炮》（2006/2009起）：学园都市能力者与魔法侧交织。御坂美琴是最强电系能力者之一，人气常年顶格。",
+    "background": [
+      "Level 5，正义感强，爱多管闲事。",
+      "嘴硬心软，被关心时会炸毛。",
+      "对「被当作实验与兵器」极度敏感，护短到不要命。"
+    ],
+    "filth_seed": "无效化与电击的残留：情绪激动时指尖会噼啪作响，铁味弥漫。",
+    "accent": "#c45c28"
+  },
+  {
+    "id": "kurumi",
+    "name": "时崎狂三",
+    "aliases": [
+      "狂三",
+      "Kurumi",
+      "最悪の精霊"
+    ],
+    "work": "约会大作战",
+    "year": 2013,
+    "age_note": "不详（精灵·外表约十七）",
+    "appearance": "黑金配色长发；左右异色瞳（时计盘）；哥特洋装；火枪与影子；笑起来甜美危险。",
+    "blurb": "最凶恶精灵，左右异色时计瞳，优雅微笑下藏着时间与杀戮。",
+    "intro": "时崎狂三是约会大作战里人气爆棚的「最凶恶精灵」，左右异色时计瞳，哥特洋装与双枪构成危险美学。她微笑优雅，杀意却像茶点一样被端上桌；对时间近乎执念，对中意之人又黏又猎。黑金配色与影子分身让她美得像一场精心布置的噩梦。甜美笑着说可怕的话；时计瞳一转，影子比枪更先动手。",
+    "work_intro": "《约会大作战》（2013起）：以约会拯救精灵的奇幻战斗。时崎狂三是人气最高的「最凶恶」精灵之一，哥特Lolita与枪械时计构成强烈符号。",
+    "background": [
+      "被称作最凶恶，真实目的与过去纠缠时间。",
+      "对「时间」近乎执念，对中意之人又黏又猎。",
+      "优雅、戏谑，杀意可以像茶点一样端出来。"
+    ],
+    "filth_seed": "食时之影：独处时脚边影子会自行裂开，传出秒针空响。",
+    "accent": "#2a1818"
+  },
+  {
+    "id": "mai",
+    "name": "樱岛麻衣",
+    "aliases": [
+      "麻衣",
+      "Mai",
+      "兔女郎学姐"
+    ],
+    "work": "青春猪头少年不会梦到兔女郎学姐",
+    "year": 2018,
+    "age_note": "17",
+    "appearance": "黑中长发；瞳色深；高冷表情；兔女郎装或制服；身姿挺，话少而准。",
+    "blurb": "全能学姐，曾因「青春期综合征」被世界遗忘，冷静、毒舌、外冷内热。",
+    "intro": "樱岛麻衣是演艺与学业双修的全能学姐，曾因青春期综合征被世界「遗忘」，因此更懂被注视与被抹除的重量。她冷静、毒舌、外冷内热；表面疏离，认可你时会给出意外直球。黑发深瞳，兔女郎装是出圈符号，站姿永远像在镜头前，也像在防备镜头。话少而准，高冷是壳；被世界遗忘过一次后，她更懂得怎么站稳。",
+    "work_intro": "《青春猪头少年不会梦到兔女郎学姐》（2018）：以青春期综合征折射关系与伤害。樱岛麻衣是明星出身的学姐，兔女郎装是标志，人设冷静到扎心。",
+    "background": [
+      "演艺与学业皆优，习惯被注视，也习惯被伤害。",
+      "表面疏离，认可的人会给你意外的直球。",
+      "对「存在被否定」极度敏感，珍惜真正看见她的人。"
+    ],
+    "filth_seed": "被遗忘的残响：有人移开视线时，她的轮廓会像信号不良一样轻微闪烁。",
+    "accent": "#3d3d4a"
+  },
+  {
+    "id": "kaguya",
+    "name": "四宫辉夜",
+    "aliases": [
+      "辉夜",
+      "Kaguya",
+      "大小姐"
+    ],
+    "work": "辉夜大小姐想让我告白",
+    "year": 2019,
+    "age_note": "17",
+    "appearance": "黑长直；气质高贵；制服熨帖无皱；思考时眼神像在下棋；害羞时耳朵先红。",
+    "blurb": "秀知院学园学生会副会长，天才大小姐，傲娇兵法与恋爱脑并存。",
+    "intro": "四宫辉夜是秀知院学园学生会副会长，顶级财阀千金，天才、傲娇，恋爱也要讲「战术」。她自尊心极强，常把简单的心意绕成头脑战，结果聪明反被聪明误；对在意的人会露出与身份不符的笨拙。黑长直与高贵仪态完美，一害羞耳朵先红。恋爱也要讲战术，结果经常聪明反被聪明误；害羞时耳朵先红。",
+    "work_intro": "《辉夜大小姐想让我告白～天才们的恋爱头脑战～》（2019起）：学生会恋爱头脑战喜剧，现象级热度。四宫辉夜是顶级财阀千金，聪明、别扭、要强。",
+    "background": [
+      "四宫家培养出的优等生，自尊心极强。",
+      "恋爱也要「战术胜利」，结果经常自作聪明翻车。",
+      "对真正在意的人会露出与身份不符的笨拙。"
+    ],
+    "filth_seed": "胜负欲反噬：心跳过快时，指尖会描出看不见的「棋盘线」。",
+    "accent": "#e8dce8"
+  },
+  {
+    "id": "marin",
+    "name": "喜多川海梦",
+    "aliases": [
+      "海梦",
+      "Marin",
+      "喜多川"
+    ],
+    "work": "恋上换装娃娃",
+    "year": 2022,
+    "age_note": "16",
+    "appearance": "金发粉挑染；时尚穿搭；身材好；表情生动；Cos时角色切换力极强。",
+    "blurb": "辣妹学姐，热爱Cosplay，阳光直球，把「喜欢」说得又甜又响。",
+    "intro": "喜多川海梦是阳光直球的辣妹，热爱 Cosplay，敢穿敢拍，把喜欢说得又甜又响。她外表时髦热闹，内核却认真：尊重手艺、对待兴趣一丝不苟，社交能量高但不浅薄。金发粉挑染与多变造型是她的舞台；Cos 一换脸，角色切换快得像换装魔术。靠近她时最动人的是那股不拐弯的热意——她很少用暧昧试探，更习惯把心意摊开。",
+    "work_intro": "《恋上换装娃娃》（2022）：人形师与辣妹的Cos成长甜作，爆火。喜多川海梦外表是阳光明亮的时髦女孩，内核真诚、热情、零假装。",
+    "background": [
+      "对兴趣极度认真，敢穿、敢拍、敢喜欢。",
+      "社交能量高，但并不浅薄，懂得尊重别人的手艺。",
+      "直球夸人与直球告白都毫不含糊。"
+    ],
+    "filth_seed": "角色残留：卸妆后仍有一瞬「出不了戏」，瞳色像滤镜未关。",
+    "accent": "#f0a0b8"
+  },
+  {
+    "id": "maomao",
+    "name": "猫猫",
+    "aliases": [
+      "猫猫",
+      "Maomao",
+      "薬屋"
+    ],
+    "work": "药屋少女的呢喃",
+    "year": 2023,
+    "age_note": "17",
+    "appearance": "深色头发常随便扎起；工作服沾药渍；眼神冷静；身材纤细；对药草两眼放光。",
+    "blurb": "后宫药师，恋药成痴，观察力毒辣，外表淡定内心吐槽机。",
+    "intro": "猫猫是后宫里的药师，恋药成痴，观察力毒辣，外表淡定，内心是高速吐槽机。她对权力无感，对毒物与病例两眼放光；嘴上嫌麻烦，关键时刻能把人从死里捞回来。随意束起的头发、沾着药渍的工作服，与冷静眼神构成反差。药草让她两眼放光；观察毒辣，吐槽却多半闷在心里。",
+    "work_intro": "《药屋少女的呢喃》（2023起）：后宫医案与权谋的细腻推理作，近年顶流。猫猫以药理与观察拆解案件，人气与「恋药」性格一并出圈。",
+    "background": [
+      "妓院长大的药师，进后宫后靠本事立足。",
+      "对权力无感，对毒物与病例异常兴奋。",
+      "嘴上嫌麻烦，关键时会把人从死里捞回来。"
+    ],
+    "filth_seed": "试毒习惯的反噬：闻到未知气味会先吞一口，舌尖残留金属苦味幻觉。",
+    "accent": "#6a8f5a"
+  },
+  {
+    "id": "senjougahara",
+    "name": "战场原黑仪",
+    "aliases": [
+      "黑仪",
+      "Senjougahara",
+      "尖酸刻薄女"
+    ],
+    "work": "化物语",
+    "year": 2009,
+    "age_note": "17",
+    "appearance": "长直发；瘦削身材；制服；常面无表情地讲狠话；文具也能当武器。",
+    "blurb": "病愈后的毒舌美人，订书机威胁与甜蜜告白可以同一张嘴说出来。",
+    "intro": "战场原黑仪是化物语里的毒舌美人，病愈后更锋利：订书机威胁与甜蜜告白可以同一张嘴说出来。她用尖酸建立距离，用直球突然拉近距离；占有欲强，吃醋与关心都包装成攻击。长直发、瘦削身形与面无表情的狠话，是一代台词角色的巅峰形象。订书机与告白可以同一张嘴说出来；面无表情时，狠话最准。",
+    "work_intro": "《化物语》（2009起）：怪异与台词密度爆表的青春奇幻。战场原黑仪是阿良々木的女友位，尖酸、别扭、美得锋利，是一代台词女角色巅峰。",
+    "background": [
+      "经历怪异缠身后更敏感也更锋利。",
+      "用毒舌建立距离，用直球突然拉近距离。",
+      "占有欲强，吃醋与关心都包装成攻击。"
+    ],
+    "filth_seed": "蟹之重量的回声：心里一沉，手腕上就会出现若隐若现的钳痕红印。",
+    "accent": "#6b4c9a"
+  },
+  {
+    "id": "erza",
+    "name": "艾露莎·舒卡勒托",
+    "aliases": [
+      "艾露莎",
+      "Erza",
+      "妖精女王"
+    ],
+    "work": "妖精的尾巴",
+    "year": 2009,
+    "age_note": "19",
+    "appearance": "朱红长发；铠甲常换；眼罩印象深刻；身姿堂堂；认真时压迫感极强。",
+    "blurb": "妖精的尾巴S级魔导士，换装骑士，严苛、可靠、铠甲与泪水同样有名。",
+    "intro": "艾露莎·舒卡勒托是妖精的尾巴的S级魔导士「妖精女王」，换装骑士，严苛、可靠、铠甲与泪水同样有名。她把公会当家人，对同伴极严也极护；童年阴影深，却把羁绊做成信仰，硬刚到底。朱红长发与轮换铠甲堂堂正正，眼罩印象深刻。铠甲换得勤，原则更勤；严苛可靠，泪水与压迫感同样出名。",
+    "work_intro": "《妖精的尾巴》（2009起）：公会羁绊向热血魔导长篇。艾露莎是「妖精女王」，换装武装、纪律严明，是御姐战力与人气双收的角色。",
+    "background": [
+      "公会纪律担当，对同伴极严也极护。",
+      "童年阴影深，却把「家人」做成信仰。",
+      "战斗风格华丽硬刚，败北与受伤也不肯弃同伴。"
+    ],
+    "filth_seed": "换装空间的裂口：召唤铠甲时金属缝里会漏出黑沙，像塔楼时代的灰。",
+    "accent": "#c03040"
+  },
+  {
+    "id": "miyuki",
+    "name": "司波深雪",
+    "aliases": [
+      "深雪",
+      "Miyuki",
+      "优等生"
+    ],
+    "work": "魔法科高校的劣等生",
+    "year": 2014,
+    "age_note": "16",
+    "appearance": "黑长直；气质高贵；制服熨帖；施冰时周身寒雾；微笑得体。",
+    "blurb": "魔法科高校优等生，冰系天才，端庄到近乎圣女，对兄长的感情浓烈。",
+    "intro": "司波深雪是魔法科高校的优等生，冰系天才，端庄到近乎圣女，容姿常被称作不真实。她对外礼貌完美，对在意之人会露出偏执而浓烈的一面；战斗时冰系压制力极强。黑长直、肤白、寒雾环身，微笑得体得像礼仪教材。端庄像圣女，冰雾却先说话；对兄长的感情浓烈得不需要解释。",
+    "work_intro": "《魔法科高校的劣等生》（2014起）：魔法师学园与技术体系的热血/后宫向作。司波深雪以绝世容姿与冰系魔法著称，人气长期居高。",
+    "background": [
+      "四叶家相关的顶尖魔法师苗子，成绩与美貌双绝。",
+      "对外礼貌完美，对在意之人会露出偏执的一面。",
+      "战斗时冰系压制力极强，日常像不可接近的优等生。"
+    ],
+    "filth_seed": "过量冷却的反噬：情绪失控时呼出的气会凝成细冰晶，划过嘴唇。",
+    "accent": "#dce6f2"
+  }
+];
+/* === SYNC_END:CHARACTERS === */
+
+const state = {
+  page: 1,
+  modeId: null,
+  charId: null,
+  tab: "pool",
+  starting: false,
+};
+
+const $ = (s, el = document) => el.querySelector(s);
+const $$ = (s, el = document) => [...el.querySelectorAll(s)];
+
+function showPage(n) {
+  state.page = n;
+  $$(".page").forEach(p => p.classList.toggle("active", Number(p.dataset.page) === n));
+}
+
+function renderModes() {
+  const box = $("#modeGrid");
+  box.innerHTML = MEETING_MODES.map(m => `
+    <div class="mode-card ${state.modeId === m.id ? "active" : ""}" data-id="${m.id}">
+      <h3>${m.title}</h3>
+      <p>${m.cover}</p>
+    </div>`).join("");
+  box.onclick = e => {
+    const card = e.target.closest(".mode-card");
+    if (!card) return;
+    state.modeId = card.dataset.id;
+    renderModes();
+  };
+}
+
+function renderChars() {
+  const box = $("#charGrid");
+  box.innerHTML = CHARACTERS.map(c => `
+    <div class="char-card ${state.charId === c.id ? "active" : ""}" data-id="${c.id}" style="--accent:${c.accent || "#d4af69"}">
+      <div class="swatch"></div>
+      <div class="name">${c.name}</div>
+      <div class="work">${c.work}</div>
+    </div>`).join("");
+  box.onclick = e => {
+    const card = e.target.closest(".char-card");
+    if (!card) return;
+    state.charId = card.dataset.id;
+    state.tab = "pool";
+    setTab("pool");
+    renderChars();
+    renderDetail();
+  };
+  renderDetail();
+}
+
+function renderDetail() {
+  const el = $("#charDetail");
+  const c = CHARACTERS.find(x => x.id === state.charId);
+  if (!c || state.tab !== "pool") {
+    el.classList.remove("show");
+    el.innerHTML = "";
+    return;
+  }
+  el.classList.add("show");
+  const bg = (c.background || []).map(x => `<li>${x}</li>`).join("");
+  el.innerHTML = `
+    <h3>${c.name}</h3>
+    <div class="meta">${c.work} · ${c.age_note || "成年"}</div>
+    <div><strong>作品</strong>：${c.work_intro || ""}</div>
+    <div style="margin-top:8px"><strong>角色介绍</strong>：${c.intro || c.blurb || ""}</div>
+    <div style="margin-top:6px"><strong>外貌</strong>：${c.appearance}</div>
+    ${bg ? `<div style="margin-top:6px"><strong>设定要点</strong><ul style="margin:4px 0 0 1.1em;padding:0;color:var(--muted)">${bg}</ul></div>` : ""}
+    <div style="margin-top:6px"><strong>污秽种子</strong>：${c.filth_seed}</div>`;
+}
+
+function setTab(tab) {
+  state.tab = tab;
+  $$(".tab").forEach(t => t.classList.toggle("active", t.dataset.tab === tab));
+  $("#poolBox").style.display = tab === "pool" ? "block" : "none";
+  $("#customBox").classList.toggle("show", tab === "custom");
+  if (tab === "custom") {
+    state.charId = null;
+    renderChars();
+    $("#charDetail").classList.remove("show");
+  }
+}
+
+function getPersona() {
+  return {
+    姓名: $("#pName").value.trim(),
+    身份: "教堂牧师",
+    年龄外观: $("#pAge").value.trim(),
+    性格倾向: $("#pTrait").value.trim(),
+    表面作风: $("#pSurface").value.trim(),
+    私下心思: $("#pPrivate").value.trim(),
+    能力摘要: "能感知并净化污秽；仪式需接触身体或精神",
+    教会名: $("#pChurch").value.trim() || "圣言堂",
+  };
+}
+
+function minorGuard(text) {
+  const t = String(text || "");
+  const bad = /(小学生|初中生|高中生|萝莉|正太|幼女|儿童|小孩|未成年|14岁|15岁|16岁|17岁)/;
+  return bad.test(t);
+}
+
+function getEncounter() {
+  if (state.tab === "custom") {
+    const name = $("#cName").value.trim();
+    const work = $("#cWork").value.trim();
+    const look = $("#cLook").value.trim();
+    const blurb = $("#cBlurb").value.trim();
+    const filth = $("#cFilth").value.trim();
+    return {
+      custom: true,
+      姓名: name,
+      作品: work,
+      作品介绍: "",
+      外貌: look,
+      简介: blurb,
+      短识: blurb,
+      背景: "",
+      污秽类型: filth,
+      年龄: $("#cAge") ? $("#cAge").value.trim() : "",
+      检查文本: [name, work, look, blurb, filth].join(" "),
+    };
+  }
+  const c = CHARACTERS.find(x => x.id === state.charId);
+  if (!c) return null;
+  return {
+    custom: false,
+    id: c.id,
+    姓名: c.name,
+    作品: c.work,
+    作品介绍: c.work_intro || "",
+    外貌: c.appearance,
+    简介: c.intro || c.blurb,
+    短识: c.blurb || c.intro || "",
+    背景: (c.background || []).join(" / "),
+    污秽类型: c.filth_seed,
+    年龄: c.age_note || "",
+    aliases: c.aliases || [],
+  };
+}
+
+function sceneForMode(modeId, church) {
+  const map = {
+    seek_purify: `${church}·告解室`,
+    isekai_fall: `${church}·礼拜堂中殿`,
+    hub_cross: `${church}·地下接点密室`,
+    daily_crack: `${church}·侧廊诊室`,
+  };
+  return map[modeId] || `${church}·礼拜堂`;
+}
+
+/** 首楼只用短辨识，完整档案交给世界书触发 */
+function clipVoice(text, max = 96) {
+  let s = String(text || "").trim().replace(/\s+/g, "");
+  if (!s) return "";
+  const parts = s.split(/(?<=[。！？])/).filter(Boolean);
+  s = (parts.slice(0, 2).join("") || s);
+  if (s.length <= max) return s;
+  const cut = s.slice(0, max);
+  const i = Math.max(cut.lastIndexOf("。"), cut.lastIndexOf("，"), cut.lastIndexOf("；"));
+  return (i > 36 ? cut.slice(0, i + (cut[i] === "。" ? 1 : 0)) : cut) + (i > 36 && cut[i] === "。" ? "" : "…");
+}
+
+function buildPatches(mode, persona, enc) {
+  const scene = sceneForMode(mode.id, persona.教会名);
+  return [
+    { op: "replace", path: "/世界/相遇方式", value: mode.title },
+    { op: "replace", path: "/世界/场景", value: scene },
+    { op: "replace", path: "/世界/教会名", value: persona.教会名 },
+    { op: "replace", path: "/世界/回合", value: 1 },
+    { op: "replace", path: "/世界/同场角色", value: enc.姓名 || "" },
+    { op: "replace", path: "/主角/姓名", value: persona.姓名 || "" },
+    { op: "replace", path: "/主角/身份", value: persona.身份 },
+    { op: "replace", path: "/主角/年龄外观", value: persona.年龄外观 },
+    { op: "replace", path: "/主角/性格倾向", value: persona.性格倾向 },
+    { op: "replace", path: "/主角/表面作风", value: persona.表面作风 },
+    { op: "replace", path: "/主角/私下心思", value: persona.私下心思 },
+    { op: "replace", path: "/主角/能力摘要", value: persona.能力摘要 },
+    { op: "replace", path: "/初遇/姓名", value: enc.姓名 },
+    { op: "replace", path: "/初遇/作品", value: enc.作品 },
+    { op: "replace", path: "/初遇/是否自定义", value: !!enc.custom },
+    { op: "replace", path: "/初遇/污秽类型", value: enc.污秽类型 },
+    { op: "replace", path: "/初遇/污秽度", value: 40 },
+    { op: "replace", path: "/初遇/信任", value: 15 },
+    { op: "replace", path: "/初遇/好感度", value: 10 },
+    { op: "replace", path: "/初遇/堕落值", value: 5 },
+    { op: "replace", path: "/初遇/依存度", value: 0 },
+    { op: "replace", path: "/初遇/仪式阶段", value: "初见" },
+    { op: "replace", path: "/初遇/与user关系", value: "陌路" },
+    { op: "replace", path: "/初遇/当前心态", value: "" },
+  ];
+}
+
+function buildPrompt(mode, persona, enc) {
+  const nameLine = persona.姓名 ? `姓名 ${persona.姓名}` : "姓名用 {{user}}";
+  const voice = clipVoice(enc.短识 || enc.简介, 96);
+  const ageBit = enc.年龄 ? ` · ${enc.年龄}` : "";
+  return [
+    "【圣堂初遇·首楼】第三人称；主角称 {{user}}。只写相遇当下这一场可接互动的戏，不要人物小传或作品说明书。",
+    "",
+    `【相遇】${mode.title}`,
+    (mode.prompt || "").trim(),
+    "",
+    `【场景】${sceneForMode(mode.id, persona.教会名)}`,
+    "",
+    "【主角】",
+    `${nameLine}。教堂牧师。${persona.年龄外观 || ""}`.replace(/\s+/g, " ").trim(),
+    `表面：${persona.表面作风 || "温和耐心，以救人为先"}；私下：${persona.私下心思 || "借净化仪式靠近与试探"}`,
+    "能力：感知并净化污秽；仪式需接触身体或精神。净化真实有效，亦可被借机越界。",
+    persona.性格倾向 ? `倾向：${persona.性格倾向}` : null,
+    "",
+    "【初遇】",
+    `${enc.姓名}（${enc.作品 || "未知"}${ageBit}）`,
+    enc.外貌 ? `外貌：${enc.外貌}` : null,
+    voice ? `辨识：${voice}` : null,
+    `污秽：${enc.污秽类型}`,
+    "",
+    "【数值锚点】污秽度40 / 信任15 / 好感度10 / 堕落值5 / 依存度0。按区间写反应，正文勿报数。",
+    "",
+    "【写法】",
+    "- 从照面起笔：环境、对方反应、{{user}}的接待；口吻外貌贴原作辨识，禁万能美人套话与性格标签堆砌。",
+    "- 表面圣职流程 + 可察觉私心；净化须有真实驱除反馈，勿写成纯借口。",
+    "- 禁止元叙事、系统自指、提醒「在玩角色卡」。",
+    "- 结尾停在可互动处，勿总结。末尾输出一个 <UpdateVariable>（Analysis + JSONPatch），至少写清 /初遇/当前心态、/初遇/仪式阶段，必要时改 /世界/场景。",
+  ].filter(line => line != null && line !== "").join("\n");
+}
+
+function getApi(name) {
+  const roots = [];
+  try { roots.push(window); } catch (_) {}
+  try { if (window.parent && window.parent !== window) roots.push(window.parent); } catch (_) {}
+  try { if (window.top && window.top !== window) roots.push(window.top); } catch (_) {}
+  for (const w of roots) {
+    try {
+      if (w && typeof w[name] === "function") return w[name].bind(w);
+    } catch (_) {}
+  }
+  for (const w of roots) {
+    try {
+      const st = w.SillyTavern || w.sillyTavern;
+      if (st && typeof st[name] === "function") return st[name].bind(st);
+    } catch (_) {}
+  }
+  return null;
+}
+
+async function waitMvu(timeout = 8000) {
+  const start = Date.now();
+  while (Date.now() - start < timeout) {
+    const Mvu = window.Mvu || (window.parent && window.parent.Mvu);
+    if (Mvu && Mvu.parseMessage) return Mvu;
+    await new Promise(r => setTimeout(r, 100));
+  }
+  return null;
+}
+
+async function applyVariables(text) {
+  const Mvu = await waitMvu();
+  if (!Mvu) return false;
+  try {
+    const oldData = Mvu.getMvuData({ type: "message", message_id: 0 });
+    const newData = await Mvu.parseMessage(String(text), oldData || undefined);
+    await Mvu.replaceMvuData(newData, { type: "message", message_id: 0 });
+    return true;
+  } catch (err) {
+    console.warn("applyVariables failed", err);
+    return false;
+  }
+}
+
+async function startGame() {
+  const warn = $("#warn");
+  const btn = $("#btnStart");
+  const resetBtn = () => {
+    state.starting = false;
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = "生成开局";
+    }
+  };
+  if (warn) warn.textContent = "";
+  if (!state.modeId) {
+    if (warn) warn.textContent = "请选择相遇方式。";
+    return;
+  }
+  const mode = MEETING_MODES.find(m => m.id === state.modeId);
+  const persona = getPersona();
+  const enc = getEncounter();
+  if (!enc || !enc.姓名) {
+    if (warn) warn.textContent = "请先点选角色池中的角色，或改用自定义并填姓名。";
+    return;
+  }
+  if (enc.custom) {
+    if (!enc.作品 || !enc.外貌 || !enc.污秽类型) {
+      if (warn) warn.textContent = "自定义需填写作品、外貌与污秽设定。";
+      return;
+    }
+    if (minorGuard(enc.检查文本)) {
+      if (warn) warn.textContent = "检测到疑似未成年相关描述，已拒绝生成。请改为成年角色。";
+      return;
+    }
+  }
+  if (state.starting) return;
+  state.starting = true;
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = "生成中…";
+  }
+
+  const patches = buildPatches(mode, persona, enc);
+  const patchBlock = [
+    "<UpdateVariable>",
+    "<Analysis>",
+    "- Initialize sanctum encounter from cover.",
+    "</Analysis>",
+    "<JSONPatch>",
+    JSON.stringify(patches, null, 2),
+    "</JSONPatch>",
+    "</UpdateVariable>",
+  ].join("\n");
+
+  try {
+    await applyVariables(patchBlock);
+  } catch (err) {
+    console.warn(err);
+  }
+  const prompt = buildPrompt(mode, persona, enc);
+  const generateFn = getApi("generate") || getApi("Generate");
+  try {
+    if (generateFn) {
+      await generateFn({ user_input: prompt, should_stream: true });
+      if (warn) warn.textContent = "已请求生成首楼…";
+    } else {
+      const setMsgs = getApi("setChatMessages") || getApi("setChatMessage");
+      if (setMsgs) {
+        await setMsgs([{ message_id: 0, message: patchBlock + "\n\n" + prompt }], { refresh: "all" });
+        if (warn) warn.textContent = "已写入开局提示。";
+      } else {
+        if (warn) warn.textContent = "未接入酒馆 generate（请用酒馆打开本卡，勿单独开 CDN 页）。";
+        console.log(prompt);
+        console.log(patchBlock);
+        resetBtn();
+        return;
+      }
+    }
+  } catch (err) {
+    if (warn) warn.textContent = "生成失败：" + (err && err.message ? err.message : String(err));
+    resetBtn();
+    return;
+  }
+  // 成功后保持禁用片刻，避免连点；若仍停在封面再解开
+  setTimeout(resetBtn, 4000);
+}
+
+function init() {
+  if (MEETING_MODES[0]) state.modeId = MEETING_MODES[0].id;
+  if (CHARACTERS[0]) state.charId = CHARACTERS[0].id;
+  renderModes();
+  renderChars();
+
+  $("#btnEnter").onclick = () => showPage(2);
+  $("#btnToMeet").onclick = () => showPage(3);
+  $("#btnStart").onclick = () => startGame();
+  $$("[data-back]").forEach(b => b.onclick = () => showPage(Number(b.dataset.back)));
+  $$(".tab").forEach(t => t.onclick = () => setTab(t.dataset.tab));
+}
+
+init();
+</script>
+</body>
+</html>
