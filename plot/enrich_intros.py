@@ -386,16 +386,13 @@ def write_md(c: dict) -> str:
     bg = "\n".join(f"    - {x}" for x in c["background"])
     intro = (c.get("intro") or c.get("blurb") or "").strip()
     intro_lines = "\n".join(("    " + line) if line else "    " for line in intro.split("\n"))
-    # 身份：用短标签，不写「本卡开局…」公文腔
     identity = (c.get("blurb") or "").strip() or "见背景"
     if len(identity) > 36:
         identity = identity[:34] + "…"
-    seed = (c.get("filth_seed") or "").strip()
-    seed_short = seed if len(seed) <= 48 else seed[:46] + "…"
-    rel = f"""    - 与{{{{user}}}}尚无旧识；第一次照面由封面相遇方式决定（求净上门 / 异界坠落 / 枢纽穿行 / 日常破绽）
-    - 口吻跟原作走：该毒舌就毒舌，该寡言就寡言，不要写成万能温柔模板
-    - 按手、告解、检查时可以后退、咬牙、攥袖——随信任 / 好感 / 堕落变，别空喊好感套话
-    - 污秽发作优先写身体征兆，挂钩种子：{seed_short}"""
+    rels = c.get("relations")
+    if not rels:
+        rels = [f"与{{{{user}}}}：开局无旧识"]
+    rel = "\n".join(f"    - {x}" for x in rels)
     return f"""角色档案:
   基本信息:
     姓名: {c['name']}
@@ -404,7 +401,7 @@ def write_md(c: dict) -> str:
     作品: {c['work']}（约 {c['year']} 起热度）
     年龄: {c['age_note']}
     身份: {identity}
-    与{{{{user}}}}关系: 开局陌路 / 求助，以变量「初遇.与user关系」为准
+    与{{{{user}}}}关系: 开局无旧识
 
   角色介绍:
 {intro_lines}

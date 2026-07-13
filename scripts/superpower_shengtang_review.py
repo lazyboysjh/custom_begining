@@ -181,6 +181,20 @@ def main() -> int:
                 errs.append(f"{e.get('comment')} 缺 keys")
             if not e.get("constant") and e.get("scan_depth") != 2:
                 warns.append(f"{e.get('comment')} scan_depth={e.get('scan_depth')} 建议 2")
+        ooc_marks = ("万能温柔模板", "别空喊好感套话", "求净上门 / 异界坠落", "挂钩种子：")
+        for e in role_entries:
+            ct = e.get("content") or ""
+            for m in ooc_marks:
+                if m in ct:
+                    errs.append(f"{e.get('comment')}: 关系设定含 OOC 模板「{m}」")
+                    break
+        write_e = next((e for e in entries if e.get("comment") == "写作与人设规则"), None)
+        if write_e:
+            wt = write_e.get("content") or ""
+            for m in ("同场角色", "万能美人", "元叙事", "禁止:"):
+                if m in wt:
+                    warns.append(f"写作与人设规则仍含可删项「{m}」（宜极简）")
+                    break
         schema = ""
         for s in card["data"]["extensions"]["tavern_helper"]["scripts"]:
             if s.get("name") == "变量结构":
