@@ -3,7 +3,7 @@
   "description": "捏同人开局：圣堂牧师 × 热门动漫女性初遇。净化真实成立，亦可借仪式越界。",
   "personality": "",
   "scenario": "圣言堂。{{user}}是能净化污秽的牧师；初遇一名成年二次元女性，按封面所选相遇方式开局。",
-  "first_mes": "```html\n<!doctype html>\n<html lang=\"zh-CN\">\n<head>\n  <meta charset=\"UTF-8\">\n  <meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">\n  <script src=\"https://code.jquery.com/jquery-3.7.1.min.js\"></script>\n</head>\n<body style=\"margin:0;padding:0;background:transparent;\">\n<script>\n$('body').load('https://testingcf.jsdelivr.net/gh/lazyboysjh/custom_begining@cb6ac9cb8280982bd4b15746ec127995c834c925/dist/shengtang/ui/cover/index.html?v=1');\n</script>\n</body>\n</html>\n```",
+  "first_mes": "```html\n<!doctype html>\n<html lang=\"zh-CN\">\n<head>\n  <meta charset=\"UTF-8\">\n  <meta name=\"viewport\" content=\"width=device-width,initial-scale=1,viewport-fit=cover\">\n  <style>\n    html,body{margin:0;padding:0;width:100%;background:transparent;}\n    iframe.st-cover{\n      display:block;width:100%;border:0;background:transparent;\n      height:min(90dvh,880px);min-height:480px;\n    }\n    @media (max-width:560px){\n      iframe.st-cover{height:min(86dvh,760px);min-height:420px;}\n    }\n  </style>\n</head>\n<body>\n  <iframe class=\"st-cover\" title=\"圣堂初遇封面\" src=\"https://testingcf.jsdelivr.net/gh/lazyboysjh/custom_begining@0e170f21bd5cf6af3488e599cd3fe3325defab00/dist/shengtang/ui/cover/index.html?v=2\"></iframe>\n</body>\n</html>\n```",
   "mes_example": "",
   "creatorcomment": "圣堂初遇 / custom_begining",
   "avatar": "none",
@@ -22,7 +22,7 @@
     "description": "捏同人开局：圣堂牧师 × 热门动漫女性初遇。净化真实成立，亦可借仪式越界。",
     "personality": "",
     "scenario": "圣言堂。{{user}}是能净化污秽的牧师；初遇一名成年二次元女性，按封面所选相遇方式开局。",
-    "first_mes": "```html\n<!doctype html>\n<html lang=\"zh-CN\">\n<head>\n  <meta charset=\"UTF-8\">\n  <meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">\n  <script src=\"https://code.jquery.com/jquery-3.7.1.min.js\"></script>\n</head>\n<body style=\"margin:0;padding:0;background:transparent;\">\n<script>\n$('body').load('https://testingcf.jsdelivr.net/gh/lazyboysjh/custom_begining@cb6ac9cb8280982bd4b15746ec127995c834c925/dist/shengtang/ui/cover/index.html?v=1');\n</script>\n</body>\n</html>\n```",
+    "first_mes": "```html\n<!doctype html>\n<html lang=\"zh-CN\">\n<head>\n  <meta charset=\"UTF-8\">\n  <meta name=\"viewport\" content=\"width=device-width,initial-scale=1,viewport-fit=cover\">\n  <style>\n    html,body{margin:0;padding:0;width:100%;background:transparent;}\n    iframe.st-cover{\n      display:block;width:100%;border:0;background:transparent;\n      height:min(90dvh,880px);min-height:480px;\n    }\n    @media (max-width:560px){\n      iframe.st-cover{height:min(86dvh,760px);min-height:420px;}\n    }\n  </style>\n</head>\n<body>\n  <iframe class=\"st-cover\" title=\"圣堂初遇封面\" src=\"https://testingcf.jsdelivr.net/gh/lazyboysjh/custom_begining@0e170f21bd5cf6af3488e599cd3fe3325defab00/dist/shengtang/ui/cover/index.html?v=2\"></iframe>\n</body>\n</html>\n```",
     "mes_example": "",
     "creator_notes": "圣堂初遇 / custom_begining",
     "system_prompt": "",
@@ -131,7 +131,7 @@
           "id": "c40d8a1f-33b8-4a32-8f47-afbba3a036bf",
           "scriptName": "显示-封面HTML后移除状态栏占位",
           "findRegex": "/(```html[\\s\\S]*?<\\/html>\\s*```)\\s*^\\s*<StatusPlaceHolderImpl\\s*\\/>\\s*$/gim",
-          "replaceString": "```html\n<!doctype html>\n<html lang=\"zh-CN\">\n<head>\n  <meta charset=\"UTF-8\">\n  <meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">\n  <script src=\"https://code.jquery.com/jquery-3.7.1.min.js\"></script>\n</head>\n<body style=\"margin:0;padding:0;background:transparent;\">\n<script>\n$('body').load('https://testingcf.jsdelivr.net/gh/lazyboysjh/custom_begining@cb6ac9cb8280982bd4b15746ec127995c834c925/dist/shengtang/ui/status/index.html?v=1');\n</script>\n</body>\n</html>\n```",
+          "replaceString": "```html\n<!doctype html>\n<html lang=\"zh-CN\">\n<head>\n  <meta charset=\"UTF-8\">\n  <meta name=\"viewport\" content=\"width=device-width,initial-scale=1,viewport-fit=cover\">\n  <style>\n    html,body{margin:0;padding:0;width:100%;background:transparent;}\n    iframe.st-status{\n      display:block;width:100%;border:0;background:transparent;\n      height:min(70dvh,720px);min-height:360px;\n    }\n    @media (max-width:560px){\n      iframe.st-status{height:min(78dvh,680px);min-height:320px;}\n    }\n  </style>\n</head>\n<body>\n  <iframe class=\"st-status\" title=\"圣堂状态\" src=\"https://testingcf.jsdelivr.net/gh/lazyboysjh/custom_begining@0e170f21bd5cf6af3488e599cd3fe3325defab00/dist/shengtang/ui/status/index.html?v=2\"></iframe>\n</body>\n</html>\n```",
           "trimStrings": [],
           "placement": [
             2
@@ -151,7 +151,7 @@
           "runOnEdit": true,
           "findRegex": "/(<StatusPlaceHolderImpl\\s*\\/>)/gim",
           "trimStrings": [],
-          "replaceString": "```html\n<!doctype html>\n<html lang=\"zh-CN\">\n<head>\n  <meta charset=\"UTF-8\">\n  <meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">\n  <script src=\"https://code.jquery.com/jquery-3.7.1.min.js\"></script>\n</head>\n<body style=\"margin:0;padding:0;background:transparent;\">\n<script>\n$('body').load('https://testingcf.jsdelivr.net/gh/lazyboysjh/custom_begining@cb6ac9cb8280982bd4b15746ec127995c834c925/dist/shengtang/ui/status/index.html?v=1');\n</script>\n</body>\n</html>\n```",
+          "replaceString": "```html\n<!doctype html>\n<html lang=\"zh-CN\">\n<head>\n  <meta charset=\"UTF-8\">\n  <meta name=\"viewport\" content=\"width=device-width,initial-scale=1,viewport-fit=cover\">\n  <style>\n    html,body{margin:0;padding:0;width:100%;background:transparent;}\n    iframe.st-status{\n      display:block;width:100%;border:0;background:transparent;\n      height:min(70dvh,720px);min-height:360px;\n    }\n    @media (max-width:560px){\n      iframe.st-status{height:min(78dvh,680px);min-height:320px;}\n    }\n  </style>\n</head>\n<body>\n  <iframe class=\"st-status\" title=\"圣堂状态\" src=\"https://testingcf.jsdelivr.net/gh/lazyboysjh/custom_begining@0e170f21bd5cf6af3488e599cd3fe3325defab00/dist/shengtang/ui/status/index.html?v=2\"></iframe>\n</body>\n</html>\n```",
           "placement": [
             2
           ],
@@ -165,7 +165,7 @@
           "id": "e15e4cd2-49fd-4dad-b7d6-ee4318bd19c9",
           "scriptName": "显示-状态栏美化",
           "findRegex": "/<StatusPlaceHolderImpl\\s*\\/>/gi",
-          "replaceString": "```html\n<!doctype html>\n<html lang=\"zh-CN\">\n<head>\n  <meta charset=\"UTF-8\">\n  <meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">\n  <script src=\"https://code.jquery.com/jquery-3.7.1.min.js\"></script>\n</head>\n<body style=\"margin:0;padding:0;background:transparent;\">\n<script>\n$('body').load('https://testingcf.jsdelivr.net/gh/lazyboysjh/custom_begining@cb6ac9cb8280982bd4b15746ec127995c834c925/dist/shengtang/ui/status/index.html?v=1');\n</script>\n</body>\n</html>\n```",
+          "replaceString": "```html\n<!doctype html>\n<html lang=\"zh-CN\">\n<head>\n  <meta charset=\"UTF-8\">\n  <meta name=\"viewport\" content=\"width=device-width,initial-scale=1,viewport-fit=cover\">\n  <style>\n    html,body{margin:0;padding:0;width:100%;background:transparent;}\n    iframe.st-status{\n      display:block;width:100%;border:0;background:transparent;\n      height:min(70dvh,720px);min-height:360px;\n    }\n    @media (max-width:560px){\n      iframe.st-status{height:min(78dvh,680px);min-height:320px;}\n    }\n  </style>\n</head>\n<body>\n  <iframe class=\"st-status\" title=\"圣堂状态\" src=\"https://testingcf.jsdelivr.net/gh/lazyboysjh/custom_begining@0e170f21bd5cf6af3488e599cd3fe3325defab00/dist/shengtang/ui/status/index.html?v=2\"></iframe>\n</body>\n</html>\n```",
           "trimStrings": [],
           "placement": [
             2

@@ -22,7 +22,7 @@ TEMPLATE = Path(
 OUT = ROOT / "圣堂初遇.json"
 CARD_NAME = "圣堂初遇"
 GITHUB_REPO = os.environ.get("ST_CDN_REPO", "lazyboysjh/custom_begining")
-CDN_V = os.environ.get("ST_CDN_V", "1")
+CDN_V = os.environ.get("ST_CDN_V", "2")
 
 
 def default_cdn_ref() -> str:
@@ -47,13 +47,20 @@ COVER_HTML = f"""```html
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <style>
+    html,body{{margin:0;padding:0;width:100%;background:transparent;}}
+    iframe.st-cover{{
+      display:block;width:100%;border:0;background:transparent;
+      height:min(90dvh,880px);min-height:480px;
+    }}
+    @media (max-width:560px){{
+      iframe.st-cover{{height:min(86dvh,760px);min-height:420px;}}
+    }}
+  </style>
 </head>
-<body style="margin:0;padding:0;background:transparent;">
-<script>
-$('body').load('{CDN}/cover/index.html?v={CDN_V}');
-</script>
+<body>
+  <iframe class="st-cover" title="圣堂初遇封面" src="{CDN}/cover/index.html?v={CDN_V}"></iframe>
 </body>
 </html>
 ```"""
@@ -63,13 +70,20 @@ STATUS_HTML = f"""```html
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <style>
+    html,body{{margin:0;padding:0;width:100%;background:transparent;}}
+    iframe.st-status{{
+      display:block;width:100%;border:0;background:transparent;
+      height:min(70dvh,720px);min-height:360px;
+    }}
+    @media (max-width:560px){{
+      iframe.st-status{{height:min(78dvh,680px);min-height:320px;}}
+    }}
+  </style>
 </head>
-<body style="margin:0;padding:0;background:transparent;">
-<script>
-$('body').load('{CDN}/status/index.html?v={CDN_V}');
-</script>
+<body>
+  <iframe class="st-status" title="圣堂状态" src="{CDN}/status/index.html?v={CDN_V}"></iframe>
 </body>
 </html>
 ```"""
