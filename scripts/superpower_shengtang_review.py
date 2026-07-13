@@ -206,6 +206,25 @@ def main() -> int:
         if n_id < len(chars) - 2:
             warns.append(f"封面内嵌 id 约 {n_id}，yaml={len(chars)}")
 
+    # --- 开局 API / 布局硬伤（对照写卡知识库 + 十国封面）---
+    if re.search(r'createMsgs\(\[\{\s*role:\s*"assistant".*?message:\s*""', cover, re.S):
+        errs.append("封面 startGame 会先造空 assistant 楼 → 生成失败时出现黑空楼（图证）")
+    if "should_silence: true" in cover or "should_silence:true" in cover:
+        errs.append("封面 generate 使用 should_silence:true；首楼开局应与十国一致用非静默 generate/trigger")
+    if "generateFn({" not in cover and "generate({" not in cover:
+        errs.append("封面缺少 generate(...) 调用")
+    else:
+        if "user_input:" in cover and "should_stream" in cover:
+            oks.append("封面 generate 含 user_input + should_stream")
+        else:
+            warns.append("封面 generate 参数不完整（缺 user_input 或 should_stream）")
+    if "scrollbar-width" not in cover and "::-webkit-scrollbar" not in cover:
+        errs.append("封面未定制滚动条（易露出系统白粗条）")
+    if re.search(r"\.char-grid\s*\{[^}]*max-height:[^}]*overflow:\s*auto", cover, re.S):
+        errs.append("角色池 char-grid 自带 max-height+overflow（双层滚动，底栏易裁切卡片）")
+    if ".page-body" in cover and "scrollbar-color" in cover:
+        oks.append("page-body 滚动条已主题化")
+
     # --- git / CDN ---
     code, status = run(["git", "status", "-sb"])
     code2, tracked = run(["git", "ls-files", "dist/shengtang/ui/cover/index.html"])
