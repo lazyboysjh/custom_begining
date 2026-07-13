@@ -22,7 +22,7 @@ TEMPLATE = Path(
 OUT = ROOT / "圣堂初遇.json"
 CARD_NAME = "圣堂初遇"
 GITHUB_REPO = os.environ.get("ST_CDN_REPO", "lazyboysjh/custom_begining")
-CDN_V = os.environ.get("ST_CDN_V", "2")
+CDN_V = os.environ.get("ST_CDN_V", "3")
 
 
 def default_cdn_ref() -> str:
@@ -42,51 +42,88 @@ def default_cdn_ref() -> str:
 GITHUB_REF = os.environ.get("ST_CDN_REF", "").strip() or default_cdn_ref()
 CDN = f"https://testingcf.jsdelivr.net/gh/{GITHUB_REPO}@{GITHUB_REF}/dist/shengtang/ui"
 
-COVER_HTML = f"""```html
+# 同文档注入（禁止跨域 iframe）：否则 generate / triggerSlash 调不到酒馆 API
+_INJECT_BOOT = r"""
+<style>
+  html,body{margin:0;padding:0;width:100%;height:min(92dvh,900px);min-height:480px;overflow:hidden;background:transparent;}
+  @media (max-width:560px){html,body{height:min(88dvh,780px);min-height:420px;}}
+</style>
+<script>
+(function () {
+  var url = %URL%;
+  function runScripts(doc) {
+    var list = Array.prototype.slice.call(doc.querySelectorAll("script"));
+    function next(i) {
+      if (i >= list.length) return;
+      var old = list[i];
+      var s = document.createElement("script");
+      if (old.src) {
+        s.src = old.src;
+        s.onload = function () { next(i + 1); };
+        s.onerror = function () { next(i + 1); };
+        document.body.appendChild(s);
+      } else {
+        s.textContent = old.textContent;
+        document.body.appendChild(s);
+        next(i + 1);
+      }
+    }
+    next(0);
+  }
+  fetch(url, { cache: "no-store" })
+    .then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.text(); })
+    .then(function (html) {
+      var doc = new DOMParser().parseFromString(html, "text/html");
+      doc.querySelectorAll("style").forEach(function (n) {
+        document.head.appendChild(n.cloneNode(true));
+      });
+      doc.querySelectorAll('link[rel="stylesheet"]').forEach(function (n) {
+        var l = document.createElement("link");
+        l.rel = "stylesheet";
+        l.href = n.href;
+        if (n.crossOrigin) l.crossOrigin = n.crossOrigin;
+        document.head.appendChild(l);
+      });
+      document.body.innerHTML = "";
+      Array.prototype.slice.call(doc.body.childNodes).forEach(function (n) {
+        if (n.nodeName && n.nodeName.toLowerCase() === "script") return;
+        document.body.appendChild(document.importNode(n, true));
+      });
+      runScripts(doc);
+    })
+    .catch(function (e) {
+      document.body.innerHTML = '<pre style="color:#c45c48;padding:12px;white-space:pre-wrap;">界面加载失败: '
+        + String(e && e.message ? e.message : e) + '\\n' + url + '</pre>';
+    });
+})();
+</script>
+"""
+
+
+def _shell(kind: str) -> str:
+    path = "cover" if kind == "cover" else "status"
+    title = "圣堂初遇封面" if kind == "cover" else "圣堂状态"
+    url = f"{CDN}/{path}/index.html?v={CDN_V}"
+    boot = _INJECT_BOOT.replace("%URL%", json.dumps(url, ensure_ascii=False))
+    min_h = "480px" if kind == "cover" else "320px"
+    h = "min(92dvh,900px)" if kind == "cover" else "min(72dvh,720px)"
+    return f"""```html
 <!doctype html>
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-  <style>
-    html,body{{margin:0;padding:0;width:100%;background:transparent;}}
-    iframe.st-cover{{
-      display:block;width:100%;border:0;background:transparent;
-      height:min(90dvh,880px);min-height:480px;
-    }}
-    @media (max-width:560px){{
-      iframe.st-cover{{height:min(86dvh,760px);min-height:420px;}}
-    }}
-  </style>
+  <title>{title}</title>
 </head>
-<body>
-  <iframe class="st-cover" title="圣堂初遇封面" src="{CDN}/cover/index.html?v={CDN_V}"></iframe>
+<body style="margin:0;padding:0;width:100%;height:{h};min-height:{min_h};overflow:hidden;background:transparent;">
+{boot}
 </body>
 </html>
 ```"""
 
-STATUS_HTML = f"""```html
-<!doctype html>
-<html lang="zh-CN">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-  <style>
-    html,body{{margin:0;padding:0;width:100%;background:transparent;}}
-    iframe.st-status{{
-      display:block;width:100%;border:0;background:transparent;
-      height:min(70dvh,720px);min-height:360px;
-    }}
-    @media (max-width:560px){{
-      iframe.st-status{{height:min(78dvh,680px);min-height:320px;}}
-    }}
-  </style>
-</head>
-<body>
-  <iframe class="st-status" title="圣堂状态" src="{CDN}/status/index.html?v={CDN_V}"></iframe>
-</body>
-</html>
-```"""
+
+COVER_HTML = _shell("cover")
+STATUS_HTML = _shell("status")
 
 VAR_LIST = """---
 <status_current_variable>
