@@ -3,7 +3,7 @@
   "description": "捏同人开局：圣堂牧师 × 热门动漫女性初遇。净化真实成立，亦可借仪式越界。",
   "personality": "",
   "scenario": "圣言堂。{{user}}是能净化污秽的牧师；初遇一名成年二次元女性，按封面所选相遇方式开局。",
-  "first_mes": "```html\n<!doctype html>\n<html lang=\"zh-CN\">\n<head>\n  <meta charset=\"UTF-8\">\n  <meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">\n  <script src=\"https://code.jquery.com/jquery-3.7.1.min.js\"></script>\n</head>\n<body style=\"margin:0;padding:0;background:transparent;\">\n<script>\n$('body').load('https://testingcf.jsdelivr.net/gh/lazyboysjh/custom_begining@e94a94f759f4e488e25666eeec400f2aec101084/dist/shengtang/ui/cover/index.html?v=1');\n</script>\n</body>\n</html>\n```",
+  "first_mes": "```html\n<!doctype html>\n<html lang=\"zh-CN\">\n<head>\n  <meta charset=\"UTF-8\">\n  <meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">\n  <script src=\"https://code.jquery.com/jquery-3.7.1.min.js\"></script>\n</head>\n<body style=\"margin:0;padding:0;background:transparent;\">\n<script>\n$('body').load('https://testingcf.jsdelivr.net/gh/lazyboysjh/custom_begining@37fa4aec062690aef001c24573156d7de4e507dd/dist/shengtang/ui/cover/index.html?v=1');\n</script>\n</body>\n</html>\n```",
   "mes_example": "",
   "creatorcomment": "圣堂初遇 / custom_begining",
   "avatar": "none",
@@ -22,7 +22,7 @@
     "description": "捏同人开局：圣堂牧师 × 热门动漫女性初遇。净化真实成立，亦可借仪式越界。",
     "personality": "",
     "scenario": "圣言堂。{{user}}是能净化污秽的牧师；初遇一名成年二次元女性，按封面所选相遇方式开局。",
-    "first_mes": "```html\n<!doctype html>\n<html lang=\"zh-CN\">\n<head>\n  <meta charset=\"UTF-8\">\n  <meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">\n  <script src=\"https://code.jquery.com/jquery-3.7.1.min.js\"></script>\n</head>\n<body style=\"margin:0;padding:0;background:transparent;\">\n<script>\n$('body').load('https://testingcf.jsdelivr.net/gh/lazyboysjh/custom_begining@e94a94f759f4e488e25666eeec400f2aec101084/dist/shengtang/ui/cover/index.html?v=1');\n</script>\n</body>\n</html>\n```",
+    "first_mes": "```html\n<!doctype html>\n<html lang=\"zh-CN\">\n<head>\n  <meta charset=\"UTF-8\">\n  <meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">\n  <script src=\"https://code.jquery.com/jquery-3.7.1.min.js\"></script>\n</head>\n<body style=\"margin:0;padding:0;background:transparent;\">\n<script>\n$('body').load('https://testingcf.jsdelivr.net/gh/lazyboysjh/custom_begining@37fa4aec062690aef001c24573156d7de4e507dd/dist/shengtang/ui/cover/index.html?v=1');\n</script>\n</body>\n</html>\n```",
     "mes_example": "",
     "creator_notes": "圣堂初遇 / custom_begining",
     "system_prompt": "",
@@ -131,7 +131,7 @@
           "id": "c40d8a1f-33b8-4a32-8f47-afbba3a036bf",
           "scriptName": "显示-封面HTML后移除状态栏占位",
           "findRegex": "/(```html[\\s\\S]*?<\\/html>\\s*```)\\s*^\\s*<StatusPlaceHolderImpl\\s*\\/>\\s*$/gim",
-          "replaceString": "```html\n<!doctype html>\n<html lang=\"zh-CN\">\n<head>\n  <meta charset=\"UTF-8\">\n  <meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">\n  <script src=\"https://code.jquery.com/jquery-3.7.1.min.js\"></script>\n</head>\n<body style=\"margin:0;padding:0;background:transparent;\">\n<script>\n$('body').load('https://testingcf.jsdelivr.net/gh/lazyboysjh/custom_begining@e94a94f759f4e488e25666eeec400f2aec101084/dist/shengtang/ui/status/index.html?v=1');\n</script>\n</body>\n</html>\n```",
+          "replaceString": "```html\n<!doctype html>\n<html lang=\"zh-CN\">\n<head>\n  <meta charset=\"UTF-8\">\n  <meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">\n  <script src=\"https://code.jquery.com/jquery-3.7.1.min.js\"></script>\n</head>\n<body style=\"margin:0;padding:0;background:transparent;\">\n<script>\n$('body').load('https://testingcf.jsdelivr.net/gh/lazyboysjh/custom_begining@37fa4aec062690aef001c24573156d7de4e507dd/dist/shengtang/ui/status/index.html?v=1');\n</script>\n</body>\n</html>\n```",
           "trimStrings": [],
           "placement": [
             2
@@ -151,7 +151,7 @@
           "runOnEdit": true,
           "findRegex": "/(<StatusPlaceHolderImpl\\s*\\/>)/gim",
           "trimStrings": [],
-          "replaceString": "```html\n<!doctype html>\n<html lang=\"zh-CN\">\n<head>\n  <meta charset=\"UTF-8\">\n  <meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">\n  <script src=\"https://code.jquery.com/jquery-3.7.1.min.js\"></script>\n</head>\n<body style=\"margin:0;padding:0;background:transparent;\">\n<script>\n$('body').load('https://testingcf.jsdelivr.net/gh/lazyboysjh/custom_begining@e94a94f759f4e488e25666eeec400f2aec101084/dist/shengtang/ui/status/index.html?v=1');\n</script>\n</body>\n</html>\n```",
+          "replaceString": "```html\n<!doctype html>\n<html lang=\"zh-CN\">\n<head>\n  <meta charset=\"UTF-8\">\n  <meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">\n  <script src=\"https://code.jquery.com/jquery-3.7.1.min.js\"></script>\n</head>\n<body style=\"margin:0;padding:0;background:transparent;\">\n<script>\n$('body').load('https://testingcf.jsdelivr.net/gh/lazyboysjh/custom_begining@37fa4aec062690aef001c24573156d7de4e507dd/dist/shengtang/ui/status/index.html?v=1');\n</script>\n</body>\n</html>\n```",
           "placement": [
             2
           ],
@@ -165,7 +165,7 @@
           "id": "e15e4cd2-49fd-4dad-b7d6-ee4318bd19c9",
           "scriptName": "显示-状态栏美化",
           "findRegex": "/<StatusPlaceHolderImpl\\s*\\/>/gi",
-          "replaceString": "```html\n<!doctype html>\n<html lang=\"zh-CN\">\n<head>\n  <meta charset=\"UTF-8\">\n  <meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">\n  <script src=\"https://code.jquery.com/jquery-3.7.1.min.js\"></script>\n</head>\n<body style=\"margin:0;padding:0;background:transparent;\">\n<script>\n$('body').load('https://testingcf.jsdelivr.net/gh/lazyboysjh/custom_begining@e94a94f759f4e488e25666eeec400f2aec101084/dist/shengtang/ui/status/index.html?v=1');\n</script>\n</body>\n</html>\n```",
+          "replaceString": "```html\n<!doctype html>\n<html lang=\"zh-CN\">\n<head>\n  <meta charset=\"UTF-8\">\n  <meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">\n  <script src=\"https://code.jquery.com/jquery-3.7.1.min.js\"></script>\n</head>\n<body style=\"margin:0;padding:0;background:transparent;\">\n<script>\n$('body').load('https://testingcf.jsdelivr.net/gh/lazyboysjh/custom_begining@37fa4aec062690aef001c24573156d7de4e507dd/dist/shengtang/ui/status/index.html?v=1');\n</script>\n</body>\n</html>\n```",
           "trimStrings": [],
           "placement": [
             2
