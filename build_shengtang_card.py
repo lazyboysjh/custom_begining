@@ -134,34 +134,44 @@ COVER_HTML = _shell("cover")
 STATUS_HTML = _shell("status")
 
 VAR_LIST = """---
-<status_current_variable>
+<status_current_variables>
 {{format_message_variable::stat_data}}
-</status_current_variable>"""
+</status_current_variables>"""
 
 USER_ENTRY = """<{{user}}>
   姓名、身份、表面作风、私下心思见 主角 变量。正文称 {{user}}。
   默认教堂牧师，能净化污秽；仪式可真实驱除，也可被借机越界。
 </{{user}}>"""
 
+# 写卡知识库「变量输出格式」固定骨架；卡专属只读/步长写在 [mvu_update]变量更新规则
 MVU_FORMAT = """---
 变量输出格式:
   rule:
-    - 每次回复末尾输出一个 <UpdateVariable>；先写剧情再输出变量块
-    - 世界.相遇方式 开局后只读
-    - 主角姓名/身份/能力摘要 开局后只读
-    - 初遇姓名/作品/是否自定义 开局后只读
-    - 污秽度/信任/好感度/堕落值/依存度 用 replace 或 delta，范围 0-100
-    - 按 worldbook「数值影响」区间写反应，勿每句报数
-    - JSON Patch 操作为 replace / delta / insert / remove
+    - you must output the update analysis and the actual update commands at once in the end of the next reply
+    - the update commands works like the **JSON Patch (RFC 6902)** standard, must be a valid JSON array containing operation objects, but supports the following operations instead:
+      - replace: replace the value of existing paths
+      - delta: update the value of existing number paths by a delta value
+      - insert: insert new items into an object or array (using `-` as array index intends appending to the end)
+      - remove
+      - move
+    - don't update field names starts with `_` as they are readonly, such as `_变量`
   format: |-
     <UpdateVariable>
-    <Analysis>$(IN ENGLISH, terse bullets)
-    - [Scene] location / ritual phase
-    - [Filth/Trust/Favor/Fall/Dep] value changes
-    - [Patch] JSON Patch ops
+    <Analysis>$(IN ENGLISH, no more than 80 words)
+    - ${calculate time passed: ...}
+    - ${decide whether dramatic updates are allowed as it's in a special case or the time passed is more than usual: yes/no}
+    - ${analyze every variable based on its corresponding `check`, according only to current reply instead of previous plots: ...}
     </Analysis>
     <JSONPatch>
-    [ {"op":"replace","path":"/初遇/好感度","value":18}, {"op":"replace","path":"/初遇/堕落值","value":8} ]
+    [
+      { "op": "replace", "path": "${/path/to/variable}", "value": "${new_value}" },
+      { "op": "delta", "path": "${/path/to/number/variable}", "value": "${positive_or_negative_delta}" },
+      { "op": "insert", "path": "${/path/to/object/new_key}", "value": "${new_value}" },
+      { "op": "insert", "path": "${/path/to/array/-}", "value": "${new_value}" },
+      { "op": "remove", "path": "${/path/to/object/key}" },
+      { "op": "remove", "path": "${/path/to/array/0}" },
+      { "op": "move", "from": "${/path/to/variable}", "to": "${/path/to/another/path}" }
+    ]
     </JSONPatch>
     </UpdateVariable>"""
 
@@ -180,6 +190,8 @@ def wb_entry(
     enabled=True,
 ):
     scan_depth = None if constant else 2
+    # before/after_char 的 depth 无意义，统一 0；仅 at_depth 使用 depth
+    store_depth = depth if position == "at_depth" else 0
     return {
         "id": entry_id,
         "keys": keys or [],
@@ -191,12 +203,13 @@ def wb_entry(
         "insertion_order": order,
         "enabled": enabled,
         "position": position,
-        "depth": depth,
+        "depth": store_depth,
         "scan_depth": scan_depth,
         "use_regex": False,
         "extensions": {
             "position": 0,
-            "exclude_recursion": False,
+            # 写卡知识库：不可递归 + 防止进一步递归 必须同时勾选
+            "exclude_recursion": True,
             "prevent_recursion": True,
             "probability": 100,
             "display_index": entry_id,
@@ -274,7 +287,7 @@ def build_worldbook_entries() -> list:
         entries.append(wb_entry(comment, content, entry_id, **kw))
         entry_id += 1
 
-    add("{{user}}", USER_ENTRY, constant=True, position="before_char", depth=4, order=3)
+    add("{{user}}", USER_ENTRY, constant=True, position="before_char", order=3)
     add(
         "===变量开始===",
         "",
@@ -293,7 +306,8 @@ def build_worldbook_entries() -> list:
         order=200,
         enabled=False,
     )
-    add("变量列表", VAR_LIST.strip(), constant=True, position="at_depth", depth=0, order=199)
+    # MVU自查：变量列表 / 更新规则 / 输出格式 → D0，顺序 200
+    add("变量列表", VAR_LIST.strip(), constant=True, position="at_depth", depth=0, order=200)
     add(
         "[mvu_update]变量更新规则",
         build_mvu_update(),
@@ -308,7 +322,7 @@ def build_worldbook_entries() -> list:
         constant=True,
         position="at_depth",
         depth=0,
-        order=201,
+        order=200,
     )
     add(
         "===变量结束===",
@@ -320,12 +334,12 @@ def build_worldbook_entries() -> list:
         enabled=False,
     )
 
+    # 大世界观：角色定义前 · 蓝灯
     add(
         "世界观",
         (ROOT / "worldbook/00_世界观.md").read_text(encoding="utf-8"),
         constant=True,
         position="before_char",
-        depth=4,
         order=1,
     )
     add(
@@ -333,32 +347,32 @@ def build_worldbook_entries() -> list:
         (ROOT / "worldbook/01_净化与污秽.md").read_text(encoding="utf-8"),
         constant=True,
         position="before_char",
-        depth=4,
         order=2,
     )
+    # 写作指导 / 数值反应：D0（知识库：指导类放 D0，不塞设定位）
     add(
         "写作与人设规则",
         (ROOT / "worldbook/02_写作与人设规则.md").read_text(encoding="utf-8"),
         constant=True,
-        position="before_char",
-        depth=4,
-        order=5,
+        position="at_depth",
+        depth=0,
+        order=1,
     )
     add(
         "数值影响",
         (ROOT / "worldbook/03_数值影响.md").read_text(encoding="utf-8"),
         constant=True,
-        position="before_char",
-        depth=4,
-        order=6,
+        position="at_depth",
+        depth=0,
+        order=2,
     )
 
+    # 多角色卡：角色详细 → 角色定义后 · 绿灯 · 顺序约 99
     for i, c in enumerate(load_characters()):
         name = c["name"]
         path = ROOT / "worldbook" / "角色" / f"{name}.md"
         content = path.read_text(encoding="utf-8") if path.is_file() else f"角色档案:\n  基本信息:\n    姓名: {name}\n"
         keys = [name, *c.get("aliases", [])]
-        # dedupe keep order
         seen = set()
         keys = [k for k in keys if not (k in seen or seen.add(k))]
         add(
@@ -367,9 +381,8 @@ def build_worldbook_entries() -> list:
             constant=False,
             selective=True,
             keys=keys,
-            position="before_char",
-            depth=4,
-            order=50 + i,
+            position="after_char",
+            order=99,
         )
 
     return entries

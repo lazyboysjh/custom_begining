@@ -144,6 +144,31 @@ def main() -> int:
         for need in ("世界观", "净化与污秽", "写作与人设规则", "数值影响", "[initvar]变量初始化勿开", "变量列表"):
             if need not in comments:
                 errs.append(f"卡内世界书缺: {need}")
+        # 写作条不得塞 MVU 格式（知识库：格式在变量输出格式）
+        for e in entries:
+            if e.get("comment") == "写作与人设规则":
+                ct = e.get("content") or ""
+                if "<UpdateVariable>" in ct or "JSONPatch" in ct or "变量路径" in ct:
+                    errs.append("「写作与人设规则」含变量输出格式，应挪到 [mvu_update]变量输出格式/更新规则")
+                if e.get("position") != "at_depth" or e.get("depth") != 0:
+                    errs.append("「写作与人设规则」应为 D0（at_depth depth=0）指导条")
+            if e.get("comment") == "变量列表":
+                ct = e.get("content") or ""
+                if "<status_current_variables>" not in ct:
+                    errs.append("变量列表标签应为 <status_current_variables>（知识库固定格式）")
+                if e.get("position") != "at_depth" or e.get("depth") != 0:
+                    errs.append("变量列表应为 at_depth depth=0")
+            if str(e.get("comment") or "").startswith("角色_"):
+                if e.get("position") != "after_char":
+                    errs.append(f"{e.get('comment')} 多角色详细信息应 after_char，现为 {e.get('position')}")
+                if e.get("constant"):
+                    errs.append(f"{e.get('comment')} 应为绿灯 selective")
+            ext = e.get("extensions") or {}
+            if not ext.get("exclude_recursion") or not ext.get("prevent_recursion"):
+                errs.append(f"{e.get('comment')}: 递归两项未齐（exclude+prevent）")
+                break  # 避免 61 条刷屏
+        else:
+            oks.append("世界书递归选项已齐")
         role_entries = [e for e in entries if str(e.get("comment") or "").startswith("角色_")]
         if len(role_entries) != len(chars):
             errs.append(f"角色绿灯条目 {len(role_entries)} ≠ yaml {len(chars)}")
