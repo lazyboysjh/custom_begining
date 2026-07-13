@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+<title>圣堂初遇 · UI 审阅预览</title>
+<style>
+  :root { color-scheme: dark; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: "Noto Sans SC", "Microsoft YaHei", sans-serif;
+    background:
+      radial-gradient(900px 500px at 15% 0%, rgba(158,61,74,.35), transparent 55%),
+      radial-gradient(800px 480px at 90% 10%, rgba(91,124,153,.3), transparent 50%),
+      linear-gradient(180deg, #1a1520, #0a0b0e 40%, #12161f);
+    color: #ebe6dc;
+    min-height: 100vh;
+  }
+  .nav {
+    position: sticky; top: 0; z-index: 30;
+    display: flex; gap: 8px; flex-wrap: wrap; align-items: center;
+    padding: 12px 16px;
+    background: rgba(12,13,16,.55);
+    backdrop-filter: blur(18px);
+    border-bottom: 1px solid rgba(212,175,105,.25);
+  }
+  .nav button {
+    border: 1px solid rgba(212,175,105,.35);
+    background: rgba(255,255,255,.04);
+    color: #f0d9a0;
+    padding: 8px 14px;
+    cursor: pointer;
+    border-radius: 999px;
+  }
+  .nav button.active {
+    background: linear-gradient(180deg, #d4af69, #b8914a);
+    color: #1a140c;
+    border-color: #e6c98a;
+  }
+  .nav .tag { margin-left: auto; color: #9a958a; font-size: 12px; }
+  .pane { display: none; }
+  .pane.active { display: block; }
+  iframe.full {
+    width: 100%;
+    height: calc(100vh - 56px);
+    border: 0;
+    background: transparent;
+  }
+  .status-wrap {
+    max-width: 980px;
+    margin: 0 auto;
+    padding: 16px 12px 48px;
+  }
+  .note { color: #9a958a; font-size: 13px; margin-bottom: 12px; }
+</style>
+</head>
+<body>
+  <div class="nav">
+    <button class="active" data-pane="cover">封面</button>
+    <button data-pane="status">状态栏</button>
+    <span class="tag" id="vpTag">viewport</span>
+  </div>
+  <section class="pane active" id="cover">
+    <iframe class="full" src="./cover/index.html" title="cover"></iframe>
+  </section>
+  <section class="pane" id="status">
+    <div class="status-wrap">
+      <p class="note">彩色背景用于显现磨砂玻璃。点数值条可展开影响分段。</p>
+      <iframe id="statusFrame" src="./status/index.html?demo=1" title="status" style="width:100%;min-height:760px;height:82vh;border:0;background:transparent;"></iframe>
+    </div>
+  </section>
+<script>
+document.querySelectorAll(".nav button").forEach(btn => {
+  btn.onclick = () => {
+    document.querySelectorAll(".nav button").forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+    document.querySelectorAll(".pane").forEach(p => p.classList.remove("active"));
+    document.getElementById(btn.dataset.pane).classList.add("active");
+  };
+});
+function tag() {
+  document.getElementById("vpTag").textContent = window.innerWidth + "×" + window.innerHeight;
+}
+tag();
+window.addEventListener("resize", tag);
+</script>
+</body>
+</html>

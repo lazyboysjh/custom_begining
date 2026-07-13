@@ -1,0 +1,250 @@
+# -*- coding: utf-8 -*-
+"""Superpower 审查：圣堂初遇角色资料 × 写卡知识库规范 × 卡/CDN 就绪。"""
+from __future__ import annotations
+
+import json
+import re
+import subprocess
+import sys
+from pathlib import Path
+
+import yaml
+
+ROOT = Path(__file__).resolve().parents[1]
+WB_DIR = ROOT / "worldbook" / "角色"
+CARD = ROOT / "圣堂初遇.json"
+
+# 外貌万能废话 / 主观美颜
+APPEARANCE_FILLER = re.compile(
+    r"精致|白皙|好看|美丽|漂亮|绝美|倾国|亭亭|匀称|优雅气质|完美容颜|肤如凝脂|桃花眼"
+)
+# 关系抽象词
+REL_ABSTRACT = re.compile(r"深厚的感情|关系很好|彼此信任|羁绊深厚|心灵相通")
+# 性格标签堆砌（角色介绍里大量纯标签可警告）
+TRAIT_SPAM = re.compile(r"(温柔|傲娇|毒舌|高冷|元气|腹黑)(、|,|，|/)")
+
+
+def run(cmd: list[str]) -> tuple[int, str]:
+    p = subprocess.run(cmd, cwd=ROOT, capture_output=True, text=True, encoding="utf-8", errors="replace")
+    return p.returncode, ((p.stdout or "") + (p.stderr or "")).strip()
+
+
+def section(body: str, name: str) -> str:
+    m = re.search(rf"^  {re.escape(name)}:\s*\n([\s\S]*?)(?=^  \S|\Z)", body, re.M)
+    return m.group(1) if m else ""
+
+
+def main() -> int:
+    errs: list[str] = []
+    warns: list[str] = []
+    oks: list[str] = []
+
+    # --- build ---
+    code, out = run([sys.executable, str(ROOT / "build_shengtang_card.py")])
+    if code != 0:
+        errs.append(f"build_shengtang_card 失败:\n{out[-2000:]}")
+    else:
+        oks.append("build_shengtang_card OK")
+
+    chars = yaml.safe_load((ROOT / "plot/characters.yaml").read_text(encoding="utf-8"))["characters"]
+    oks.append(f"characters.yaml 共 {len(chars)} 人")
+
+    # --- 知识库四段结构（世界书 md）---
+    required_secs = ["基本信息", "外貌特征", "背景设定", "关系设定"]
+    # 本卡额外有「角色介绍」：允许，但不替代四段
+    for c in chars:
+        name = c["name"]
+        path = WB_DIR / f"{name}.md"
+        if not path.is_file():
+            errs.append(f"{name}: 缺 worldbook/角色/{name}.md")
+            continue
+        text = path.read_text(encoding="utf-8")
+        if not text.strip().startswith("角色档案:"):
+            errs.append(f"{name}: 世界书不以「角色档案:」开头")
+        for sec in required_secs:
+            if f"  {sec}:" not in text:
+                errs.append(f"{name}: 缺分段「{sec}」")
+        # 基本信息必要字段
+        basic = section(text.replace("角色档案:\n", ""), "基本信息") if "角色档案:" in text else ""
+        # simpler checks on full text
+        for key in ("姓名:", "性别:", "作品:", "年龄:", "与{{user}}关系:"):
+            if key not in text:
+                errs.append(f"{name}: 基本信息缺 {key}")
+
+        # 角色介绍允许存在（本卡需求）；性格标签应主要在介绍里，不在「基本信息」
+        if "  角色介绍:" not in text:
+            warns.append(f"{name}: 无「角色介绍」分段（本卡建议有）")
+        else:
+            # 介绍里不要只剩标签
+            intro_sec = section(text.split("角色档案:\n", 1)[-1], "角色介绍")
+            if intro_sec and len(re.findall(r"[\u4e00-\u9fff]", intro_sec)) < 80:
+                errs.append(f"{name}: 角色介绍有效汉字过少")
+
+        # 外貌：特征向
+        app_sec = ""
+        mapp = re.search(r"外貌特征:\s*\n([\s\S]*?)(?=^  \S|\Z)", text, re.M)
+        if mapp:
+            app_sec = mapp.group(1)
+            if APPEARANCE_FILLER.search(app_sec):
+                warns.append(f"{name}: 外貌含万能美颜词")
+            if "精致的脸" in app_sec or "白皙的皮肤" in app_sec:
+                errs.append(f"{name}: 外貌万能废话句")
+
+        intro = c.get("intro") or ""
+        if len(intro) < 80:
+            errs.append(f"{name}: intro 过短（{len(intro)}字），需详细介绍")
+        elif len(intro) < 120:
+            warns.append(f"{name}: intro 偏短（{len(intro)}字）")
+
+        app = c.get("appearance") or ""
+        if APPEARANCE_FILLER.search(app):
+            warns.append(f"{name}: 外貌含万能美颜词 → {APPEARANCE_FILLER.findall(app)}")
+        if len(app) < 20:
+            errs.append(f"{name}: 外貌过短，辨识度不足")
+
+        bg = c.get("background") or []
+        if len(bg) < 2:
+            errs.append(f"{name}: 背景要点 < 2")
+        if not c.get("filth_seed"):
+            errs.append(f"{name}: 缺污秽种子")
+        if not c.get("work_intro"):
+            errs.append(f"{name}: 缺作品简介")
+
+        aliases = c.get("aliases") or []
+        if not aliases:
+            warns.append(f"{name}: 无别名，绿灯触发可能偏窄")
+
+        # 关系设定抽象检查
+        rel = ""
+        m = re.search(r"关系设定:\s*\n([\s\S]*?)(?=\Z)", text)
+        if m:
+            rel = m.group(1)
+            if REL_ABSTRACT.search(rel):
+                warns.append(f"{name}: 关系设定含抽象句")
+            if "与{{user}}" not in rel and "与{{user}}" not in text:
+                warns.append(f"{name}: 关系设定未点明与 user 开局关系")
+
+    # 重复作品（非错误，提示）
+    works = {}
+    for c in chars:
+        works.setdefault(c["work"], []).append(c["name"])
+    dups = {w: ns for w, ns in works.items() if len(ns) > 1}
+    if dups:
+        warns.append("同作品多人: " + "; ".join(f"{w}={ns}" for w, ns in dups.items()))
+
+    first = ""
+    # --- 卡 JSON ---
+    if not CARD.is_file():
+        errs.append("缺 圣堂初遇.json")
+    else:
+        card = json.loads(CARD.read_text(encoding="utf-8"))
+        first = card.get("first_mes") or card["data"].get("first_mes") or ""
+        entries = card["data"]["character_book"]["entries"]
+        comments = [e.get("comment") for e in entries]
+        for need in ("世界观", "净化与污秽", "写作与人设规则", "数值影响", "[initvar]变量初始化勿开", "变量列表"):
+            if need not in comments:
+                errs.append(f"卡内世界书缺: {need}")
+        role_entries = [e for e in entries if str(e.get("comment") or "").startswith("角色_")]
+        if len(role_entries) != len(chars):
+            errs.append(f"角色绿灯条目 {len(role_entries)} ≠ yaml {len(chars)}")
+        else:
+            oks.append(f"角色绿灯 {len(role_entries)} 条对齐")
+        for e in role_entries:
+            if e.get("constant"):
+                errs.append(f"{e.get('comment')} 应为 selective 绿灯")
+            if not e.get("keys"):
+                errs.append(f"{e.get('comment')} 缺 keys")
+            if not e.get("constant") and e.get("scan_depth") != 2:
+                warns.append(f"{e.get('comment')} scan_depth={e.get('scan_depth')} 建议 2")
+        schema = ""
+        for s in card["data"]["extensions"]["tavern_helper"]["scripts"]:
+            if s.get("name") == "变量结构":
+                schema = s.get("content") or ""
+        for key in ("初遇", "好感度", "堕落值", "依存度", "污秽度", "信任"):
+            if key not in schema:
+                errs.append(f"卡内 schema 缺 {key}")
+        if "registerMvuSchema" in schema:
+            oks.append("MVU schema 已注入")
+        if "shengtang/ui/cover" not in first:
+            errs.append("first_mes 未指向 shengtang cover CDN")
+        else:
+            oks.append("封面 CDN 壳已写入 first_mes")
+        ok_status = False
+        for rs in card["data"]["extensions"].get("regex_scripts") or []:
+            if "shengtang/ui/status" in (rs.get("replaceString") or ""):
+                ok_status = True
+                break
+        if not ok_status:
+            errs.append("正则状态栏未指向 shengtang/ui/status")
+        else:
+            oks.append("状态栏 CDN 壳已写入正则")
+
+    # --- 前端文件 ---
+    for rel in (
+        "src/shengtang/ui/cover/index.html",
+        "src/shengtang/ui/status/index.html",
+        "dist/shengtang/ui/cover/index.html",
+        "dist/shengtang/ui/status/index.html",
+    ):
+        p = ROOT / rel
+        if not p.is_file():
+            errs.append(f"缺文件 {rel}")
+        elif p.stat().st_size < 1000:
+            warns.append(f"{rel} 过小 ({p.stat().st_size})")
+    cover = (ROOT / "src/shengtang/ui/cover/index.html").read_text(encoding="utf-8")
+    if "const CHARACTERS = [" not in cover or len(chars) > 0 and chars[0]["name"] not in cover:
+        # after sync should embed
+        if "牧濑红莉栖" not in cover and "雪之下雪乃" not in cover:
+            errs.append("封面 HTML 未同步角色数据（缺人名）")
+        else:
+            oks.append("封面已内嵌角色数据")
+    else:
+        oks.append("封面已内嵌角色数据")
+    if cover.count('"id":') < len(chars):
+        # rough count
+        n_id = cover.count('\n    "id":')
+        if n_id < len(chars) - 2:
+            warns.append(f"封面内嵌 id 约 {n_id}，yaml={len(chars)}")
+
+    # --- git / CDN ---
+    code, status = run(["git", "status", "-sb"])
+    code2, tracked = run(["git", "ls-files", "dist/shengtang/ui/cover/index.html"])
+    if not tracked.strip():
+        errs.append("dist/shengtang 未被 git 跟踪 → 推送后 jsDelivr CDN 无文件")
+    code3, head = run(["git", "rev-parse", "HEAD"])
+    head = head.strip()
+    # remote has dist?
+    code4, remote_ls = run(["git", "ls-tree", "-r", "origin/main", "--name-only"])
+    if "dist/shengtang/ui/cover/index.html" not in remote_ls:
+        errs.append("origin/main 无 dist/shengtang → 当前 CDN 链接 404/不可用")
+    else:
+        oks.append("origin/main 已有 dist/shengtang")
+    if "??" in status or " M " in status or status.startswith("##") and "ahead" in status:
+        if "src/shengtang" in status or "dist/" in status or "圣堂" in status or "plot/" in status:
+            warns.append("本地有未提交/未推送改动，CDN 仍指向旧 commit")
+    oks.append(f"本地 HEAD={head[:10]}")
+
+    # CDN URL from build output / card
+    m = re.search(r"https://testingcf\.jsdelivr\.net/gh/[^`'\"\s]+shengtang/ui", first if CARD.is_file() else "")
+    if m:
+        oks.append(f"卡内 CDN 前缀: {m.group(0)}")
+
+    # report
+    print("=" * 60)
+    print("圣堂初遇 Superpower 审查报告")
+    print("=" * 60)
+    for x in oks:
+        print(f"[OK] {x}")
+    for x in warns:
+        print(f"[WARN] {x}")
+    for x in errs:
+        print(f"[ERR] {x}")
+    print("-" * 60)
+    print(f"合计: OK={len(oks)} WARN={len(warns)} ERR={len(errs)}")
+    ready = not errs
+    print("整卡就绪:" , "否（见 ERR）" if not ready else "结构通过；若 WARN 含未推送则 CDN 仍未就绪")
+    return 1 if errs else 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
