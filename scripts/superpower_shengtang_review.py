@@ -206,11 +206,16 @@ def main() -> int:
         if n_id < len(chars) - 2:
             warns.append(f"封面内嵌 id 约 {n_id}，yaml={len(chars)}")
 
-    # --- 开局 API / 布局硬伤（对照写卡知识库 + 十国封面）---
-    if re.search(r'createMsgs\(\[\{\s*role:\s*"assistant".*?message:\s*""', cover, re.S):
-        errs.append("封面 startGame 会先造空 assistant 楼 → 生成失败时出现黑空楼（图证）")
+    # --- 开局 API / 布局硬伤（对照写卡知识库，不以他卡为真理）---
+    if "（开局生成中" in cover:
+        oks.append("开局使用占位开场楼（非空串）")
+    elif re.search(r'role:\s*"assistant"[^]]*message:\s*""', cover, re.S):
+        errs.append("封面会 create 空字符串 assistant 楼 → 黑空楼；应写占位文案再 setChatMessages")
+    if "setMsgs" in cover or "setChatMessages" in cover:
+        if "generateFn" in cover or "generate(" in cover:
+            oks.append("开局路径含 generate + setChatMessages 落楼")
     if "should_silence: true" in cover or "should_silence:true" in cover:
-        errs.append("封面 generate 使用 should_silence:true；首楼开局应与十国一致用非静默 generate/trigger")
+        warns.append("开局使用 should_silence:true（知识库：仅影响停止按钮；开局一般应允许停止）")
     if "generateFn({" not in cover and "generate({" not in cover:
         errs.append("封面缺少 generate(...) 调用")
     else:
@@ -218,9 +223,11 @@ def main() -> int:
             oks.append("封面 generate 含 user_input + should_stream")
         else:
             warns.append("封面 generate 参数不完整（缺 user_input 或 should_stream）")
+    if "十国" in cover and "真理" not in cover and "不以" not in cover:
+        warns.append("封面注释仍把十国当权威来源")
     if "scrollbar-width" not in cover and "::-webkit-scrollbar" not in cover:
         errs.append("封面未定制滚动条（易露出系统白粗条）")
-    if re.search(r"\.char-grid\s*\{[^}]*max-height:[^}]*overflow:\s*auto", cover, re.S):
+    if re.search(r"\.char-grid\s*\{[^}]*max-height:\s*min\([^}]*overflow:\s*auto", cover, re.S):
         errs.append("角色池 char-grid 自带 max-height+overflow（双层滚动，底栏易裁切卡片）")
     if ".page-body" in cover and "scrollbar-color" in cover:
         oks.append("page-body 滚动条已主题化")
