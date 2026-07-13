@@ -45,8 +45,8 @@ CDN = f"https://testingcf.jsdelivr.net/gh/{GITHUB_REPO}@{GITHUB_REF}/dist/shengt
 # 同文档注入（禁止跨域 iframe）：否则 generate / triggerSlash 调不到酒馆 API
 _INJECT_BOOT = r"""
 <style>
-  html,body{margin:0;padding:0;width:100%;height:min(92dvh,900px);min-height:480px;overflow:hidden;background:transparent;}
-  @media (max-width:560px){html,body{height:min(88dvh,780px);min-height:420px;}}
+  html,body{margin:0;padding:0;width:100%;height:__H__;min-height:__MIN__;overflow:hidden;background:transparent;}
+  @media (max-width:560px){html,body{height:__H_SM__;min-height:__MIN_SM__;}}
 </style>
 <script>
 (function () {
@@ -104,9 +104,17 @@ def _shell(kind: str) -> str:
     path = "cover" if kind == "cover" else "status"
     title = "圣堂初遇封面" if kind == "cover" else "圣堂状态"
     url = f"{CDN}/{path}/index.html?v={CDN_V}"
-    boot = _INJECT_BOOT.replace("%URL%", json.dumps(url, ensure_ascii=False))
-    min_h = "480px" if kind == "cover" else "320px"
-    h = "min(92dvh,900px)" if kind == "cover" else "min(72dvh,720px)"
+    if kind == "cover":
+        h, minh, hsm, minsm = "min(92dvh,900px)", "480px", "min(88dvh,780px)", "420px"
+    else:
+        h, minh, hsm, minsm = "min(72dvh,720px)", "320px", "min(78dvh,680px)", "300px"
+    boot = (
+        _INJECT_BOOT.replace("%URL%", json.dumps(url, ensure_ascii=False))
+        .replace("__H__", h)
+        .replace("__MIN__", minh)
+        .replace("__H_SM__", hsm)
+        .replace("__MIN_SM__", minsm)
+    )
     return f"""```html
 <!doctype html>
 <html lang="zh-CN">
@@ -115,7 +123,7 @@ def _shell(kind: str) -> str:
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <title>{title}</title>
 </head>
-<body style="margin:0;padding:0;width:100%;height:{h};min-height:{min_h};overflow:hidden;background:transparent;">
+<body style="margin:0;padding:0;width:100%;height:{h};min-height:{minh};overflow:hidden;background:transparent;">
 {boot}
 </body>
 </html>
