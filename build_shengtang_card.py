@@ -22,7 +22,7 @@ TEMPLATE = Path(
 OUT = ROOT / "圣堂初遇.json"
 CARD_NAME = "圣堂初遇"
 GITHUB_REPO = os.environ.get("ST_CDN_REPO", "lazyboysjh/custom_begining")
-CDN_V = os.environ.get("ST_CDN_V", "3")
+CDN_V = os.environ.get("ST_CDN_V", "4")
 
 
 def default_cdn_ref() -> str:
