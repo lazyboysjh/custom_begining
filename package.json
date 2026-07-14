@@ -7,9 +7,13 @@
     "lint": "eslint",
     "lint:fix": "eslint --fix",
     "dump": "node dump_schema.ts",
+<<<<<<< HEAD
     "sync": "node tavern_sync.mjs",
     "copy:shengtang": "node scripts/copy_shengtang_static.mjs",
     "card": "python build_shengtang_card.py"
+=======
+    "sync": "node tavern_sync.mjs"
+>>>>>>> 563a54227d547b8c7ade58fb3242b38f89cefd18
   },
   "browserslist": [
     "defaults and partially supports es6-module"
