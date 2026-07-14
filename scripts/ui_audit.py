@@ -20,64 +20,91 @@ SAMPLE_JS = r"""
 window.getAllVariables = function () {
   return {
     stat_data: {
-      世界: { 相遇方式: "求净上门", 场景: "圣言堂·告解室", 教会名: "圣言堂", 回合: 3 },
-      初遇: {
-        姓名: "芙莉莲",
-        作品: "葬送的芙莉莲",
-        是否自定义: false,
-        污秽类型: "讨伐恶魔时沾上的魔力残渣",
-        污秽度: 58,
-        信任: 46,
-        好感度: 32,
-        堕落值: 18,
-        依存度: 12,
-        仪式阶段: "仪式中",
-        与user关系: "半信半疑",
-        当前心态: "觉得麻烦，但魔力紊乱让她不得不配合。"
+      世界: {
+        相遇方式: "求净上门",
+        场景: "圣言堂·告解室",
+        教会名: "圣言堂",
+        回合: 3,
+        出场角色: ["芙莉莲", "牧濑红莉栖", "雪之下雪乃"]
+      },
+      角色: {
+        芙莉莲: {
+          作品: "葬送的芙莉莲", 污秽类型: "魔力残渣", 污秽度: 58,
+          信任: 46, 好感度: 32, 堕落值: 18, 依存度: 12,
+          仪式阶段: "仪式中", 与user关系: "半信半疑",
+          当前心态: "觉得麻烦，但仍在观察净化效果。",
+          当前目标: "压下魔力紊乱后继续旅行",
+          对user判断: "能力可能有效，动机仍待验证",
+          当前边界: "只接受已说明的基础检查"
+        },
+        牧濑红莉栖: {
+          作品: "命运石之门", 污秽类型: "认知回响", 污秽度: 34,
+          信任: 28, 好感度: 18, 堕落值: 8, 依存度: 4,
+          仪式阶段: "检查", 与user关系: "观察",
+          当前心态: "正在分析这里的异常机制。",
+          当前目标: "验证净化是否可重复",
+          对user判断: "言行尚可，证据不足",
+          当前边界: "拒绝缺乏解释的接触"
+        },
+        雪之下雪乃: {
+          作品: "我的青春恋爱物语果然有问题", 污秽类型: "情绪残响", 污秽度: 26,
+          信任: 20, 好感度: 12, 堕落值: 5, 依存度: 2,
+          仪式阶段: "初见", 与user关系: "戒备",
+          当前心态: "不喜欢被当成需要拯救的人。",
+          当前目标: "弄清被带到此处的原因",
+          对user判断: "态度礼貌，但没有可信依据",
+          当前边界: "保持公开距离"
+        }
       }
     }
   };
 };
-if (typeof render === "function") render();
+if (typeof populateCharacterData === "function") populateCharacterData();
 """
 
 
 async def shot_status(context, name: str, w: int, h: int, notes: list[str]) -> None:
     page = await context.new_page()
     await page.set_viewport_size({"width": w, "height": h})
-    html = f"""<!doctype html><html><head><meta charset="utf-8"></head>
-    <body style="margin:0;min-height:100vh;padding:20px 12px 40px;background:
-      radial-gradient(900px 500px at 15% 0%, rgba(158,61,74,.42), transparent 55%),
-      radial-gradient(800px 480px at 90% 10%, rgba(91,124,153,.34), transparent 50%),
-      linear-gradient(180deg,#1a1c28,#090a0d);">
-      <iframe id="f" src="{STATUS}" style="width:100%;max-width:920px;height:780px;border:0;display:block;margin:0 auto;background:transparent"></iframe>
-      <script>
-        const f = document.getElementById('f');
-        f.addEventListener('load', () => {{
-          const s = f.contentDocument.createElement('script');
-          s.textContent = {SAMPLE_JS!r};
-          f.contentDocument.body.appendChild(s);
-          setTimeout(() => {{
-            const st = f.contentDocument.querySelector('.stat');
-            if (st) st.click();
-          }}, 450);
-        }});
-      </script>
-    </body></html>"""
-    await page.set_content(html, wait_until="load")
-    await page.wait_for_timeout(1400)
+    errors: list[str] = []
+    page.on("pageerror", lambda error: errors.append(str(error)))
+    await page.add_init_script(SAMPLE_JS)
+    await page.goto(STATUS, wait_until="load")
+    await page.wait_for_timeout(900)
+    role = page.locator(".role-chip").nth(1)
+    if await role.count():
+        await role.click()
+    await page.wait_for_timeout(500)
+    selected_name = (await page.locator("#name").inner_text()).strip()
+    role_count = (await page.locator("#roleCount").inner_text()).strip()
+    shell_visible = await page.locator("#stage").is_visible()
+    if selected_name != "牧濑红莉栖" or role_count != "3 人" or not shell_visible:
+        raise AssertionError(
+            f"status-{name}: role switch failed "
+            f"(name={selected_name!r}, count={role_count!r}, visible={shell_visible})"
+        )
     path = OUT / f"status-{name}.png"
     await page.screenshot(path=str(path), full_page=True)
     overflow = await page.evaluate(
         "() => document.documentElement.scrollWidth > document.documentElement.clientWidth + 2"
     )
-    notes.append(f"{path.name} overflowX={overflow}")
+    if overflow or errors:
+        raise AssertionError(
+            f"status-{name}: overflowX={overflow}, pageErrors={errors}"
+        )
+    notes.append(
+        f"{path.name} overflowX={overflow} pageErrors={len(errors)} "
+        f"selected={selected_name} roleCount={role_count}"
+    )
+    notes.extend(f"  ERROR {error}" for error in errors)
     await page.close()
 
 
 async def shot_cover(context, name: str, w: int, h: int, notes: list[str]) -> None:
     page = await context.new_page()
     await page.set_viewport_size({"width": w, "height": h})
+    errors: list[str] = []
+    page.on("pageerror", lambda error: errors.append(str(error)))
     await page.goto(COVER, wait_until="load")
     await page.wait_for_timeout(800)
     await page.screenshot(path=str(OUT / f"cover-p1-{name}.png"), full_page=True)
@@ -102,7 +129,16 @@ async def shot_cover(context, name: str, w: int, h: int, notes: list[str]) -> No
     overflow = await page.evaluate(
         "() => document.documentElement.scrollWidth > document.documentElement.clientWidth + 2"
     )
-    notes.append(f"cover-p3-{name}.png overflowX={overflow}")
+    detail_visible = await page.locator("#charDetail").is_visible()
+    if overflow or errors or not detail_visible:
+        raise AssertionError(
+            f"cover-{name}: overflowX={overflow}, pageErrors={errors}, "
+            f"detailVisible={detail_visible}"
+        )
+    notes.append(
+        f"cover-p3-{name}.png overflowX={overflow} pageErrors={len(errors)} "
+        f"detailVisible={detail_visible}"
+    )
     await page.close()
 
 

@@ -17,6 +17,8 @@ CARD = json.loads((ROOT / "圣堂初遇.json").read_text(encoding="utf-8"))
 CHARS = yaml.safe_load((ROOT / "plot/characters.yaml").read_text(encoding="utf-8"))["characters"]
 WRITE_RULES = (ROOT / "worldbook/02_写作与人设规则.md").read_text(encoding="utf-8")
 MVU_RULES = (ROOT / "plot/mvu_update.yaml").read_text(encoding="utf-8")
+MVU_SCHEMA = (ROOT / "plot/schema.mvu.js").read_text(encoding="utf-8")
+INITVAR = yaml.safe_load((ROOT / "plot/initvar.yaml").read_text(encoding="utf-8"))
 WRITING_RULES = WRITE_RULES
 
 
@@ -84,6 +86,82 @@ class StatusLifecycleTests(unittest.TestCase):
         )["replaceString"]
         self.assertIn("overflow:visible", render)
         self.assertNotIn("aspect-ratio:16/10", render)
+
+
+class MultiRoleStateTests(unittest.TestCase):
+    def test_schema_has_present_role_array_and_role_record(self) -> None:
+        self.assertIn("出场角色: z.array(z.string())", MVU_SCHEMA)
+        self.assertIn("角色: z.record(z.string()", MVU_SCHEMA)
+        self.assertEqual(INITVAR["世界"]["出场角色"], [])
+        self.assertEqual(INITVAR["角色"], {})
+
+    def test_schema_migrates_and_normalizes_legacy_state(self) -> None:
+        for marker in (
+            "同场角色",
+            "初遇",
+            "new Set",
+            "delete data.初遇",
+            "delete data.世界.同场角色",
+        ):
+            self.assertIn(marker, MVU_SCHEMA)
+
+    def test_multirole_rules_keep_character_updates_independent(self) -> None:
+        for marker in (
+            "出场角色",
+            "角色.[姓名]",
+            "实际感知",
+            "未出场角色",
+            "/世界/出场角色/-",
+        ):
+            self.assertIn(marker, MVU_RULES)
+
+    def test_opening_and_draw_prompts_write_multirole_paths(self) -> None:
+        self.assertIn('/世界/出场角色', COVER)
+        self.assertIn('/角色/', COVER)
+        self.assertIn('/世界/出场角色', STATUS)
+        self.assertIn('/角色/', STATUS)
+        self.assertNotIn('/世界/同场角色', STATUS)
+
+    def test_status_renders_selected_role_from_current_scene(self) -> None:
+        for marker in (
+            "stat_data.世界.出场角色",
+            "stat_data.角色",
+            "activeRoleName",
+            "renderRoleSwitcher",
+            'id="rolePicker"',
+            'aria-label="全部角色"',
+        ):
+            self.assertIn(marker, STATUS)
+
+
+class ProductUiTests(unittest.TestCase):
+    def test_cover_and_status_share_product_tokens(self) -> None:
+        for token in (
+            "--st-bg",
+            "--st-surface",
+            "--st-line",
+            "--st-gold",
+            "--st-radius",
+            "--st-ease",
+        ):
+            self.assertIn(token, COVER)
+            self.assertIn(token, STATUS)
+
+    def test_internal_copy_is_not_rendered(self) -> None:
+        self.assertNotIn("UI ·", COVER)
+        self.assertNotIn("v9 · pc-opening", COVER)
+        self.assertNotIn("MVU变量初始化成功", STATUS)
+        self.assertNotIn("Ambient orbs", STATUS)
+
+    def test_layout_avoids_viewport_height_and_horizontal_page_scroll(self) -> None:
+        self.assertNotRegex(COVER, r"\b\d+(?:\.\d+)?vh\b")
+        self.assertNotRegex(STATUS, r"\b\d+(?:\.\d+)?vh\b")
+        self.assertIn("overflow-x: hidden", COVER)
+        self.assertIn("overflow-x: hidden", STATUS)
+
+    def test_motion_has_reduced_motion_fallback(self) -> None:
+        self.assertIn("prefers-reduced-motion: reduce", COVER)
+        self.assertIn("prefers-reduced-motion: reduce", STATUS)
 
 
 class BuildIsolationTests(unittest.TestCase):
