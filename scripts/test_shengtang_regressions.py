@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import re
+import subprocess
 import unittest
 from pathlib import Path
 
@@ -124,6 +125,45 @@ class MultiRoleStateTests(unittest.TestCase):
         ):
             self.assertIn(marker, MVU_SCHEMA)
 
+    def test_schema_keeps_present_name_during_incremental_role_creation(self) -> None:
+        script = r"""
+const fs = require('fs');
+global.z = require('zod');
+global._ = require('lodash');
+let source = fs.readFileSync('plot/schema.mvu.js', 'utf8')
+  .replace(/^import[^\n]+\n/, '')
+  .replace('export const Schema', 'global.Schema')
+  .replace(/\n\$\(\(\) => \{[\s\S]*$/, '');
+new Function(source)();
+const world = '\u4e16\u754c';
+const present = '\u51fa\u573a\u89d2\u8272';
+const hero = '\u4e3b\u89d2';
+const roles = '\u89d2\u8272';
+const first = '\u521d\u9047';
+const name = '\u6f29\u6da1\u7396\u8f9b\u5948';
+const input = {
+  [world]: {[present]: [name]},
+  [hero]: {},
+  [roles]: {},
+  [first]: {},
+};
+process.stdout.write(JSON.stringify(Schema.parse(input)[world][present]));
+"""
+        result = subprocess.run(
+            ["node", "-e", script],
+            cwd=ROOT,
+            check=True,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+        )
+        self.assertEqual(json.loads(result.stdout), ["漩涡玖辛奈"])
+
+    def test_opening_creates_role_before_marking_it_present(self) -> None:
+        role_insert = COVER.index('{ op: "insert", path: rolePath')
+        present_replace = COVER.index('{ op: "replace", path: "/世界/出场角色"')
+        self.assertLess(role_insert, present_replace)
+
     def test_multirole_rules_keep_character_updates_independent(self) -> None:
         for marker in (
             "出场角色",
@@ -206,6 +246,16 @@ class ProductUiTests(unittest.TestCase):
 
 
 class BuildIsolationTests(unittest.TestCase):
+    def test_static_copy_script_is_valid_javascript(self) -> None:
+        result = subprocess.run(
+            ["node", "--check", "scripts/copy_shengtang_static.mjs"],
+            cwd=ROOT,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+        )
+        self.assertEqual(result.returncode, 0, result.stderr)
+
     def test_build_uses_repository_local_template(self) -> None:
         self.assertRegex(BUILD, r'TEMPLATE\s*=\s*ROOT\s*/\s*"templates"\s*/\s*"shengtang_base\.json"')
         self.assertNotIn(r"E:\create\十国千娇", BUILD)

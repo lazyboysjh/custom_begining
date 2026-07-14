@@ -233,6 +233,10 @@ def main() -> int:
         ):
             if marker not in schema:
                 errs.append(f"MVU schema 缺空复合值兼容: {marker.split(':', 1)[0]}")
+        if ".filter(name => !!data.角色[name])" in schema:
+            errs.append("MVU schema 会在角色档案增量写入前误删出场角色")
+        else:
+            oks.append("MVU schema 保留增量写入中的出场角色")
         if "shengtang/ui/cover" not in first:
             errs.append("first_mes 未指向 shengtang cover CDN")
         else:
@@ -285,6 +289,12 @@ def main() -> int:
             oks.append(f"开局事务：{label}")
         else:
             errs.append(f"开局事务缺：{label}")
+    role_insert = cover.find('{ op: "insert", path: rolePath')
+    present_replace = cover.find('{ op: "replace", path: "/世界/出场角色"')
+    if role_insert >= 0 and present_replace >= 0 and role_insert < present_replace:
+        oks.append("开局先创建角色档案，再写入出场数组")
+    else:
+        errs.append("开局补丁顺序错误：必须先创建角色档案，再写入出场数组")
     for forbidden in ("deleteExtraFloors", 'getApi("deleteChatMessages")', 'refresh: "all"', "createChatMessages"):
         if forbidden in cover:
             errs.append(f"开局残留危险逻辑: {forbidden}")

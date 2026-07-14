@@ -102,7 +102,7 @@ export const Schema = z
       ...(legacyName ? [legacyName] : []),
       ...legacyNames,
     ]);
-    data.世界.出场角色 = [...orderedNames].filter(name => !!data.角色[name]);
+    data.世界.出场角色 = [...orderedNames];
 
     delete data.初遇;
     delete data.世界.同场角色;

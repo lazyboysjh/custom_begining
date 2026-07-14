@@ -1,4 +1,4 @@
-# Copy static HTML UIs into dist for jsDelivr / local CDN path
+// Copy static HTML UIs into dist for jsDelivr / local CDN path
 import { copyFileSync, mkdirSync, existsSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
