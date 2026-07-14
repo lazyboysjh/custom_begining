@@ -102,8 +102,8 @@ def _shell(kind: str) -> str:
     url = f"{CDN}/{path}/index.html?v={CDN_V}"
     # 封面自身滚动，保持可视框；状态栏由内容自然撑高，不能用固定比例裁切。
     if kind == "cover":
-        size, size_sm, overflow = "aspect-ratio:3 / 4;", "aspect-ratio:9 / 16;", "hidden"
-        body_style = "margin:0;padding:0;width:100%;aspect-ratio:3/4;overflow:hidden;background:transparent;"
+        size, size_sm, overflow = "aspect-ratio:16 / 9;", "aspect-ratio:9 / 16;", "hidden"
+        body_style = "margin:0;padding:0;width:100%;aspect-ratio:16/9;overflow:hidden;background:transparent;"
     else:
         size, size_sm, overflow = "", "", "visible"
         body_style = "margin:0;padding:0;width:100%;overflow:visible;background:transparent;"
