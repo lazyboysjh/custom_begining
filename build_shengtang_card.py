@@ -17,7 +17,7 @@ TEMPLATE = ROOT / "templates" / "shengtang_base.json"
 OUT = ROOT / "圣堂初遇.json"
 CARD_NAME = "圣堂初遇"
 GITHUB_REPO = os.environ.get("ST_CDN_REPO", "lazyboysjh/custom_begining")
-CDN_V = os.environ.get("ST_CDN_V", "6")
+CDN_V = os.environ.get("ST_CDN_V", "7")
 
 
 def default_cdn_ref() -> str:
