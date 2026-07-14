@@ -3,10 +3,11 @@
 from __future__ import annotations
 
 import asyncio
+import os
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-OUT = ROOT / "tmp" / "ui-audit"
+OUT = ROOT / "tmp" / "ui-audit" / f"run-{os.getpid()}"
 COVER = (ROOT / "src/shengtang/ui/cover/index.html").as_uri()
 STATUS = (ROOT / "src/shengtang/ui/status/index.html").as_uri()
 
