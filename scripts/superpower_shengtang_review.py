@@ -229,8 +229,6 @@ def main() -> int:
     for rel in (
         "src/shengtang/ui/cover/index.html",
         "src/shengtang/ui/status/index.html",
-        "dist/shengtang/ui/cover/index.html",
-        "dist/shengtang/ui/status/index.html",
     ):
         p = ROOT / rel
         if not p.is_file():
@@ -310,17 +308,28 @@ def main() -> int:
 
     # --- git / CDN ---
     code, status = run(["git", "status", "-sb"])
-    code2, tracked = run(["git", "ls-files", "dist/shengtang/ui/cover/index.html"])
-    if not tracked.strip():
-        errs.append("dist/shengtang 未被 git 跟踪 → 推送后 jsDelivr CDN 无文件")
     code3, head = run(["git", "rev-parse", "HEAD"])
     head = head.strip()
-    # remote has dist?
-    code4, remote_ls = run(["git", "ls-tree", "-r", "origin/main", "--name-only"])
-    if "dist/shengtang/ui/cover/index.html" not in remote_ls:
-        errs.append("origin/main 无 dist/shengtang → 当前 CDN 链接 404/不可用")
+    cdn_ref_match = re.search(
+        r"custom_begining@([^/]+)/dist/shengtang/ui", first if CARD.is_file() else ""
+    )
+    cdn_ref = cdn_ref_match.group(1) if cdn_ref_match else "main"
+    # 固定 commit 的卡不依赖随后可能被 CI 覆盖的 main 分支内容。
+    if cdn_ref != "main":
+        code4, _ = run([
+            "git", "cat-file", "-e",
+            f"{cdn_ref}:dist/shengtang/ui/cover/index.html",
+        ])
+        if code4:
+            errs.append(f"卡内固定 CDN commit 缺封面文件: {cdn_ref}")
+        else:
+            oks.append(f"固定 CDN commit 已有 dist/shengtang: {cdn_ref[:10]}")
     else:
-        oks.append("origin/main 已有 dist/shengtang")
+        code4, remote_ls = run(["git", "ls-tree", "-r", "origin/main", "--name-only"])
+        if "dist/shengtang/ui/cover/index.html" not in remote_ls:
+            errs.append("origin/main 无 dist/shengtang → 当前 CDN 链接 404/不可用")
+        else:
+            oks.append("origin/main 已有 dist/shengtang")
     if "??" in status or " M " in status or status.startswith("##") and "ahead" in status:
         if "src/shengtang" in status or "dist/" in status or "圣堂" in status or "plot/" in status:
             warns.append("本地有未提交/未推送改动，CDN 仍指向旧 commit")
