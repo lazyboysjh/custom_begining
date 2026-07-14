@@ -90,10 +90,20 @@ class StatusLifecycleTests(unittest.TestCase):
 
 class MultiRoleStateTests(unittest.TestCase):
     def test_schema_has_present_role_array_and_role_record(self) -> None:
-        self.assertIn("出场角色: z.array(z.string())", MVU_SCHEMA)
-        self.assertIn("角色: z.record(z.string()", MVU_SCHEMA)
+        self.assertIn("z.array(z.string())", MVU_SCHEMA)
+        self.assertIn("z.record(z.string(), RoleState)", MVU_SCHEMA)
         self.assertEqual(INITVAR["世界"]["出场角色"], [])
         self.assertEqual(INITVAR["角色"], {})
+
+    def test_schema_normalizes_null_compound_values_from_mvu_initialization(self) -> None:
+        self.assertIn(
+            "出场角色: z.preprocess(value => value == null ? [] : value",
+            MVU_SCHEMA,
+        )
+        self.assertIn(
+            "角色: z.preprocess(value => value == null ? {} : value",
+            MVU_SCHEMA,
+        )
 
     def test_schema_migrates_and_normalizes_legacy_state(self) -> None:
         for marker in (

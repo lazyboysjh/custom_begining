@@ -56,7 +56,7 @@ export const Schema = z
         场景: z.string().prefault(''),
         教会名: z.string().prefault('圣言堂'),
         回合: z.coerce.number().transform(v => Math.max(1, Math.floor(v))).prefault(1),
-        出场角色: z.array(z.string()).prefault([]),
+        出场角色: z.preprocess(value => value == null ? [] : value, z.array(z.string())),
         同场角色: z.string().prefault(''),
       })
       .prefault({}),
@@ -71,7 +71,7 @@ export const Schema = z
         能力摘要: z.string().prefault('能感知并净化污秽；仪式需接触身体或精神'),
       })
       .prefault({}),
-    角色: z.record(z.string(), RoleState).prefault({}),
+    角色: z.preprocess(value => value == null ? {} : value, z.record(z.string(), RoleState)),
     初遇: LegacyOpening,
   })
   .transform(data => {
