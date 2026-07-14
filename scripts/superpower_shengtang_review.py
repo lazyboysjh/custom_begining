@@ -29,6 +29,11 @@ def run(cmd: list[str]) -> tuple[int, str]:
     return p.returncode, ((p.stdout or "") + (p.stderr or "")).strip()
 
 
+def run_raw(cmd: list[str]) -> tuple[int, str]:
+    p = subprocess.run(cmd, cwd=ROOT, capture_output=True, text=True, encoding="utf-8", errors="replace")
+    return p.returncode, p.stdout or ""
+
+
 def section(body: str, name: str) -> str:
     m = re.search(rf"^  {re.escape(name)}:\s*\n([\s\S]*?)(?=^  \S|\Z)", body, re.M)
     return m.group(1) if m else ""
@@ -212,6 +217,22 @@ def main() -> int:
                 errs.append(f"卡内 schema 缺 {key}")
         if "registerMvuSchema" in schema:
             oks.append("MVU schema 已注入")
+        schema_source = (ROOT / "plot/schema.mvu.js").read_text(encoding="utf-8")
+        if schema != schema_source:
+            errs.append("卡内变量结构与 plot/schema.mvu.js 不一致，需重建卡片")
+        elif re.findall(r"const\s+(\w+)\s*=\s*z\b", schema) != ["Schema"]:
+            errs.append("MVU schema 存在根结构外的 Zod 子 schema，不符合知识库约束")
+        else:
+            oks.append("卡内 MVU schema 与源码一致且结构内聚")
+        for marker in (
+            "出场角色: z.preprocess(value => value == null ? [] : value",
+            "角色: z.preprocess(",
+            "世界: z.preprocess(",
+            "主角: z.preprocess(",
+            "初遇: z.preprocess(",
+        ):
+            if marker not in schema:
+                errs.append(f"MVU schema 缺空复合值兼容: {marker.split(':', 1)[0]}")
         if "shengtang/ui/cover" not in first:
             errs.append("first_mes 未指向 shengtang cover CDN")
         else:
@@ -292,6 +313,13 @@ def main() -> int:
         oks.append("状态栏事件驱动且可卸载")
     else:
         errs.append("状态栏生命周期不完整")
+    for marker in ("Mvu.getMvuData", "getCurrentMessageId", "waitUntil", "getRoleState", "jsonPointerSegment"):
+        if marker not in status_html:
+            errs.append(f"状态栏缺消息级 MVU/多角色安全逻辑: {marker}")
+    if "getAllVariables" in status_html:
+        errs.append("状态栏误读 getAllVariables，必须读取所在消息楼层 MVU 数据")
+    if re.search(r"`角色\.\$\{", status_html):
+        errs.append("状态栏使用点路径读取角色，带点姓名会失效")
     status_regex = next(
         (x for x in card["data"]["extensions"].get("regex_scripts", []) if x.get("scriptName") == "显示-状态栏美化"),
         {},
@@ -326,6 +354,12 @@ def main() -> int:
             errs.append(f"卡内固定 CDN commit 缺封面文件: {cdn_ref}")
         else:
             oks.append(f"固定 CDN commit 已有 dist/shengtang: {cdn_ref[:10]}")
+            for kind in ("cover", "status"):
+                rel = f"dist/shengtang/ui/{kind}/index.html"
+                source = (ROOT / f"src/shengtang/ui/{kind}/index.html").read_text(encoding="utf-8")
+                code5, pinned = run_raw(["git", "show", f"{cdn_ref}:{rel}"])
+                if code5 or pinned.replace("\r\n", "\n") != source.replace("\r\n", "\n"):
+                    errs.append(f"卡内固定 CDN 的 {kind} 与当前源码不一致，需重新固定发布提交")
     else:
         code4, remote_ls = run(["git", "ls-tree", "-r", "origin/main", "--name-only"])
         if "dist/shengtang/ui/cover/index.html" not in remote_ls:

@@ -91,7 +91,8 @@ class StatusLifecycleTests(unittest.TestCase):
 class MultiRoleStateTests(unittest.TestCase):
     def test_schema_has_present_role_array_and_role_record(self) -> None:
         self.assertIn("z.array(z.string())", MVU_SCHEMA)
-        self.assertIn("z.record(z.string(), RoleState)", MVU_SCHEMA)
+        self.assertIn("z.record(", MVU_SCHEMA)
+        self.assertIn("z.string(),", MVU_SCHEMA)
         self.assertEqual(INITVAR["世界"]["出场角色"], [])
         self.assertEqual(INITVAR["角色"], {})
 
@@ -100,10 +101,18 @@ class MultiRoleStateTests(unittest.TestCase):
             "出场角色: z.preprocess(value => value == null ? [] : value",
             MVU_SCHEMA,
         )
-        self.assertIn(
-            "角色: z.preprocess(value => value == null ? {} : value",
+        self.assertRegex(
             MVU_SCHEMA,
+            r"角色:\s*z\.preprocess\(\s*value => value == null \? \{\} : value",
         )
+        for key in ("世界", "主角", "初遇"):
+            self.assertRegex(
+                MVU_SCHEMA,
+                rf"{key}:\s*z\.preprocess\(\s*value => value == null \? \{{\}} : value",
+            )
+
+    def test_schema_defines_no_detached_zod_subschemas(self) -> None:
+        self.assertEqual(re.findall(r"const\s+(\w+)\s*=\s*z\b", MVU_SCHEMA), ["Schema"])
 
     def test_schema_migrates_and_normalizes_legacy_state(self) -> None:
         for marker in (
@@ -142,6 +151,28 @@ class MultiRoleStateTests(unittest.TestCase):
             'aria-label="全部角色"',
         ):
             self.assertIn(marker, STATUS)
+
+    def test_status_reads_current_message_mvu_after_stat_data_exists(self) -> None:
+        for marker in (
+            "Mvu.getMvuData",
+            "getCurrentMessageId",
+            "waitUntil",
+            "stat_data",
+        ):
+            self.assertIn(marker, STATUS)
+        self.assertNotIn("getAllVariables", STATUS)
+
+    def test_status_uses_literal_role_keys_and_escaped_json_pointers(self) -> None:
+        self.assertIn("function getRoleState", STATUS)
+        self.assertIn("roles[name]", STATUS)
+        self.assertNotIn("`角色.${activeRoleName}`", STATUS)
+        self.assertIn("function jsonPointerSegment", STATUS)
+        self.assertIn("jsonPointerSegment(character.name)", STATUS)
+        self.assertIn("const focusPath = jsonPointerSegment(focus)", STATUS)
+
+    def test_draw_never_readds_a_role_already_in_scene(self) -> None:
+        self.assertNotIn("available.length ? available : pool", STATUS)
+        self.assertIn("if (!available.length) return null", STATUS)
 
 
 class ProductUiTests(unittest.TestCase):
@@ -206,7 +237,6 @@ class BuildIsolationTests(unittest.TestCase):
             regex_names,
             [
                 "显示-封面HTML后移除状态栏占位",
-                "显示-状态栏排序",
                 "显示-状态栏美化",
                 "显示-隐藏变量更新块",
                 "提示词-隐藏状态栏占位",

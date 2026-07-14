@@ -643,15 +643,6 @@ def patch_regex_scripts(card: dict) -> None:
             prompt=False,
         ),
         regex(
-            "shengtang-status-order",
-            "显示-状态栏排序",
-            r"/(<StatusPlaceHolderImpl\s*\/>)/gim",
-            "$1",
-            markdown=True,
-            prompt=False,
-            max_depth=3,
-        ),
-        regex(
             "shengtang-status-render",
             "显示-状态栏美化",
             r"/<StatusPlaceHolderImpl\s*\/>/gi",

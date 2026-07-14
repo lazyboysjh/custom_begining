@@ -17,15 +17,14 @@ VIEWPORTS = [
 ]
 
 SAMPLE_JS = r"""
-window.getAllVariables = function () {
-  return {
+const auditVariables = {
     stat_data: {
       世界: {
         相遇方式: "求净上门",
         场景: "圣言堂·告解室",
         教会名: "圣言堂",
         回合: 3,
-        出场角色: ["芙莉莲", "牧濑红莉栖", "雪之下雪乃"]
+        出场角色: ["芙莉莲", "牧濑红莉栖", "雪之下雪乃", "C.C."]
       },
       角色: {
         芙莉莲: {
@@ -54,10 +53,27 @@ window.getAllVariables = function () {
           当前目标: "弄清被带到此处的原因",
           对user判断: "态度礼貌，但没有可信依据",
           当前边界: "保持公开距离"
+        },
+        "C.C.": {
+          作品: "Code Geass", 污秽类型: "契约残响", 污秽度: 41,
+          信任: 17, 好感度: 9, 堕落值: 6, 依存度: 1,
+          仪式阶段: "观察", 与user关系: "陌路",
+          当前心态: "正在确认契约是否受到干扰。",
+          当前目标: "厘清异常来源",
+          对user判断: "尚无足够证据",
+          当前边界: "拒绝未经说明的精神干预"
         }
       }
     }
-  };
+};
+window.getCurrentMessageId = () => 7;
+window.Mvu = {
+  getMvuData: option => option && option.message_id === 7 ? auditVariables : {},
+  events: { VARIABLE_UPDATE_ENDED: "mock_variable_update_ended" }
+};
+window.waitGlobalInitialized = async () => window.Mvu;
+window.waitUntil = async predicate => {
+  if (!predicate()) throw new Error("mock message stat_data unavailable");
 };
 if (typeof populateCharacterData === "function") populateCharacterData();
 """
@@ -71,14 +87,14 @@ async def shot_status(context, name: str, w: int, h: int, notes: list[str]) -> N
     await page.add_init_script(SAMPLE_JS)
     await page.goto(STATUS, wait_until="load")
     await page.wait_for_timeout(900)
-    role = page.locator(".role-chip").nth(1)
+    role = page.locator(".role-chip").nth(3)
     if await role.count():
         await role.click()
     await page.wait_for_timeout(500)
     selected_name = (await page.locator("#name").inner_text()).strip()
     role_count = (await page.locator("#roleCount").inner_text()).strip()
     shell_visible = await page.locator("#stage").is_visible()
-    if selected_name != "牧濑红莉栖" or role_count != "3 人" or not shell_visible:
+    if selected_name != "C.C." or role_count != "4 人" or not shell_visible:
         raise AssertionError(
             f"status-{name}: role switch failed "
             f"(name={selected_name!r}, count={role_count!r}, visible={shell_visible})"
