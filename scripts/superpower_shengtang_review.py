@@ -197,7 +197,8 @@ def main() -> int:
             if s.get("name") == "变量结构":
                 schema = s.get("content") or ""
         for key in (
-            "初遇",
+            "出场角色",
+            "角色",
             "好感度",
             "堕落值",
             "依存度",
@@ -307,7 +308,8 @@ def main() -> int:
             errs.append(f"卡内模板污染: {marker}")
 
     # --- git / CDN ---
-    code, status = run(["git", "status", "-sb"])
+    code, status = run(["git", "status", "--porcelain", "--untracked-files=no"])
+    code2, ahead = run(["git", "rev-list", "--count", "origin/main..HEAD"])
     code3, head = run(["git", "rev-parse", "HEAD"])
     head = head.strip()
     cdn_ref_match = re.search(
@@ -330,9 +332,8 @@ def main() -> int:
             errs.append("origin/main 无 dist/shengtang → 当前 CDN 链接 404/不可用")
         else:
             oks.append("origin/main 已有 dist/shengtang")
-    if "??" in status or " M " in status or status.startswith("##") and "ahead" in status:
-        if "src/shengtang" in status or "dist/" in status or "圣堂" in status or "plot/" in status:
-            warns.append("本地有未提交/未推送改动，CDN 仍指向旧 commit")
+    if status.strip() or (code2 == 0 and int(ahead.strip() or "0") > 0):
+        warns.append("本地有已跟踪改动或未推送提交，发布状态需重新核对")
     oks.append(f"本地 HEAD={head[:10]}")
 
     # CDN URL from build output / card
@@ -353,7 +354,7 @@ def main() -> int:
     print("-" * 60)
     print(f"合计: OK={len(oks)} WARN={len(warns)} ERR={len(errs)}")
     ready = not errs
-    print("整卡就绪:" , "否（见 ERR）" if not ready else "结构通过；若 WARN 含未推送则 CDN 仍未就绪")
+    print("整卡就绪:", "否（见 ERR）" if not ready else "是（结构与固定 CDN 均通过）")
     return 1 if errs else 0
 
 
