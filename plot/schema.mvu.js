@@ -40,6 +40,9 @@ export const Schema = z
         仪式阶段: z.string().prefault('初见'),
         与user关系: z.string().prefault('陌路'),
         当前心态: z.string().prefault(''),
+        当前目标: z.string().prefault('确认污秽来源并保全自身'),
+        对user判断: z.string().prefault('陌生人；能力与动机待验证'),
+        当前边界: z.string().prefault('不接受未经说明或同意的私密接触'),
       })
       .prefault({})
       .transform(data => {

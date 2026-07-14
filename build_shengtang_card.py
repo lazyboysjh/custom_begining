@@ -13,16 +13,11 @@ from pathlib import Path
 import yaml
 
 ROOT = Path(__file__).resolve().parent
-TEMPLATE = Path(
-    os.environ.get(
-        "SHENGTANG_TEMPLATE",
-        r"E:\create\十国千娇\十国千娇.json",
-    )
-)
+TEMPLATE = ROOT / "templates" / "shengtang_base.json"
 OUT = ROOT / "圣堂初遇.json"
 CARD_NAME = "圣堂初遇"
 GITHUB_REPO = os.environ.get("ST_CDN_REPO", "lazyboysjh/custom_begining")
-CDN_V = os.environ.get("ST_CDN_V", "5")
+CDN_V = os.environ.get("ST_CDN_V", "6")
 
 
 def default_cdn_ref() -> str:
@@ -43,10 +38,11 @@ GITHUB_REF = os.environ.get("ST_CDN_REF", "").strip() or default_cdn_ref()
 CDN = f"https://testingcf.jsdelivr.net/gh/{GITHUB_REPO}@{GITHUB_REF}/dist/shengtang/ui"
 
 # 同文档注入（禁止跨域 iframe）：否则 generate / triggerSlash 调不到酒馆 API
+# 高度用 width + aspect-ratio，禁止 vh/dvh/min-height 撑破消息楼层
 _INJECT_BOOT = r"""
 <style>
-  html,body{margin:0;padding:0;width:100%;height:__H__;min-height:__MIN__;overflow:hidden;background:transparent;}
-  @media (max-width:560px){html,body{height:__H_SM__;min-height:__MIN_SM__;}}
+  html,body{margin:0;padding:0;width:100%;__SIZE__overflow:__OVERFLOW__;background:transparent;}
+  @media (max-width:560px){html,body{__SIZE_SM__}}
 </style>
 <script>
 (function () {
@@ -104,16 +100,18 @@ def _shell(kind: str) -> str:
     path = "cover" if kind == "cover" else "status"
     title = "圣堂初遇封面" if kind == "cover" else "圣堂状态"
     url = f"{CDN}/{path}/index.html?v={CDN_V}"
+    # 封面自身滚动，保持可视框；状态栏由内容自然撑高，不能用固定比例裁切。
     if kind == "cover":
-        h, minh, hsm, minsm = "min(92dvh,900px)", "480px", "min(88dvh,780px)", "420px"
+        size, size_sm, overflow = "aspect-ratio:3 / 4;", "aspect-ratio:9 / 16;", "hidden"
+        body_style = "margin:0;padding:0;width:100%;aspect-ratio:3/4;overflow:hidden;background:transparent;"
     else:
-        h, minh, hsm, minsm = "min(72dvh,720px)", "320px", "min(78dvh,680px)", "300px"
+        size, size_sm, overflow = "", "", "visible"
+        body_style = "margin:0;padding:0;width:100%;overflow:visible;background:transparent;"
     boot = (
         _INJECT_BOOT.replace("%URL%", json.dumps(url, ensure_ascii=False))
-        .replace("__H__", h)
-        .replace("__MIN__", minh)
-        .replace("__H_SM__", hsm)
-        .replace("__MIN_SM__", minsm)
+        .replace("__SIZE__", size)
+        .replace("__SIZE_SM__", size_sm)
+        .replace("__OVERFLOW__", overflow)
     )
     return f"""```html
 <!doctype html>
@@ -123,7 +121,7 @@ def _shell(kind: str) -> str:
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <title>{title}</title>
 </head>
-<body style="margin:0;padding:0;width:100%;height:{h};min-height:{minh};overflow:hidden;background:transparent;">
+<body style="{body_style}">
 {boot}
 </body>
 </html>
@@ -142,6 +140,18 @@ USER_ENTRY = """<{{user}}>
   姓名、身份、表面作风、私下心思见 主角 变量。正文称 {{user}}。
   默认教堂牧师，能净化污秽；仪式可真实驱除，也可被借机越界。
 </{{user}}>"""
+
+PROFILE_RULES = """<人设演绎总则>
+  指导（不是设定复述）:
+  - 写「初遇.姓名」时先按其档案口吻行动；数值只调犹豫幅度，不改性格底色。
+  - 每轮先写清她自己的目标/风险判断，再写对{{user}}的反应；禁止整段围着讨好转。
+  - 净化有效 ≠ 可爱可靠；可承认「有用」，不得跳到崇拜/献身/秒信。
+  - 开局无旧识；可拒绝、拖延、试探、讨价还价；牧师身份不提高服从。
+  - 保留原作核心关系；{{user}}不得凭主角光环取代家人、恋人、敌人或职责。
+  - 无充分事件时禁捷径词：「好厉害」「只有你」「我愿意为你」「从见面起就…」。
+  - 外貌只写可辨识差异特征；禁精致五官/绝美/倾国等万能美人套话。
+  - 禁止元叙事、系统自指、提醒「在玩角色卡」。
+</人设演绎总则>"""
 
 # 写卡知识库「变量输出格式」固定骨架；卡专属只读/步长写在 [mvu_update]变量更新规则
 MVU_FORMAT = """---
@@ -278,9 +288,119 @@ def load_meeting_modes() -> list[dict]:
     return list(data.get("modes") or [])
 
 
+def build_character_overview(chars: list[dict]) -> str:
+    lines = [
+        "<角色速览>",
+        "  本卡为多角色池；开局只选一名初遇，详细档案绿灯触发（关键词=姓名/别名）。",
+        "  当前焦点以变量「初遇.姓名」为准；同场其他人见「世界.同场角色」。",
+        "  演绎须贴各人档案口吻与底线，禁止串戏与万能温柔模板。",
+        "",
+        "  角色池:",
+    ]
+    for c in chars:
+        name = c.get("name") or ""
+        work = c.get("work") or ""
+        blurb = (c.get("blurb") or "").strip().replace("\n", " ")
+        if len(blurb) > 36:
+            blurb = blurb[:36] + "…"
+        lines.append(f"  - {name}（{work}）：{blurb}")
+    lines.append("</角色速览>")
+    return "\n".join(lines)
+
+
+def render_character_profile(c: dict) -> str:
+    name = c["name"]
+    aliases = "、".join(str(a) for a in (c.get("aliases") or []))
+    age = c.get("age_note") or ""
+    work = c.get("work") or ""
+    year = c.get("year")
+    work_line = f"{work}（约 {year} 起热度）" if year else work
+    intro = (c.get("intro") or c.get("blurb") or "").strip()
+    appearance = (c.get("appearance") or "").strip()
+    work_intro = (c.get("work_intro") or "").strip()
+    background = c.get("background") or []
+    if isinstance(background, str):
+        background = [background]
+    relations = c.get("relations") or []
+    if isinstance(relations, str):
+        relations = [relations]
+    filth = (c.get("filth_seed") or "").strip()
+    blurb = (c.get("blurb") or "").strip()
+
+    # 演绎锚点：从既有字段提炼，避免空喊「原作感」
+    voice_bits = [r for r in relations if r and "与{{user}}" not in r and "开局" not in r]
+    if not voice_bits and blurb:
+        voice_bits = [blurb]
+    drive_bits = [str(b) for b in background if b][:2]
+    drive_bits.extend(r for r in relations if r and "与{{user}}" not in r and r not in drive_bits)
+    hard_lines = [
+        f"遮住姓名也应能认出是「{name}」：外貌与口吻不得换成万能美人/万能温柔",
+        "开局与{{user}}无旧识；低信任时可持续戒备、质疑、拒绝私密检查",
+        "数值只调反应强度；不可因好感/堕落升高而丢掉本条口吻与职业惯性",
+        "保留原作核心关系与独立目标；{{user}}不能仅凭主角身份取代、压过或抹除它们",
+        "不奉承{{user}}，不凭空认定其正确、强大或有魅力；关系变化必须对应已发生事件",
+    ]
+    loyalty_blob = "\n".join([intro, blurb, "\n".join(background), "\n".join(relations)])
+    if any(k in loyalty_blob for k in ("主人", "Darling", "人妻", "忠诚", "影子大人")):
+        hard_lines.append(
+            "原作忠诚/亲密对象不可因一次净化或救助转移给{{user}}；开局最多试探或利用，禁止秒改称呼与献身"
+        )
+    if filth:
+        hard_lines.append(f"污秽发作优先挂钩种子：{filth}")
+
+    lines = [
+        "角色档案:",
+        "  基本信息:",
+        f"    姓名: {name}",
+        f"    别名: {aliases}",
+        "    性别: 女",
+        f"    作品: {work_line}",
+        f"    年龄: {age}",
+        f"    身份: {blurb or '见原作；本卡开局为初遇对象'}",
+        "    与{{user}}关系: 开局无旧识",
+        "",
+        "  角色介绍:",
+        f"    {intro}",
+        "",
+        "  外貌特征:",
+        f"    - {appearance}" if appearance else "    - （见原作辨识特征）",
+        "",
+        "  背景设定:",
+    ]
+    if work_intro:
+        lines.append(f"    作品简介: {work_intro}")
+    if background:
+        lines.append("    角色要点:")
+        for b in background:
+            lines.append(f"    - {b}")
+    if filth:
+        lines.append(f"    污秽种子: {filth}")
+    lines.append("")
+    lines.append("  关系设定:")
+    if relations:
+        for r in relations:
+            lines.append(f"    - {r}")
+    else:
+        lines.append("    - 与{{user}}：开局无旧识")
+    lines.append("")
+    lines.append("  演绎锚点:")
+    lines.append("    行动驱力:")
+    for d in drive_bits[:4]:
+        lines.append(f"    - {d}")
+    lines.append("    口吻:")
+    for v in voice_bits[:4]:
+        lines.append(f"    - {v}")
+    lines.append("    不可违背:")
+    for h in hard_lines:
+        lines.append(f"    - {h}")
+    lines.append("")
+    return "\n".join(lines)
+
+
 def build_worldbook_entries() -> list:
     entries = []
     entry_id = 0
+    chars = load_characters()
 
     def add(comment, content, **kw):
         nonlocal entry_id
@@ -349,6 +469,13 @@ def build_worldbook_entries() -> list:
         position="before_char",
         order=2,
     )
+    add(
+        "角色速览",
+        build_character_overview(chars),
+        constant=True,
+        position="before_char",
+        order=4,
+    )
     # 写作指导 / 数值反应：D0（知识库：指导类放 D0，不塞设定位）
     add(
         "写作与人设规则",
@@ -366,24 +493,44 @@ def build_worldbook_entries() -> list:
         depth=0,
         order=2,
     )
+    add(
+        "人设演绎总则",
+        PROFILE_RULES.strip(),
+        constant=True,
+        position="at_depth",
+        depth=0,
+        order=3,
+    )
 
     # 多角色卡：角色详细 → 角色定义后 · 绿灯 · 顺序约 99
-    for i, c in enumerate(load_characters()):
+    # scan_depth 提到 4，降低「姓名刚离开近2楼就丢档案」导致的 OOC
+    profile_dir = ROOT / "worldbook" / "角色"
+    profile_dir.mkdir(parents=True, exist_ok=True)
+    expected_profiles = {f"{c['name']}.md" for c in chars}
+    for stale in profile_dir.glob("*.md"):
+        if stale.name not in expected_profiles:
+            stale.unlink()
+    for i, c in enumerate(chars):
         name = c["name"]
-        path = ROOT / "worldbook" / "角色" / f"{name}.md"
-        content = path.read_text(encoding="utf-8") if path.is_file() else f"角色档案:\n  基本信息:\n    姓名: {name}\n"
+        path = profile_dir / f"{name}.md"
+        content = render_character_profile(c)
+        path.write_text(content, encoding="utf-8")
         keys = [name, *c.get("aliases", [])]
         seen = set()
         keys = [k for k in keys if not (k in seen or seen.add(k))]
-        add(
+        entry = wb_entry(
             f"角色_{name}",
             content,
+            entry_id,
             constant=False,
             selective=True,
             keys=keys,
             position="after_char",
             order=99,
         )
+        entry["scan_depth"] = 4
+        entries.append(entry)
+        entry_id += 1
 
     return entries
 
@@ -397,20 +544,24 @@ def sync_cover_assets() -> None:
     modes_js = "const MEETING_MODES = " + json.dumps(modes, ensure_ascii=False, indent=2) + ";"
     chars_js = "const CHARACTERS = " + json.dumps(chars, ensure_ascii=False, indent=2) + ";"
 
-    text = re.sub(
+    text, modes_count = re.subn(
         r"/\* === SYNC_BEGIN:MEETING_MODES === \*/.*?/\* === SYNC_END:MEETING_MODES === \*/",
         lambda _m: "/* === SYNC_BEGIN:MEETING_MODES === */\n" + modes_js + "\n/* === SYNC_END:MEETING_MODES === */",
         text,
         count=1,
         flags=re.S,
     )
-    text = re.sub(
+    text, chars_count = re.subn(
         r"/\* === SYNC_BEGIN:CHARACTERS === \*/.*?/\* === SYNC_END:CHARACTERS === \*/",
         lambda _m: "/* === SYNC_BEGIN:CHARACTERS === */\n" + chars_js + "\n/* === SYNC_END:CHARACTERS === */",
         text,
         count=1,
         flags=re.S,
     )
+    if modes_count != 1 or chars_count != 1:
+        raise SystemExit(
+            f"cover sync markers invalid: meeting_modes={modes_count}, characters={chars_count}"
+        )
     cover.write_text(text, encoding="utf-8")
     print(f"synced cover data: {len(modes)} modes, {len(chars)} characters")
 
@@ -455,24 +606,127 @@ def sync_static_dist() -> None:
 
 
 def patch_regex_scripts(card: dict) -> None:
-    scripts = card["data"]["extensions"].get("regex_scripts") or []
-    for rs in scripts:
-        sn = rs.get("scriptName", "")
-        find = rs.get("findRegex", "")
-        if sn == "显示-状态栏美化" or ("状态栏" in sn and "美化" in sn):
-            rs["replaceString"] = STATUS_HTML
-        elif "StatusPlaceHolderImpl" in find:
-            if "隐藏" in sn or "提示词" in sn:
-                rs["replaceString"] = ""
-            else:
-                rs["replaceString"] = STATUS_HTML
+    def regex(
+        id_: str,
+        name: str,
+        find: str,
+        replace: str,
+        *,
+        markdown: bool,
+        prompt: bool,
+        min_depth=None,
+        max_depth=None,
+    ) -> dict:
+        return {
+            "id": id_,
+            "scriptName": name,
+            "findRegex": find,
+            "replaceString": replace,
+            "trimStrings": [],
+            "placement": [2],
+            "disabled": False,
+            "markdownOnly": markdown,
+            "promptOnly": prompt,
+            "runOnEdit": True,
+            "substituteRegex": 0,
+            "minDepth": min_depth,
+            "maxDepth": max_depth,
+        }
+
+    card["data"]["extensions"]["regex_scripts"] = [
+        regex(
+            "shengtang-cover-keep",
+            "显示-封面HTML后移除状态栏占位",
+            r"/(```html[\s\S]*?<\/html>\s*```)\s*^\s*<StatusPlaceHolderImpl\s*\/>\s*$/gim",
+            "$1",
+            markdown=True,
+            prompt=False,
+        ),
+        regex(
+            "shengtang-status-order",
+            "显示-状态栏排序",
+            r"/(<StatusPlaceHolderImpl\s*\/>)/gim",
+            "$1",
+            markdown=True,
+            prompt=False,
+            max_depth=3,
+        ),
+        regex(
+            "shengtang-status-render",
+            "显示-状态栏美化",
+            r"/<StatusPlaceHolderImpl\s*\/>/gi",
+            STATUS_HTML,
+            markdown=True,
+            prompt=False,
+        ),
+        regex(
+            "shengtang-hide-update-display",
+            "显示-隐藏变量更新块",
+            r"/^\s*<UpdateVariable(?:variable)?>[\s\S]*?^\s*<\/UpdateVariable(?:variable)?>\s*$/gim",
+            "",
+            markdown=True,
+            prompt=False,
+        ),
+        regex(
+            "shengtang-hide-status-prompt",
+            "提示词-隐藏状态栏占位",
+            r"/^\s*<StatusPlaceHolderImpl\s*\/>\s*$/gim",
+            "",
+            markdown=False,
+            prompt=True,
+        ),
+        regex(
+            "shengtang-limit-update-prompt",
+            "提示词-仅发送近3楼变量",
+            r"/^\s*<UpdateVariable(?:variable)?>[\s\S]*?^\s*<\/UpdateVariable(?:variable)?>\s*$/gim",
+            "",
+            markdown=False,
+            prompt=True,
+            min_depth=6,
+        ),
+        regex(
+            "shengtang-hide-ui-prompt",
+            "提示词-隐藏界面CDN壳",
+            r"/```html[\s\S]*?dist\/shengtang\/ui\/[\s\S]*?```/gim",
+            "",
+            markdown=False,
+            prompt=True,
+        ),
+    ]
 
 
 def patch_tavern_helper_scripts(card: dict) -> None:
-    scripts = card["data"]["extensions"].get("tavern_helper", {}).get("scripts") or []
-    for script in scripts:
-        if script.get("name") == "变量结构":
-            script["content"] = build_schema_script()
+    def script(id_: str, name: str, content: str, buttons: list[dict]) -> dict:
+        return {
+            "type": "script",
+            "enabled": True,
+            "name": name,
+            "id": id_,
+            "content": content,
+            "info": "",
+            "button": {"enabled": True, "buttons": buttons},
+            "data": {},
+            "export_with": {"data": True, "button": True},
+        }
+
+    card["data"]["extensions"]["tavern_helper"] = {
+        "scripts": [
+            script("shengtang-schema", "变量结构", build_schema_script(), []),
+            script(
+                "shengtang-mvu",
+                "MVUbeta",
+                "import 'https://testingcf.jsdelivr.net/gh/MagicalAstrogy/MagVarUpdate/artifact/bundle.js';",
+                [
+                    {"name": "重新处理变量", "visible": True},
+                    {"name": "重新读取初始变量", "visible": True},
+                    {"name": "清除旧楼层变量", "visible": False},
+                    {"name": "快照楼层", "visible": False},
+                    {"name": "重演楼层", "visible": False},
+                    {"name": "重试额外模型解析", "visible": False},
+                ],
+            ),
+        ]
+    }
 
 
 def main() -> None:
@@ -484,9 +738,9 @@ def main() -> None:
 
     card = json.loads(TEMPLATE.read_text(encoding="utf-8"))
     card["name"] = CARD_NAME
-    card["description"] = "捏同人开局：圣堂牧师 × 热门动漫女性初遇。净化真实成立，亦可借仪式越界。"
+    card["description"] = "捏同人开局：圣堂牧师 × 热门动漫女性初遇。角色年龄、身份与关系按所选原著时间点记录。"
     card["personality"] = ""
-    card["scenario"] = "圣言堂。{{user}}是能净化污秽的牧师；初遇一名成年二次元女性，按封面所选相遇方式开局。"
+    card["scenario"] = "圣言堂。{{user}}是能净化污秽的牧师；初遇一名二次元女性，按封面所选相遇方式与原著人设开局。"
     card["first_mes"] = COVER_HTML
     card["mes_example"] = ""
     card["creatorcomment"] = "圣堂初遇 / custom_begining"
@@ -504,7 +758,7 @@ def main() -> None:
     data["post_history_instructions"] = ""
     data["tags"] = card["tags"]
     data["creator"] = "lazyboysjh"
-    data["character_version"] = "0.1.0"
+    data["character_version"] = "0.2.0"
     data["alternate_greetings"] = []
 
     ext = data.setdefault("extensions", {})

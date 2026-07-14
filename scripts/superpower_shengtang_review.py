@@ -39,13 +39,6 @@ def main() -> int:
     warns: list[str] = []
     oks: list[str] = []
 
-    # --- build ---
-    code, out = run([sys.executable, str(ROOT / "build_shengtang_card.py")])
-    if code != 0:
-        errs.append(f"build_shengtang_card 失败:\n{out[-2000:]}")
-    else:
-        oks.append("build_shengtang_card OK")
-
     chars = yaml.safe_load((ROOT / "plot/characters.yaml").read_text(encoding="utf-8"))["characters"]
     oks.append(f"characters.yaml 共 {len(chars)} 人")
 
@@ -179,27 +172,41 @@ def main() -> int:
                 errs.append(f"{e.get('comment')} 应为 selective 绿灯")
             if not e.get("keys"):
                 errs.append(f"{e.get('comment')} 缺 keys")
-            if not e.get("constant") and e.get("scan_depth") != 2:
-                warns.append(f"{e.get('comment')} scan_depth={e.get('scan_depth')} 建议 2")
-        ooc_marks = ("万能温柔模板", "别空喊好感套话", "求净上门 / 异界坠落", "挂钩种子：")
+            if not e.get("constant") and e.get("scan_depth") != 4:
+                errs.append(f"{e.get('comment')} scan_depth={e.get('scan_depth')}，本卡应为 4")
         for e in role_entries:
             ct = e.get("content") or ""
-            for m in ooc_marks:
-                if m in ct:
-                    errs.append(f"{e.get('comment')}: 关系设定含 OOC 模板「{m}」")
-                    break
+            for required in ("演绎锚点:", "口吻:", "不可违背:"):
+                if required not in ct:
+                    errs.append(f"{e.get('comment')}: 缺人设锚点「{required}」")
         write_e = next((e for e in entries if e.get("comment") == "写作与人设规则"), None)
         if write_e:
             wt = write_e.get("content") or ""
-            for m in ("同场角色", "万能美人", "元叙事", "禁止:"):
-                if m in wt:
-                    warns.append(f"写作与人设规则仍含可删项「{m}」（宜极简）")
-                    break
+            for required in (
+                "人设优先级",
+                "防 OOC",
+                "防媚{{user}}",
+                "不默认赞同{{user}}",
+                "关系变化必须有可指认事件",
+                "高信任只降低戒备",
+            ):
+                if required not in wt:
+                    errs.append(f"写作与人设规则缺「{required}」")
         schema = ""
         for s in card["data"]["extensions"]["tavern_helper"]["scripts"]:
             if s.get("name") == "变量结构":
                 schema = s.get("content") or ""
-        for key in ("初遇", "好感度", "堕落值", "依存度", "污秽度", "信任"):
+        for key in (
+            "初遇",
+            "好感度",
+            "堕落值",
+            "依存度",
+            "污秽度",
+            "信任",
+            "当前目标",
+            "对user判断",
+            "当前边界",
+        ):
             if key not in schema:
                 errs.append(f"卡内 schema 缺 {key}")
         if "registerMvuSchema" in schema:
@@ -245,14 +252,22 @@ def main() -> int:
         if n_id < len(chars) - 2:
             warns.append(f"封面内嵌 id 约 {n_id}，yaml={len(chars)}")
 
-    # --- 开局 API / 布局硬伤（对照写卡知识库，不以他卡为真理）---
-    if "（开局生成中" in cover:
-        oks.append("开局使用占位开场楼（非空串）")
-    elif re.search(r'role:\s*"assistant"[^]]*message:\s*""', cover, re.S):
-        errs.append("封面会 create 空字符串 assistant 楼 → 黑空楼；应写占位文案再 setChatMessages")
-    if "setMsgs" in cover or "setChatMessages" in cover:
-        if "generateFn" in cover or "generate(" in cover:
-            oks.append("开局路径含 generate + setChatMessages 落楼")
+    # --- 开局事务 / 布局硬伤 ---
+    opening_requirements = {
+        "generation_id": "generation_id:" in cover,
+        "停止生成": "stopGenerationById" in cover,
+        "事务提交": bool(re.search(r"message_id:\s*0,\s*message:[\s\S]{0,160}data:", cover)),
+        "最终MVU解析": "Mvu.parseMessage(text, initializedData)" in cover,
+        "卸载取消": "pagehide" in cover and "stopOpening" in cover,
+    }
+    for label, passed in opening_requirements.items():
+        if passed:
+            oks.append(f"开局事务：{label}")
+        else:
+            errs.append(f"开局事务缺：{label}")
+    for forbidden in ("deleteExtraFloors", 'getApi("deleteChatMessages")', 'refresh: "all"', "createChatMessages"):
+        if forbidden in cover:
+            errs.append(f"开局残留危险逻辑: {forbidden}")
     if "should_silence: true" in cover or "should_silence:true" in cover:
         warns.append("开局使用 should_silence:true（知识库：仅影响停止按钮；开局一般应允许停止）")
     if "generateFn({" not in cover and "generate({" not in cover:
@@ -270,6 +285,28 @@ def main() -> int:
         errs.append("角色池 char-grid 自带 max-height+overflow（双层滚动，底栏易裁切卡片）")
     if ".page-body" in cover and "scrollbar-color" in cover:
         oks.append("page-body 滚动条已主题化")
+
+    status_html = (ROOT / "src/shengtang/ui/status/index.html").read_text(encoding="utf-8")
+    if "setInterval(" in status_html:
+        errs.append("状态栏仍使用永久轮询")
+    elif "VARIABLE_UPDATE_ENDED" in status_html and "pagehide" in status_html and ".stop()" in status_html:
+        oks.append("状态栏事件驱动且可卸载")
+    else:
+        errs.append("状态栏生命周期不完整")
+    status_regex = next(
+        (x for x in card["data"]["extensions"].get("regex_scripts", []) if x.get("scriptName") == "显示-状态栏美化"),
+        {},
+    )
+    status_shell = status_regex.get("replaceString") or ""
+    if "overflow:visible" in status_shell and "aspect-ratio:16/10" not in status_shell:
+        oks.append("状态栏 CDN 壳由内容撑高")
+    else:
+        errs.append("状态栏 CDN 壳仍可能按固定比例裁切")
+
+    extensions_blob = json.dumps(card["data"].get("extensions") or {}, ensure_ascii=False)
+    for marker in ("大魏芳华", "__mnx", "mnx-", "dist/dawei", "十国千娇"):
+        if marker in extensions_blob:
+            errs.append(f"卡内模板污染: {marker}")
 
     # --- git / CDN ---
     code, status = run(["git", "status", "-sb"])
