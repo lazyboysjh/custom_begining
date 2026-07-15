@@ -60,6 +60,51 @@ class OpeningOptionTests(unittest.TestCase):
 
 
 class OpeningLifecycleTests(unittest.TestCase):
+    def test_cover_samples_all_random_dimensions_without_manual_heroine_picker(self) -> None:
+        self.assertNotIn('id="modeGrid"', COVER)
+        self.assertNotIn('id="charGrid"', COVER)
+        self.assertNotIn('data-tab="pool"', COVER)
+        self.assertIn("function sampleOpeningConfig", COVER)
+        self.assertIn("function randomIndex", COVER)
+        for marker in (
+            "OPENING_OPTIONS.story_types",
+            "OPENING_OPTIONS.atmospheres",
+            "OPENING_OPTIONS.eras",
+            "OPENING_OPTIONS.sanctum_forms",
+            "OPENING_OPTIONS.integration_modes",
+            "CHARACTERS",
+        ):
+            self.assertIn(marker, COVER)
+
+    def test_normal_and_one_click_random_start_share_locked_config(self) -> None:
+        self.assertIn('id="btnRandomStart"', COVER)
+        self.assertIn("async function startGame(randomAll = false)", COVER)
+        self.assertIn("sampleOpeningConfig({ randomAbility: randomAll })", COVER)
+        self.assertIn("config:", COVER)
+        self.assertIn("activeOpening.config", COVER)
+
+    def test_cross_era_prompt_requires_complete_causal_chain(self) -> None:
+        for marker in (
+            "为何出现在当前世界",
+            "当前时代的身份",
+            "与圣堂发生联系",
+            "主动追求",
+            "异常如何进入因果链",
+            "核心性格",
+            "功能相近",
+        ):
+            self.assertIn(marker, COVER)
+
+    def test_opening_patches_persist_public_random_context(self) -> None:
+        for path in (
+            "/世界/时代背景",
+            "/世界/故事类型",
+            "/世界/故事氛围",
+            "/世界/圣堂形态",
+            "/世界/开局摘要",
+        ):
+            self.assertIn(path, COVER)
+
     def test_never_deletes_chat_floors(self) -> None:
         self.assertNotIn("deleteExtraFloors", COVER)
         self.assertNotIn('getApi("deleteChatMessages")', COVER)
@@ -91,7 +136,7 @@ class OpeningLifecycleTests(unittest.TestCase):
         self.assertGreater(COVER.index("activeOpening = null;", commit), commit)
 
     def test_mvu_is_not_written_before_generation(self) -> None:
-        start = COVER.index("async function startGame()")
+        start = COVER.index("async function startGame(")
         generation = COVER.index("generateFn(", start)
         before_generation = COVER[start:generation]
         self.assertNotIn("replaceMvuData", before_generation)
@@ -99,6 +144,20 @@ class OpeningLifecycleTests(unittest.TestCase):
 
 
 class StatusLifecycleTests(unittest.TestCase):
+    def test_status_renders_public_opening_context_and_ability(self) -> None:
+        for marker in (
+            'id="storyType"',
+            'id="storyAtmosphere"',
+            'id="sanctumForm"',
+            'id="abilitySummary"',
+            "world.故事类型",
+            "world.故事氛围",
+            "world.圣堂形态",
+            "currentStat.主角",
+        ):
+            self.assertIn(marker, STATUS)
+        self.assertNotIn('id="integrationMode"', STATUS)
+
     def test_status_has_no_render_blocking_font_dependency(self) -> None:
         self.assertNotIn("fonts.googleapis.com", STATUS)
         self.assertNotIn("fonts.gstatic.com", STATUS)
@@ -291,6 +350,20 @@ class ProductUiTests(unittest.TestCase):
     def test_motion_has_reduced_motion_fallback(self) -> None:
         self.assertIn("prefers-reduced-motion: reduce", COVER)
         self.assertIn("prefers-reduced-motion: reduce", STATUS)
+
+    def test_cover_reveal_has_accessible_independent_states(self) -> None:
+        for marker in (
+            'id="revealStage"',
+            'id="revealName"',
+            'id="revealWork"',
+            'id="revealBlurb"',
+            'aria-live="polite"',
+            "revealDone",
+            "generationDone",
+            "function startReveal",
+            "function finishReveal",
+        ):
+            self.assertIn(marker, COVER)
 
     def test_c2_surfaces_share_material_button_tokens(self) -> None:
         for token in (

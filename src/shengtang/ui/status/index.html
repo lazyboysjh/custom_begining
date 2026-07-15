@@ -153,6 +153,34 @@ button { -webkit-tap-highlight-color: transparent; }
   box-shadow: inset 0 1px rgba(255,255,255,.34), 0 4px 14px rgba(173,135,70,.14);
 }
 .role-count { color: #716e69; font-size: 10px; white-space: nowrap; }
+.opening-context {
+  display: grid;
+  grid-template-columns: .85fr .85fr .85fr 1.45fr;
+  gap: 0;
+  border-bottom: 1px solid var(--st-line);
+  background: rgba(255,255,255,.012);
+}
+.opening-context span {
+  min-width: 0;
+  padding: 8px 11px;
+  border-right: 1px solid rgba(255,255,255,.045);
+}
+.opening-context span:last-child { border-right: 0; }
+.opening-context small {
+  display: block;
+  color: #716e69;
+  font-size: 9px;
+}
+.opening-context b {
+  display: block;
+  margin-top: 2px;
+  overflow: hidden;
+  color: #c9c1b5;
+  font-size: 10px;
+  font-weight: 500;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 .content {
   display: grid;
   grid-template-columns: minmax(0,1.15fr) minmax(260px,.85fr);
@@ -449,6 +477,9 @@ button { -webkit-tap-highlight-color: transparent; }
   .content { grid-template-columns: 1fr; }
   .role-quick { display: flex; overflow-x: auto; }
   .role-chip:nth-child(n+5) { display: block; }
+  .opening-context { grid-template-columns: 1fr 1fr; }
+  .opening-context span:nth-child(2n) { border-right: 0; }
+  .opening-context span:nth-child(-n+2) { border-bottom: 1px solid rgba(255,255,255,.045); }
 }
 @media (max-width: 480px) {
   .topbar { padding-left: 12px; }
@@ -477,6 +508,12 @@ button { -webkit-tap-highlight-color: transparent; }
       <div class="role-quick" id="roleQuick"></div>
       <span class="role-count" id="roleCount">0 人</span>
     </nav>
+    <div class="opening-context" aria-label="开局背景">
+      <span><small>故事</small><b id="storyType">—</b></span>
+      <span><small>氛围</small><b id="storyAtmosphere">—</b></span>
+      <span><small>圣堂</small><b id="sanctumForm">—</b></span>
+      <span><small>能力</small><b id="abilitySummary">—</b></span>
+    </div>
     <div class="content">
       <section class="primary-pane">
         <div class="identity">
@@ -1296,7 +1333,8 @@ const ROSTER = [
 
 const STAT_META = ["污秽度", "信任", "好感度", "堕落值", "依存度"];
 const DEMO_STAT = {
-  世界: { 相遇方式: "求净上门", 场景: "圣言堂·告解室", 教会名: "圣言堂", 回合: 3, 出场角色: ["芙莉莲", "牧濑红莉栖", "雪之下雪乃"] },
+  世界: { 相遇方式: "都市悬疑", 场景: "夜间诊所·异常档案室", 教会名: "夜间诊所", 时代背景: "当代世界", 故事类型: "都市悬疑", 故事氛围: "悬疑博弈", 圣堂形态: "夜间诊所", 回合: 3, 出场角色: ["芙莉莲", "牧濑红莉栖", "雪之下雪乃"] },
+  主角: { 能力摘要: "能进入目标记忆寻找污染锚点，但无法保证看到的记忆完全真实。" },
   角色: {
     芙莉莲: { 作品: "葬送的芙莉莲", 污秽类型: "魔力残渣", 污秽度: 58, 信任: 46, 好感度: 32, 堕落值: 18, 依存度: 12, 仪式阶段: "仪式中", 与user关系: "半信半疑", 当前心态: "觉得麻烦，但仍在观察净化效果。", 当前目标: "压下魔力紊乱后继续旅行", 对user判断: "能力可能有效，动机仍待验证", 当前边界: "只接受已说明的基础检查" },
     牧濑红莉栖: { 作品: "命运石之门", 污秽类型: "认知回响", 污秽度: 34, 信任: 28, 好感度: 18, 堕落值: 8, 依存度: 4, 仪式阶段: "检查", 与user关系: "观察", 当前心态: "正在分析这里的异常机制。", 当前目标: "验证净化是否可重复", 对user判断: "言行尚可，证据不足", 当前边界: "拒绝缺乏解释的接触" },
@@ -1423,6 +1461,11 @@ function populateCharacterData() {
     const world = currentStat.世界 || {};
     document.getElementById("scene").textContent = world.场景 || world.教会名 || "当前场景";
     document.getElementById("sceneMeta").textContent = [world.相遇方式, world.回合 ? `第 ${world.回合} 回合` : ""].filter(Boolean).join(" · ") || "圣堂记录";
+    document.getElementById("storyType").textContent = world.故事类型 || "尚未记录";
+    document.getElementById("storyAtmosphere").textContent = world.故事氛围 || "尚未记录";
+    document.getElementById("sanctumForm").textContent = world.圣堂形态 || world.教会名 || "圣言堂";
+    const protagonist = currentStat.主角 || {};
+    document.getElementById("abilitySummary").textContent = protagonist.能力摘要 || "尚未记录";
     renderRoleSwitcher(names, activeRoleName);
     renderRoleState(getRoleState(currentStat, activeRoleName));
     setDataState("ready");

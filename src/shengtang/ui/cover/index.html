@@ -687,6 +687,89 @@ select:focus {
 .detail .meta { color: #aaa7a0; }
 .char-card .name { color: #e5e0d7; }
 .detail-row { color: #c8c2b7; }
+.ability-panel {
+  display: grid;
+  gap: 14px;
+  width: min(100%, 680px);
+  margin-top: 12px;
+}
+.ability-modes {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 7px;
+}
+.ability-mode {
+  min-height: 40px;
+  border: 1px solid var(--st-btn-edge);
+  border-radius: 7px;
+  color: #bdb8ae;
+  background: var(--st-btn-bg);
+  box-shadow: var(--st-btn-shadow);
+  cursor: pointer;
+  transition: transform 220ms var(--st-ease), border-color 220ms ease, color 220ms ease, box-shadow 220ms ease;
+}
+.ability-mode:hover { color: #eee9df; border-color: var(--st-btn-edge-hover); transform: translateY(-1px); }
+.ability-mode:active { transform: translateY(1px) scale(.98); box-shadow: var(--st-btn-active-shadow); }
+.ability-mode:focus-visible { outline: none; box-shadow: var(--st-btn-shadow), 0 0 0 3px rgba(218,184,119,.12); }
+.ability-mode.active {
+  color: #20170c;
+  border-color: rgba(230,202,146,.58);
+  background: linear-gradient(180deg, #f0d9a8, #c89f59 52%, #9b6e31);
+  box-shadow: inset 0 1px #fff4d3, inset 0 -2px rgba(87,49,12,.38), 0 8px 20px rgba(183,135,59,.2);
+}
+.ability-preview {
+  min-height: 46px;
+  padding: 11px 12px;
+  border-left: 2px solid rgba(218,184,119,.44);
+  color: #c9c4ba;
+  background: rgba(255,255,255,.025);
+}
+.reveal-stage {
+  width: min(100%, 680px);
+  min-height: 238px;
+  margin: 0 auto 10px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  overflow: hidden;
+}
+.reveal-kicker {
+  color: #9f8b65;
+  font-size: 11px;
+  letter-spacing: .22em;
+}
+.reveal-reel {
+  width: 100%;
+  height: 24px;
+  margin-top: 12px;
+  overflow: hidden;
+  color: rgba(228,220,204,.42);
+  font-family: var(--font-display);
+  font-size: 15px;
+  white-space: nowrap;
+  mask-image: linear-gradient(90deg, transparent, #000 20%, #000 80%, transparent);
+}
+.reveal-reel.spinning { animation: revealPulse 460ms ease-in-out infinite alternate; }
+.reveal-name {
+  min-height: 1.25em;
+  margin-top: 10px;
+  color: #ead5a7;
+  font-size: 34px;
+}
+.reveal-work { min-height: 1.4em; color: #9e9a92; font-size: 12px; }
+.reveal-blurb { min-height: 2.9em; max-width: 48em; margin: 10px 0 0; color: #c5c0b7; }
+.reveal-context {
+  min-height: 24px;
+  margin-top: 10px;
+  color: #a89065;
+  font-size: 11px;
+}
+@keyframes revealPulse {
+  from { opacity: .35; transform: translateY(-1px); }
+  to { opacity: .78; transform: translateY(1px); }
+}
 .btn {
   position: relative;
   min-height: 38px;
@@ -816,6 +899,9 @@ select:focus {
   .foot .btn { min-height: 40px; }
   .hero h1 { font-size: 34px; }
   .loading-card h2 { font-size: 28px; }
+  .ability-modes { grid-template-columns: 1fr; }
+  .reveal-stage { min-height: 250px; }
+  .reveal-name { font-size: 28px; }
 }
 @media (max-width: 760px) {
   .app { padding: 10px; }
@@ -825,6 +911,10 @@ select:focus {
   .hero-glass { padding: 20px 16px 16px; }
   .foot { gap: 8px; }
   .foot .btn { flex: 1 1 0; }
+  .reveal-reel { height: 22px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .reveal-reel.spinning { animation: none !important; opacity: .55; }
 }
 </style>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -853,67 +943,29 @@ select:focus {
   <!-- PAGE 2 -->
   <section class="page" data-page="2">
     <div class="page-body">
-      <div class="brand">主角 · 牧师</div>
+      <div class="brand">OPENING RITUAL</div>
       <div class="ornament"></div>
-      <div class="section-title">捏造你的身份</div>
-      <p class="hint">默认是能净化污秽的教堂牧师。表面救人为先，私下可借仪式试探。</p>
-      <div class="panel grid-2">
-        <label class="field">姓名
-          <input id="pName" placeholder="空则使用 {{user}}" />
+      <div class="section-title">你的能力</div>
+      <p class="hint">选择净化方式，或写下属于你的能力。其余一切将在仪式中揭晓。</p>
+      <div class="panel ability-panel">
+        <div class="ability-modes" role="group" aria-label="能力设置方式">
+          <button class="ability-mode active" type="button" data-ability-mode="preset">预设</button>
+          <button class="ability-mode" type="button" data-ability-mode="custom">自定义</button>
+          <button class="ability-mode" type="button" data-ability-mode="random">随机能力</button>
+        </div>
+        <label class="field" id="abilityPresetField">能力预设
+          <select id="abilityPreset" aria-label="能力预设"></select>
         </label>
-        <label class="field">年龄外观
-          <input id="pAge" placeholder="例：二十七岁，清瘦，黑袍" value="二十余岁，黑袍牧师" />
+        <label class="field" id="abilityCustomField" hidden>能力描述
+          <textarea id="abilityCustom" placeholder="说明能力效果、限制与代价"></textarea>
         </label>
-        <label class="field">教会 / 堂区名
-          <input id="pChurch" value="圣言堂" />
-        </label>
-        <label class="field">性格倾向
-          <input id="pTrait" placeholder="例：温和、耐心、话少" value="温和、耐心、话少" />
-        </label>
-        <label class="field">表面作风
-          <textarea id="pSurface">温和耐心，以救人为先，流程专业。</textarea>
-        </label>
-        <label class="field">私下心思
-          <textarea id="pPrivate">借检查与净化仪式靠近对方，试探底线。</textarea>
-        </label>
-      </div>
-    </div>
-    <div class="foot">
-      <button class="btn ghost" data-back="1">返回</button>
-      <button class="btn primary" id="btnToMeet">下一步 · 初遇</button>
-    </div>
-  </section>
-
-  <!-- PAGE 3 -->
-  <section class="page" data-page="3">
-    <div class="page-body">
-      <div class="brand">入局</div>
-      <div class="ornament"></div>
-      <div class="section-title">相遇方式</div>
-      <div class="mode-grid" id="modeGrid"></div>
-
-      <div class="section-title" style="margin-top:8px;">初遇角色</div>
-      <div class="tabs">
-        <button class="tab active" data-tab="pool">角色池</button>
-        <button class="tab" data-tab="custom">自定义</button>
-      </div>
-      <div id="poolBox">
-        <p class="hint" id="poolHint">点选下方角色；名单可上下滑动。</p>
-        <div class="panel detail" id="charDetail"></div>
-        <div class="char-grid" id="charGrid"></div>
-      </div>
-      <div id="customBox" class="panel grid-2">
-        <label class="field">姓名<input id="cName" /></label>
-        <label class="field">作品 / 世界观<input id="cWork" placeholder="例：原创 / 某作" /></label>
-        <label class="field">外貌要点<textarea id="cLook" placeholder="只写可辨识特征"></textarea></label>
-        <label class="field" style="grid-column:1/-1;">角色介绍（详细）<textarea id="cBlurb" placeholder="性格、经历、魅力与相处感觉，写详细些"></textarea></label>
-        <label class="field" style="grid-column:1/-1;">污秽设定<textarea id="cFilth" placeholder="附体/诅咒/侵蚀等"></textarea></label>
-        <p class="hint" style="grid-column:1/-1;">自定义需填姓名、作品、外貌与污秽设定。</p>
+        <div class="ability-preview" id="abilityPreview" aria-live="polite"></div>
       </div>
     </div>
     <div class="foot">
       <div class="foot-msg" id="warn" role="status" aria-live="polite"></div>
-      <button class="btn ghost" data-back="2">返回</button>
+      <button class="btn ghost" data-back="1">返回</button>
+      <button class="btn ghost" id="btnRandomStart">一键随机开始</button>
       <button class="btn primary" id="btnStart">生成开局</button>
     </div>
   </section>
@@ -923,6 +975,14 @@ select:focus {
     <div class="page-body">
       <div class="brand">SANCTUM OPENING</div>
       <div class="ornament"></div>
+      <div class="panel reveal-stage" id="revealStage" aria-live="polite">
+        <div class="reveal-kicker">圣堂启示</div>
+        <div class="reveal-reel" id="revealReel" aria-hidden="true"></div>
+        <h2 class="reveal-name" id="revealName">正在辨认来客</h2>
+        <div class="reveal-work" id="revealWork"></div>
+        <p class="reveal-blurb" id="revealBlurb"></p>
+        <div class="reveal-context" id="revealContext"></div>
+      </div>
       <div class="panel loading-card">
         <h2 id="generationTitle">正在生成开局</h2>
         <p id="generationStatus">已提交生成请求，请稍等。</p>
@@ -1462,12 +1522,6 @@ const OPENING_OPTIONS = {
   ]
 };
 /* === SYNC_END:OPENING_OPTIONS === */
-const MEETING_MODES = OPENING_OPTIONS.story_types.map(({ id, title, core_goal, prompt }) => ({
-  id,
-  title,
-  cover: core_goal,
-  prompt,
-}));
 /* === SYNC_BEGIN:CHARACTERS === */
 const CHARACTERS = [
   {
@@ -3679,9 +3733,8 @@ const CHARACTERS = [
 
 const state = {
   page: 1,
-  modeId: null,
-  charId: null,
-  tab: "pool",
+  abilityMode: "preset",
+  revealTimer: null,
   starting: false,
 };
 
@@ -3707,165 +3760,6 @@ function setGenerationState(title, status, done = false) {
   if (cancel) cancel.textContent = done ? "返回选择" : "取消并返回";
 }
 
-function renderModes() {
-  const box = $("#modeGrid");
-  box.innerHTML = MEETING_MODES.map(m => `
-    <div class="mode-card ${state.modeId === m.id ? "active" : ""}" data-id="${m.id}">
-      <h3>${m.title}</h3>
-      <p>${m.cover}</p>
-    </div>`).join("");
-  box.onclick = e => {
-    const card = e.target.closest(".mode-card");
-    if (!card) return;
-    state.modeId = card.dataset.id;
-    renderModes();
-  };
-}
-
-function renderChars() {
-  const box = $("#charGrid");
-  if (!box) return;
-  box.innerHTML = CHARACTERS.map(c => `
-    <div class="char-card ${state.charId === c.id ? "active" : ""}" data-id="${c.id}" style="--accent:${c.accent || "#d4af69"}">
-      <div class="swatch"></div>
-      <div class="name">${c.name}</div>
-      <div class="work">${c.work}</div>
-    </div>`).join("");
-  if (!box.dataset.bound) {
-    box.dataset.bound = "1";
-    box.addEventListener("click", e => {
-      const card = e.target.closest(".char-card");
-      if (!card) return;
-      selectPoolChar(card.dataset.id);
-    });
-  }
-  renderDetail();
-}
-
-function selectPoolChar(id) {
-  if (!id || !CHARACTERS.some(c => c.id === id)) return;
-  state.charId = id;
-  state.tab = "pool";
-  $$(".tab").forEach(t => t.classList.toggle("active", t.dataset.tab === "pool"));
-  const pool = $("#poolBox");
-  const custom = $("#customBox");
-  if (pool) pool.style.display = "block";
-  if (custom) custom.classList.remove("show");
-  renderChars();
-  const detail = $("#charDetail");
-  const body = detail && detail.closest(".page-body");
-  if (detail && body) {
-    body.scrollTop = Math.max(0, detail.offsetTop - 8);
-  }
-}
-
-function clipOneLine(text, max = 72) {
-  let s = String(text || "").trim().replace(/\s+/g, " ");
-  if (!s) return "";
-  const stop = s.search(/[。！？]/);
-  if (stop > 12 && stop < max) return s.slice(0, stop + 1);
-  if (s.length <= max) return s;
-  return s.slice(0, max) + "…";
-}
-
-function renderDetail() {
-  const el = $("#charDetail");
-  const c = CHARACTERS.find(x => x.id === state.charId);
-  if (!c || state.tab !== "pool") {
-    el.classList.remove("show");
-    el.innerHTML = "";
-    return;
-  }
-  el.classList.add("show");
-  const workLine = clipOneLine(c.work_intro || "", 80);
-  el.innerHTML = `
-    <h3>${c.name}</h3>
-    <div class="meta">${c.work} · ${c.age_note || "成年"}</div>
-    ${workLine ? `<div class="hint">${workLine}</div>` : ""}
-    <div class="detail-row intro"><strong>角色介绍</strong>：${c.intro || c.blurb || ""}</div>
-    <div class="detail-row appearance"><strong>外貌</strong>：${c.appearance}</div>
-    <div class="detail-row seed"><strong>污秽种子</strong>：${c.filth_seed}</div>`;
-}
-
-function setTab(tab) {
-  state.tab = tab;
-  $$(".tab").forEach(t => t.classList.toggle("active", t.dataset.tab === tab));
-  $("#poolBox").style.display = tab === "pool" ? "block" : "none";
-  $("#customBox").classList.toggle("show", tab === "custom");
-  if (tab === "custom") {
-    state.charId = null;
-    renderChars();
-    $("#charDetail").classList.remove("show");
-  } else if (!state.charId && CHARACTERS[0]) {
-    state.charId = CHARACTERS[0].id;
-    renderChars();
-  } else {
-    renderDetail();
-  }
-}
-
-function getPersona() {
-  return {
-    姓名: $("#pName").value.trim(),
-    身份: "教堂牧师",
-    年龄外观: $("#pAge").value.trim(),
-    性格倾向: $("#pTrait").value.trim(),
-    表面作风: $("#pSurface").value.trim(),
-    私下心思: $("#pPrivate").value.trim(),
-    能力摘要: "能感知并净化污秽；仪式需接触身体或精神",
-    教会名: $("#pChurch").value.trim() || "圣言堂",
-  };
-}
-
-function getEncounter() {
-  if (state.tab === "custom") {
-    const name = $("#cName").value.trim();
-    const work = $("#cWork").value.trim();
-    const look = $("#cLook").value.trim();
-    const blurb = $("#cBlurb").value.trim();
-    const filth = $("#cFilth").value.trim();
-    return {
-      custom: true,
-      姓名: name,
-      作品: work,
-      作品介绍: "",
-      外貌: look,
-      简介: blurb,
-      短识: blurb,
-      背景: "",
-      污秽类型: filth,
-      年龄: $("#cAge") ? $("#cAge").value.trim() : "",
-      检查文本: [name, work, look, blurb, filth].join(" "),
-    };
-  }
-  const c = CHARACTERS.find(x => x.id === state.charId);
-  if (!c) return null;
-  return {
-    custom: false,
-    id: c.id,
-    姓名: c.name,
-    作品: c.work,
-    作品介绍: c.work_intro || "",
-    外貌: c.appearance,
-    简介: c.intro || c.blurb,
-    短识: c.blurb || c.intro || "",
-    背景: (c.background || []).join(" / "),
-    污秽类型: c.filth_seed,
-    年龄: c.age_note || "",
-    aliases: c.aliases || [],
-  };
-}
-
-function sceneForMode(modeId, church) {
-  const map = {
-    seek_purify: `${church}·告解室`,
-    isekai_fall: `${church}·礼拜堂中殿`,
-    hub_cross: `${church}·地下接点密室`,
-    daily_crack: `${church}·侧廊诊室`,
-  };
-  return map[modeId] || `${church}·礼拜堂`;
-}
-
 /** 首楼只用短辨识，完整档案交给世界书触发 */
 function clipVoice(text, max = 96) {
   let s = String(text || "").trim().replace(/\s+/g, "");
@@ -3888,13 +3782,84 @@ function patchPathSegment(value) {
   return String(value || "").replace(/~/g, "~0").replace(/\//g, "~1");
 }
 
-function buildPatches(mode, persona, enc) {
-  const scene = sceneForMode(mode.id, persona.教会名);
-  const currentGoal = openingGoal(enc);
+function randomIndex(length) {
+  if (!Number.isInteger(length) || length < 1) throw new Error("当前没有可用的随机选项。");
+  if (globalThis.crypto && typeof globalThis.crypto.getRandomValues === "function") {
+    const ceiling = Math.floor(0x100000000 / length) * length;
+    const value = new Uint32Array(1);
+    do globalThis.crypto.getRandomValues(value); while (value[0] >= ceiling);
+    return value[0] % length;
+  }
+  return Math.floor(Math.random() * length);
+}
+
+function pickOne(list) {
+  return list[randomIndex(list.length)];
+}
+
+function selectedAbility(randomAbility) {
+  if (randomAbility || state.abilityMode === "random") return pickOne(OPENING_OPTIONS.ability_presets);
+  if (state.abilityMode === "custom") {
+    const summary = String($("#abilityCustom") && $("#abilityCustom").value || "").trim();
+    if (!summary) throw new Error("请写下能力效果、限制或代价。");
+    return { id: "custom", title: "自定义能力", summary };
+  }
+  const id = String($("#abilityPreset") && $("#abilityPreset").value || "");
+  return OPENING_OPTIONS.ability_presets.find(item => item.id === id) || OPENING_OPTIONS.ability_presets[0];
+}
+
+function sampleOpeningConfig({ randomAbility: randomAll }) {
+  return Object.freeze({
+    character: pickOne(CHARACTERS),
+    era: pickOne(OPENING_OPTIONS.eras),
+    storyType: pickOne(OPENING_OPTIONS.story_types),
+    atmosphere: pickOne(OPENING_OPTIONS.atmospheres),
+    sanctumForm: pickOne(OPENING_OPTIONS.sanctum_forms),
+    integrationMode: pickOne(OPENING_OPTIONS.integration_modes),
+    ability: selectedAbility(randomAll),
+  });
+}
+
+function encounterFromCharacter(character) {
+  return {
+    custom: false,
+    id: character.id,
+    姓名: character.name,
+    作品: character.work,
+    作品介绍: character.work_intro || "",
+    外貌: character.appearance || "",
+    简介: character.intro || character.blurb || "",
+    短识: character.blurb || character.intro || "",
+    背景: (character.background || []).join(" / "),
+    污秽类型: character.filth_seed || "待诊断的异常",
+    年龄: character.age_note || "",
+    aliases: character.aliases || [],
+  };
+}
+
+function openingPersona(config) {
+  return {
+    姓名: "",
+    身份: `${config.sanctumForm.title}的净化执行者`,
+    年龄外观: "",
+    性格倾向: "",
+    表面作风: "先确认事实、说明流程，再决定是否举行仪式。",
+    私下心思: "观察异常与来客的真实目的，不预设对方立场。",
+    能力摘要: config.ability.summary,
+    教会名: config.sanctumForm.title,
+  };
+}
+
+function openingScene(config) {
+  return `${config.sanctumForm.title}·${config.storyType.title}`;
+}
+
+function buildOpeningPatches(config, persona, enc) {
+  const currentGoal = config.storyType.core_goal;
   const rolePath = `/角色/${patchPathSegment(enc.姓名)}`;
   const roleState = {
     作品: enc.作品,
-    是否自定义: !!enc.custom,
+    是否自定义: false,
     污秽类型: enc.污秽类型,
     污秽度: 40,
     信任: 15,
@@ -3905,17 +3870,22 @@ function buildPatches(mode, persona, enc) {
     与user关系: "陌路",
     当前心态: "",
     当前目标: currentGoal,
-    对user判断: "陌生牧师；只确认其自称与圣职外观，能力和动机待验证",
+    对user判断: "尚未确认圣堂执行者的能力和动机",
     当前边界: "不接受未经说明或同意的私密接触",
   };
   return [
-    { op: "replace", path: "/世界/相遇方式", value: mode.title },
-    { op: "replace", path: "/世界/场景", value: scene },
-    { op: "replace", path: "/世界/教会名", value: persona.教会名 },
+    { op: "replace", path: "/世界/相遇方式", value: config.storyType.title },
+    { op: "replace", path: "/世界/场景", value: openingScene(config) },
+    { op: "replace", path: "/世界/教会名", value: config.sanctumForm.title },
+    { op: "replace", path: "/世界/时代背景", value: config.era.title },
+    { op: "replace", path: "/世界/故事类型", value: config.storyType.title },
+    { op: "replace", path: "/世界/故事氛围", value: config.atmosphere.title },
+    { op: "replace", path: "/世界/圣堂形态", value: config.sanctumForm.title },
+    { op: "replace", path: "/世界/开局摘要", value: `${config.era.title} · ${config.storyType.title} · ${config.atmosphere.title}` },
     { op: "replace", path: "/世界/回合", value: 1 },
     { op: "insert", path: rolePath, value: roleState },
     { op: "replace", path: "/世界/出场角色", value: [enc.姓名] },
-    { op: "replace", path: "/主角/姓名", value: persona.姓名 || "" },
+    { op: "replace", path: "/主角/姓名", value: persona.姓名 },
     { op: "replace", path: "/主角/身份", value: persona.身份 },
     { op: "replace", path: "/主角/年龄外观", value: persona.年龄外观 },
     { op: "replace", path: "/主角/性格倾向", value: persona.性格倾向 },
@@ -3925,43 +3895,79 @@ function buildPatches(mode, persona, enc) {
   ];
 }
 
-function buildPrompt(mode, persona, enc) {
-  const nameLine = persona.姓名 ? `姓名 ${persona.姓名}` : "姓名用 {{user}}";
-  const voice = clipVoice(enc.短识 || enc.简介, 96);
-  const ageBit = enc.年龄 ? ` · ${enc.年龄}` : "";
+function buildOpeningPrompt(config, persona, enc) {
+  const voice = clipVoice(enc.短识 || enc.简介, 108);
+  const rolePath = patchPathSegment(enc.姓名);
   return [
-    "【圣堂初遇·首楼】第三人称；主角称 {{user}}。只写相遇当下这一场可接互动的戏，不要人物小传或作品说明书。",
-    "",
-    `【相遇】${mode.title}`,
-    (mode.prompt || "").trim(),
-    "",
-    `【场景】${sceneForMode(mode.id, persona.教会名)}`,
-    "",
-    "【主角】",
-    `${nameLine}。教堂牧师。${persona.年龄外观 || ""}`.replace(/\s+/g, " ").trim(),
-    `表面：${persona.表面作风 || "温和耐心，以救人为先"}；私下：${persona.私下心思 || "借净化仪式靠近与试探"}`,
-    "能力：感知并净化污秽；仪式需接触身体或精神。净化真实有效，亦可被借机越界。",
-    persona.性格倾向 ? `倾向：${persona.性格倾向}` : null,
-    "",
-    "【初遇】",
-    `${enc.姓名}（${enc.作品 || "未知"}${ageBit}）`,
-    enc.外貌 ? `外貌：${enc.外貌}` : null,
-    voice ? `辨识：${voice}` : null,
-    `污秽：${enc.污秽类型}`,
-    "",
-    "【数值锚点】污秽度40 / 信任15 / 好感度10 / 堕落值5 / 依存度0。按区间写反应，正文勿报数。",
-    `【角色当前目标】${openingGoal(enc)}。先按此目标行动，不围着{{user}}运转；背景设定只提供口吻，不改成取悦或追随。`,
-    "",
-    "【写法】",
-    `- 严格扮演「${enc.姓名}」：口吻/戒备/动机贴原作档案；数值只调强度，禁止写成万能温柔或秒信牧师。`,
-    "- 保留角色独立目标与原作关系；不奉承、不秒信、不自动把{{user}}当特殊人物，关系变化必须由已发生事件支撑。",
-    "- 先按角色自己的目标、已知证据与边界行动；{{user}}可被反驳、拒绝或只获部分认可，主角身份不保证成功。",
-    "- 净化有效只证明「可能有用」，不等于可爱、可信或值得献身；无充分事件禁「好厉害/只有你/我愿意为你」。",
-    "- 从照面起笔：环境、对方反应、{{user}}的接待；外貌只写可辨识差异特征。",
-    "- 表面圣职流程 + 可察觉私心；净化写出真实驱除反馈；对方可拒绝、怀疑、半推半就。",
-    "- 禁止元叙事、系统自指、提醒「在玩角色卡」。",
-    `- 结尾停在可互动处，勿总结。末尾输出一个 <UpdateVariable>（Analysis + JSONPatch），只更新 /角色/${patchPathSegment(enc.姓名)}/当前心态、/角色/${patchPathSegment(enc.姓名)}/仪式阶段、/角色/${patchPathSegment(enc.姓名)}/当前目标、/角色/${patchPathSegment(enc.姓名)}/对user判断、/角色/${patchPathSegment(enc.姓名)}/当前边界；判断只写可验证事实，边界不随好感自动放宽。`,
-  ].filter(line => line != null && line !== "").join("\n");
+    "【圣堂初遇·随机开局】第三人称；主角称 {{user}}。写一场可以继续互动的完整开场，不写人物说明书。",
+    `【时代与世界】${config.era.title}：${config.era.prompt}`,
+    `【故事类型】${config.storyType.title}。核心目标：${config.storyType.core_goal}。失败风险：${config.storyType.failure_stakes}。${config.storyType.prompt}`,
+    `【故事氛围】${config.atmosphere.title}：${config.atmosphere.prompt}`,
+    `【圣堂形态】${config.sanctumForm.title}：${config.sanctumForm.prompt}`,
+    `【世界融入】${config.integrationMode.title}：${config.integrationMode.prompt}`,
+    `【{{user}}】身份：${persona.身份}。能力：${persona.能力摘要}`,
+    `【初遇女主】${enc.姓名}（${enc.作品}）`,
+    `原作辨识：${voice}`,
+    `原作经历锚点：${enc.背景}`,
+    `外貌锚点：${enc.外貌}`,
+    `原始异常灵感：${enc.污秽类型}`,
+    "【开场必须自然完成的因果链】",
+    "1. 解释她为何出现在当前世界，不能默认用突然穿越或失忆醒来。",
+    "2. 建立她在当前时代的身份、社会关系与现实约束。",
+    "3. 通过具体事件说明她为何与圣堂发生联系。",
+    "4. 让她围绕自己的主动追求采取行动，而不是等待{{user}}安排。",
+    "5. 说明异常如何进入因果链，并把原始异常灵感重构成当前题材可理解的表现。",
+    "【跨时代改写规则】",
+    "- 保留角色核心性格、语言习惯、价值冲突、独立目标和拒绝边界；不能只保留名字与外貌。",
+    "- 原作能力必须保留功能核心；表现不适配时转译为当前时代功能相近的术法、技术、身份资源或专业能力。",
+    "- 原作经历可以映射为本世界功能相近的经历，但不得覆盖角色由此形成的人格矛盾。",
+    "- 圣堂必须保留净化体系、跨界节点、仪式规则和长期据点四项本质，外形与社会职能按当前时代重构。",
+    "- 初见保持陌生与证据不足；不奉承、不秒信、不自动把{{user}}当特殊人物，{{user}}可被怀疑、拒绝、利用或反驳。",
+    "- 净化有效不等于可爱、可信或值得献身；禁止无事件依据写出「好厉害」「只有你理解我」「我愿意为你」。",
+    "- 从正在发生的事件起笔，结尾停在需要{{user}}回应或决策的位置。",
+    `- 末尾输出一个 <UpdateVariable>（Analysis + JSONPatch），根据正文更新 /角色/${rolePath}/污秽类型、/角色/${rolePath}/当前心态、/角色/${rolePath}/仪式阶段、/角色/${rolePath}/当前目标、/角色/${rolePath}/对user判断、/角色/${rolePath}/当前边界；只能写正文已经公开或角色实际感知的变化。`,
+  ].join("\n");
+}
+
+function finishReveal(config) {
+  if (state.revealTimer) clearInterval(state.revealTimer);
+  state.revealTimer = null;
+  const character = config.character;
+  const reel = $("#revealReel");
+  if (reel) {
+    reel.classList.remove("spinning");
+    reel.textContent = `${config.integrationMode.title} · ${config.sanctumForm.title}`;
+  }
+  $("#revealName").textContent = character.name;
+  $("#revealWork").textContent = character.work || "";
+  $("#revealBlurb").textContent = character.blurb || character.intro || "";
+  $("#revealContext").textContent = `${config.era.title} · ${config.storyType.title} · ${config.atmosphere.title}`;
+  if (activeOpening) activeOpening.revealDone = true;
+}
+
+function startReveal(config) {
+  const reduced = globalThis.matchMedia && globalThis.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const reel = $("#revealReel");
+  $("#revealName").textContent = "正在辨认来客";
+  $("#revealWork").textContent = "";
+  $("#revealBlurb").textContent = "圣堂正在回应另一个世界的回声。";
+  $("#revealContext").textContent = `${config.era.title} · ${config.storyType.title}`;
+  if (reduced) {
+    finishReveal(config);
+    return Promise.resolve();
+  }
+  if (reel) reel.classList.add("spinning");
+  state.revealTimer = setInterval(() => {
+    const candidates = [];
+    for (let index = 0; index < 4; index += 1) candidates.push(pickOne(CHARACTERS).name);
+    if (reel) reel.textContent = candidates.join("　·　");
+  }, 85);
+  return new Promise(resolve => {
+    setTimeout(() => {
+      finishReveal(config);
+      resolve();
+    }, 1850);
+  });
 }
 
 function getApi(name) {
@@ -4052,6 +4058,8 @@ function stopOpening(reason) {
     try { run.streamHandle.stop(); } catch (_) {}
   }
   if (run.timer) clearTimeout(run.timer);
+  if (state.revealTimer) clearInterval(state.revealTimer);
+  state.revealTimer = null;
   if (typeof run.stopGeneration === "function") {
     try { run.stopGeneration(run.generationId); } catch (_) {}
   }
@@ -4073,48 +4081,81 @@ function runGeneration(generatePromise, run, timeoutMs) {
   });
 }
 
-async function startGame() {
+function setAbilityMode(mode) {
+  state.abilityMode = mode;
+  $$("[data-ability-mode]").forEach(button => {
+    button.classList.toggle("active", button.dataset.abilityMode === mode);
+    button.setAttribute("aria-pressed", button.dataset.abilityMode === mode ? "true" : "false");
+  });
+  const presetField = $("#abilityPresetField");
+  const customField = $("#abilityCustomField");
+  if (presetField) presetField.hidden = mode !== "preset";
+  if (customField) customField.hidden = mode !== "custom";
+  updateAbilityPreview();
+}
+
+function updateAbilityPreview() {
+  const preview = $("#abilityPreview");
+  if (!preview) return;
+  try {
+    if (state.abilityMode === "random") {
+      preview.textContent = "生成时从能力池中随机选择，结果会与本局一起锁定。";
+      return;
+    }
+    if (state.abilityMode === "custom") {
+      preview.textContent = String($("#abilityCustom").value || "").trim() || "写下能力效果、限制与代价。";
+      return;
+    }
+    const ability = selectedAbility(false);
+    preview.textContent = `${ability.title}：${ability.summary}`;
+  } catch (error) {
+    preview.textContent = error.message || String(error);
+  }
+}
+
+async function startGame(randomAll = false) {
   const warn = $("#warn");
-  const btn = $("#btnStart");
-  const resetBtn = () => {
+  const startButton = $("#btnStart");
+  const randomButton = $("#btnRandomStart");
+  const resetButtons = () => {
     state.starting = false;
-    if (btn) {
-      btn.disabled = false;
-      btn.textContent = "生成开局";
+    if (startButton) {
+      startButton.disabled = false;
+      startButton.textContent = "生成开局";
+    }
+    if (randomButton) {
+      randomButton.disabled = false;
+      randomButton.textContent = "一键随机开始";
     }
   };
   if (warn) warn.textContent = "";
-  if (!state.modeId) {
-    if (warn) warn.textContent = "请选择相遇方式。";
-    return;
-  }
-  const mode = MEETING_MODES.find(m => m.id === state.modeId);
-  const persona = getPersona();
-  const enc = getEncounter();
-  if (!enc || !enc.姓名) {
-    if (warn) warn.textContent = "请先点选角色池中的角色，或改用自定义并填姓名。";
-    return;
-  }
-  if (enc.custom) {
-    if (!enc.作品 || !enc.外貌 || !enc.污秽类型) {
-      if (warn) warn.textContent = "自定义需填写作品、外貌与污秽设定。";
-      return;
-    }
-  }
   if (state.starting) return;
-  state.starting = true;
-  if (btn) {
-    btn.disabled = true;
-    btn.textContent = "生成中…";
+
+  let config;
+  try {
+    config = sampleOpeningConfig({ randomAbility: randomAll });
+  } catch (error) {
+    if (warn) warn.textContent = error.message || String(error);
+    return;
   }
-  setGenerationState("正在生成开局", "正在准备开局，请稍候。");
+  const persona = openingPersona(config);
+  const enc = encounterFromCharacter(config.character);
+  const patches = buildOpeningPatches(config, persona, enc);
+  const prompt = buildOpeningPrompt(config, persona, enc);
+
+  state.starting = true;
+  if (startButton) {
+    startButton.disabled = true;
+    startButton.textContent = "生成中…";
+  }
+  if (randomButton) randomButton.disabled = true;
+  setGenerationState("正在生成开局", "正在准备本次世界与故事。", false);
   showPage(4);
 
-  const patches = buildPatches(mode, persona, enc);
   const patchBlock = [
     "<UpdateVariable>",
     "<Analysis>",
-    "- Initialize sanctum encounter from cover.",
+    "- Lock the randomized opening configuration and initialize its first present role.",
     "</Analysis>",
     "<JSONPatch>",
     JSON.stringify(patches, null, 2),
@@ -4122,7 +4163,6 @@ async function startGame() {
     "</UpdateVariable>",
   ].join("\n");
 
-  const prompt = buildPrompt(mode, persona, enc);
   const generateFn = getApi("generate") || getApi("Generate");
   const setMsgs = getApi("setChatMessages") || getApi("setChatMessage");
   const getMsgs = getApi("getChatMessages");
@@ -4135,16 +4175,17 @@ async function startGame() {
   try {
     const Mvu = await waitMvu(5000);
     if (!Mvu) throw new Error("开局组件尚未就绪，请稍后重试。");
-    if (!generateFn || !setMsgs || !getMsgs) {
-      throw new Error("当前环境暂不支持生成，请检查酒馆助手后重试。");
-    }
-
+    if (!generateFn || !setMsgs || !getMsgs) throw new Error("当前环境暂不支持生成，请检查酒馆助手后重试。");
     const floor0 = (getMsgs(0, { include_swipes: false }) || [])[0];
     if (!floor0) throw new Error("无法读取当前开局页面，请重新打开后再试。");
 
     const generationId = "shengtang-opening-" + Date.now() + "-" + Math.random().toString(36).slice(2, 9);
     const run = {
       generationId,
+      generation_id: generationId,
+      config: config,
+      revealDone: false,
+      generationDone: false,
       chatId: currentChatId(),
       originalMessage: String(floor0.message || ""),
       cancelled: false,
@@ -4154,39 +4195,35 @@ async function startGame() {
       stopGeneration,
     };
     activeOpening = run;
+    const lockedConfig = activeOpening.config;
+    const revealPromise = startReveal(lockedConfig);
 
     if (typeof eventOn === "function") {
       const onStream = (fullText, generationId) => {
         if (generationId !== run.generationId || run.cancelled) return;
         const length = String(fullText || "").length;
-        if (warn) warn.textContent = length ? "正在生成 · " + length + " 字" : "正在生成…";
-        setGenerationState("正在生成开局", length ? "正在生成 · " + length + " 字" : "正在等待模型返回。");
+        setGenerationState("正在生成开局", length ? `故事正在展开 · ${length} 字` : "正在等待故事回应。", false);
       };
       run.streamHandle = eventOn(streamEvt, onStream);
     }
 
     const oldData = await waitOpeningMvuData(Mvu, 6000);
     const initializedData = (await Mvu.parseMessage(patchBlock, oldData)) || oldData;
-    setGenerationState("正在生成开局", "准备完成，正在写作首段剧情。");
+    setGenerationState("正在生成开局", "世界已经确定，正在写作首段剧情。", false);
     const raw = await runGeneration(
-      generateFn({
-        user_input: prompt,
-        should_stream: true,
-        generation_id: generationId,
-      }),
+      generateFn({ user_input: prompt, should_stream: true, generation_id: generationId }),
       run,
       GEN_TIMEOUT_MS,
     );
     const text = asGenText(raw).trim();
-    if (!text) throw new Error("模型返回空内容，请检查预设后重试");
-    setGenerationState("正在整理开局", "正在整理生成内容，请稍候。");
+    if (!text) throw new Error("生成内容为空，请重试。");
+    run.generationDone = true;
+    await revealPromise;
+    setGenerationState("正在整理开局", "正在整理故事内容，请稍候。", false);
     assertOpeningCanCommit(run, getMsgs);
     const finalData = (await Mvu.parseMessage(text, initializedData)) || initializedData;
     assertOpeningCanCommit(run, getMsgs);
-    if (run.streamHandle && typeof run.streamHandle.stop === "function") {
-      run.streamHandle.stop();
-      run.streamHandle = null;
-    }
+    if (run.streamHandle && typeof run.streamHandle.stop === "function") run.streamHandle.stop();
     await setMsgs(
       [{ message_id: 0, message: openingMessage(text), data: finalData }],
       { refresh: "affected" },
@@ -4194,39 +4231,42 @@ async function startGame() {
     activeOpening = null;
     state.starting = false;
     setGenerationState("开局已生成", "开局内容已经准备完成。", true);
-    return;
-  } catch (err) {
-    stopOpening(err && err.message ? err.message : String(err));
-    if (warn) warn.textContent = "生成失败：" + (err && err.message ? err.message : String(err));
-    setGenerationState("生成失败", err && err.message ? err.message : String(err), true);
-    resetBtn();
-    return;
+  } catch (error) {
+    stopOpening(error && error.message ? error.message : String(error));
+    if (warn) warn.textContent = "生成失败：" + (error && error.message ? error.message : String(error));
+    setGenerationState("生成失败", error && error.message ? error.message : String(error), true);
+    resetButtons();
   }
-  resetBtn();
 }
 
 function init() {
-  if (MEETING_MODES[0]) state.modeId = MEETING_MODES[0].id;
-  if (CHARACTERS[0]) state.charId = CHARACTERS[0].id;
-  renderModes();
-  renderChars();
-
+  const preset = $("#abilityPreset");
+  if (preset) {
+    preset.innerHTML = OPENING_OPTIONS.ability_presets
+      .map(item => `<option value="${item.id}">${item.title}</option>`)
+      .join("");
+    preset.addEventListener("change", updateAbilityPreview);
+  }
+  $$("[data-ability-mode]").forEach(button => {
+    button.addEventListener("click", () => setAbilityMode(button.dataset.abilityMode));
+  });
+  const custom = $("#abilityCustom");
+  if (custom) custom.addEventListener("input", updateAbilityPreview);
+  setAbilityMode("preset");
   $("#btnEnter").onclick = () => showPage(2);
-  $("#btnToMeet").onclick = () => showPage(3);
-  $("#btnStart").onclick = () => startGame();
+  $("#btnStart").onclick = () => startGame(false);
+  $("#btnRandomStart").onclick = () => startGame(true);
   $("#btnCancelGeneration").onclick = () => {
     stopOpening("用户取消生成");
     state.starting = false;
-    const btn = $("#btnStart");
-    if (btn) {
-      btn.disabled = false;
-      btn.textContent = "生成开局";
-    }
+    const startButton = $("#btnStart");
+    const randomButton = $("#btnRandomStart");
+    if (startButton) { startButton.disabled = false; startButton.textContent = "生成开局"; }
+    if (randomButton) { randomButton.disabled = false; randomButton.textContent = "一键随机开始"; }
     setGenerationState("正在生成开局", "已提交生成请求，请稍等。");
-    showPage(3);
+    showPage(2);
   };
   $$("[data-back]").forEach(b => b.onclick = () => showPage(Number(b.dataset.back)));
-  $$(".tab").forEach(t => t.onclick = () => setTab(t.dataset.tab));
 }
 
 window.addEventListener("pagehide", () => stopOpening("页面已卸载"));
