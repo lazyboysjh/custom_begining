@@ -933,7 +933,7 @@ select:focus {
           <h1>圣堂初遇</h1>
           <p class="hook">圣堂会回应一次尚未发生的相遇。<em>设定你的能力</em>，其余交给命运揭晓。</p>
           <div class="foot" style="justify-content:flex-start;margin-top:22px;background:none;border:0;padding:0;position:static;">
-            <button class="btn primary" id="btnEnter" style="width:auto">开始初遇</button>
+            <button class="btn primary" id="btnEnter" style="width:auto">开始召唤啦~</button>
           </div>
         </div>
       </div>
@@ -965,8 +965,8 @@ select:focus {
     <div class="foot">
       <div class="foot-msg" id="warn" role="status" aria-live="polite"></div>
       <button class="btn ghost" data-back="1">返回</button>
-      <button class="btn ghost" id="btnRandomStart">随机启程</button>
-      <button class="btn primary" id="btnStart">揭晓初遇</button>
+      <button class="btn ghost" id="btnRandomStart">命运随便摇~</button>
+      <button class="btn primary" id="btnStart">看看谁来啦</button>
     </div>
   </section>
 
@@ -976,7 +976,7 @@ select:focus {
       <div class="brand">SANCTUM OPENING</div>
       <div class="ornament"></div>
       <div class="panel reveal-stage" id="revealStage" aria-live="polite">
-        <div class="reveal-kicker">来客将至</div>
+        <div class="reveal-kicker">神秘嘉宾加载中</div>
         <div class="reveal-reel" id="revealReel" aria-hidden="true"></div>
         <h2 class="reveal-name" id="revealName">正在辨认来客</h2>
         <div class="reveal-work" id="revealWork"></div>
@@ -984,7 +984,7 @@ select:focus {
         <div class="reveal-context" id="revealContext"></div>
       </div>
       <div class="panel loading-card">
-        <h2 id="generationTitle">正在编织初遇</h2>
+        <h2 id="generationTitle">正在摇人，请稍候~</h2>
         <p id="generationStatus">故事正在回应，请稍候。</p>
         <div class="meter" id="generationMeter" aria-hidden="true"><i></i></div>
       </div>
@@ -7573,11 +7573,11 @@ async function startGame(randomAll = false) {
     state.starting = false;
     if (startButton) {
       startButton.disabled = false;
-      startButton.textContent = "揭晓初遇";
+      startButton.textContent = "看看谁来啦";
     }
     if (randomButton) {
       randomButton.disabled = false;
-      randomButton.textContent = "随机启程";
+      randomButton.textContent = "命运随便摇~";
     }
   };
   if (warn) warn.textContent = "";
@@ -7601,7 +7601,7 @@ async function startGame(randomAll = false) {
     startButton.textContent = "揭晓中…";
   }
   if (randomButton) randomButton.disabled = true;
-  setGenerationState("正在编织初遇", "正在准备本次世界与故事。", false);
+  setGenerationState("正在摇人，请稍候~", "命运正在认真翻名单。", false);
   showPage(4);
 
   const patchBlock = [
@@ -7654,14 +7654,14 @@ async function startGame(randomAll = false) {
       const onStream = (fullText, generationId) => {
         if (generationId !== run.generationId || run.cancelled) return;
         const length = String(fullText || "").length;
-        setGenerationState("正在编织初遇", length ? `故事正在展开 · ${length} 字` : "正在等待故事回应。", false);
+        setGenerationState("故事正在冒泡~", length ? `已经写到 ${length} 字啦` : "灵感正在赶来的路上。", false);
       };
       run.streamHandle = eventOn(streamEvt, onStream);
     }
 
     const oldData = await waitOpeningMvuData(Mvu, 6000);
     const initializedData = (await Mvu.parseMessage(patchBlock, oldData)) || oldData;
-    setGenerationState("正在编织初遇", "世界已经确定，正在写作首段剧情。", false);
+    setGenerationState("人选敲定啦~", "正在安排她闪亮登场。", false);
     const raw = await runGeneration(
       generateFn({ user_input: prompt, should_stream: true, generation_id: generationId }),
       run,
@@ -7714,9 +7714,9 @@ function init() {
     state.starting = false;
     const startButton = $("#btnStart");
     const randomButton = $("#btnRandomStart");
-    if (startButton) { startButton.disabled = false; startButton.textContent = "揭晓初遇"; }
-    if (randomButton) { randomButton.disabled = false; randomButton.textContent = "随机启程"; }
-    setGenerationState("正在编织初遇", "故事正在回应，请稍候。");
+    if (startButton) { startButton.disabled = false; startButton.textContent = "看看谁来啦"; }
+    if (randomButton) { randomButton.disabled = false; randomButton.textContent = "命运随便摇~"; }
+    setGenerationState("故事正在冒泡~", "马上就好，再等它一下下。");
     showPage(2);
   };
   $$("[data-back]").forEach(b => b.onclick = () => showPage(Number(b.dataset.back)));

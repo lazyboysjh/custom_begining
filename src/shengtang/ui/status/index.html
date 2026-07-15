@@ -500,7 +500,7 @@ button { -webkit-tap-highlight-color: transparent; }
       <div class="scene"><b id="scene">—</b><span id="sceneMeta">—</span></div>
       <div class="toolbar">
         <button class="icon-btn" id="btnPrevRole" type="button" title="上一位来客" aria-label="上一位来客">‹</button>
-        <button class="icon-btn primary" id="btnRolePicker" type="button" title="切换来客" aria-label="切换来客">⌘</button>
+        <button class="icon-btn primary" id="btnRolePicker" type="button" title="看看其他人" aria-label="看看其他人">⌘</button>
         <button class="icon-btn" id="btnNextRole" type="button" title="下一位来客" aria-label="下一位来客">›</button>
       </div>
     </header>
@@ -532,11 +532,11 @@ button { -webkit-tap-highlight-color: transparent; }
       </section>
     </div>
     <footer class="actions">
-      <button type="button" class="command-btn" id="btnDraw">召来新客</button>
-      <button type="button" class="command-btn primary" id="btnTogether">推进当前幕</button>
+      <button type="button" class="command-btn" id="btnDraw">再摇一位~</button>
+      <button type="button" class="command-btn primary" id="btnTogether">故事继续走~</button>
       <div class="action-note" id="drawNote"></div>
     </footer>
-    <aside class="role-picker" id="rolePicker" aria-label="切换来客">
+    <aside class="role-picker" id="rolePicker" aria-label="看看其他人">
       <input class="role-search" id="roleSearch" type="search" placeholder="搜索在场来客" autocomplete="off" />
       <div class="role-list" id="roleList"></div>
     </aside>
@@ -2795,7 +2795,7 @@ function buildTogetherPrompt(stat) {
   const role = getRoleState(stat, focus);
   const focusPath = jsonPointerSegment(focus);
   return [
-    "【圣堂初遇｜推进当前幕】承接当前剧情，不重置变量或新增无关人物。",
+    "【圣堂初遇｜故事接着走】承接当前剧情，保留已有变量与在场人物。",
     `当前场景：${getPath(stat, "世界.场景", "圣言堂")}；焦点：${focus}；同场：${present.join("、") || "暂无"}。`,
     `焦点角色目标：${role.当前目标 || "未记录"}；判断：${role.对user判断 || "未形成"}；边界：${role.当前边界 || "未说明"}。`,
     "先推进各角色自己的目标与风险判断，再写相处。多人可以产生不同甚至冲突的反应；不围着讨好{{user}}转，禁止捷径吹捧和秒信/奉承。",
@@ -2827,10 +2827,10 @@ async function onDrawEncounter() {
 async function onTogetherMoment() {
   if (drawing || !presentRoles(currentStat).length) return;
   setActionBusy(true);
-  document.getElementById("drawNote").textContent = "正在续写当前幕";
+  document.getElementById("drawNote").textContent = "故事正在往前跑~";
   try {
     const sent = await dispatchSend(buildTogetherPrompt(currentStat));
-    toast(sent ? "已开始续写当前幕" : "请先打开消息发送功能，再续写当前幕。");
+    toast(sent ? "好戏继续啦~" : "先打开消息发送功能，故事才能继续哦。");
   } catch (error) { console.error(error); toast("发送失败，请重试"); }
   document.getElementById("drawNote").textContent = "";
   setActionBusy(false);
