@@ -8,9 +8,11 @@ import subprocess
 import sys
 from pathlib import Path
 
-import yaml
-
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT))
+
+from build_shengtang_card import load_characters
+
 WB_DIR = ROOT / "worldbook" / "角色"
 CARD = ROOT / "圣堂初遇.json"
 
@@ -44,8 +46,8 @@ def main() -> int:
     warns: list[str] = []
     oks: list[str] = []
 
-    chars = yaml.safe_load((ROOT / "plot/characters.yaml").read_text(encoding="utf-8"))["characters"]
-    oks.append(f"characters.yaml 共 {len(chars)} 人")
+    chars = load_characters()
+    oks.append(f"组合角色目录共 {len(chars)} 人")
 
     # --- 知识库四段结构（世界书 md）---
     required_secs = ["基本信息", "外貌特征", "背景设定", "关系设定"]

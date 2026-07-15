@@ -10,17 +10,78 @@ from pathlib import Path
 
 import yaml
 
+from build_shengtang_card import load_character_sources, load_characters
+
 ROOT = Path(__file__).resolve().parents[1]
 COVER = (ROOT / "src/shengtang/ui/cover/index.html").read_text(encoding="utf-8")
 STATUS = (ROOT / "src/shengtang/ui/status/index.html").read_text(encoding="utf-8")
 BUILD = (ROOT / "build_shengtang_card.py").read_text(encoding="utf-8")
 CARD = json.loads((ROOT / "圣堂初遇.json").read_text(encoding="utf-8"))
-CHARS = yaml.safe_load((ROOT / "plot/characters.yaml").read_text(encoding="utf-8"))["characters"]
+CHARS = load_characters()
 WRITE_RULES = (ROOT / "worldbook/02_写作与人设规则.md").read_text(encoding="utf-8")
 MVU_RULES = (ROOT / "plot/mvu_update.yaml").read_text(encoding="utf-8")
 MVU_SCHEMA = (ROOT / "plot/schema.mvu.js").read_text(encoding="utf-8")
 INITVAR = yaml.safe_load((ROOT / "plot/initvar.yaml").read_text(encoding="utf-8"))
 WRITING_RULES = WRITE_RULES
+
+
+class CharacterCatalogTests(unittest.TestCase):
+    def test_roster_has_exactly_150_unique_characters(self) -> None:
+        self.assertEqual(len(CHARS), 150)
+        self.assertEqual(len({char["id"] for char in CHARS}), 150)
+        self.assertEqual(len({char["name"] for char in CHARS}), 150)
+
+    def test_new_batches_have_complete_source_records(self) -> None:
+        base = yaml.safe_load((ROOT / "plot/characters.yaml").read_text(encoding="utf-8"))["characters"]
+        base_ids = {char["id"] for char in base}
+        added = [char for char in CHARS if char["id"] not in base_ids]
+        sources = load_character_sources()
+        self.assertEqual(len(base), 78)
+        self.assertEqual(len(added), 72)
+        self.assertEqual(set(sources), {char["id"] for char in added})
+        for char in added:
+            source = sources[char["id"]]
+            self.assertTrue(source.get("category"), char["name"])
+            self.assertTrue(source.get("primary"), char["name"])
+            self.assertTrue(source.get("notes"), char["name"])
+
+    def test_added_profiles_are_individually_complete(self) -> None:
+        base_ids = {
+            char["id"]
+            for char in yaml.safe_load(
+                (ROOT / "plot/characters.yaml").read_text(encoding="utf-8")
+            )["characters"]
+        }
+        required_text = ("name", "work", "appearance", "blurb", "intro", "work_intro", "filth_seed")
+        for char in (item for item in CHARS if item["id"] not in base_ids):
+            for field in required_text:
+                self.assertTrue(str(char.get(field) or "").strip(), f"{char['id']}: {field}")
+            self.assertGreaterEqual(len(char.get("aliases") or []), 3, char["id"])
+            self.assertGreaterEqual(len(char.get("background") or []), 3, char["id"])
+            self.assertGreaterEqual(len(char.get("relations") or []), 3, char["id"])
+            self.assertEqual(char["relations"][0], "与{{user}}：开局无旧识", char["id"])
+
+    def test_aliases_do_not_collide_across_roster(self) -> None:
+        owners: dict[str, str] = {}
+        collisions: list[str] = []
+        for char in CHARS:
+            for raw in [char["name"], *(char.get("aliases") or [])]:
+                alias = str(raw).strip().casefold()
+                if not alias:
+                    continue
+                owner = owners.setdefault(alias, char["id"])
+                if owner != char["id"]:
+                    collisions.append(f"{raw}: {owner} / {char['id']}")
+        self.assertEqual(collisions, [])
+
+    def test_real_performers_are_not_random_roleplay_targets(self) -> None:
+        roster_text = "\n".join(
+            str(alias)
+            for char in CHARS
+            for alias in [char["name"], *(char.get("aliases") or [])]
+        )
+        for name in ("杨幂", "刘诗诗", "唐嫣", "刘亦菲", "赵丽颖", "迪丽热巴"):
+            self.assertNotIn(name, roster_text)
 
 
 class OpeningOptionTests(unittest.TestCase):

@@ -1,0 +1,21 @@
+version: 1
+base_roster: characters.yaml
+batch_directory: character_batches
+batches:
+- path: anime_game.yaml
+  category: 动画与游戏
+  expected_count: 24
+- path: web_novel.yaml
+  category: 中国网络小说
+  expected_count: 20
+- path: classics.yaml
+  category: 古典文学与传说
+  expected_count: 16
+- path: cn_screen_fiction.yaml
+  category: 中国影视虚构角色
+  expected_count: 12
+source_policy:
+  primary_first: true
+  secondary_only_for_gaps: true
+  public_figures_excluded: true
+  note: 现实人物不进入含成人或胁迫题材的随机角色扮演池；以明确虚构角色补足名额。

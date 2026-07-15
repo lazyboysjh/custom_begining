@@ -275,12 +275,95 @@ def build_mvu_update() -> str:
     return "\n".join(lines)
 
 
+def load_character_registry() -> dict:
+    path = ROOT / "plot/character_sources.yaml"
+    if not path.is_file():
+        return {"base_roster": "characters.yaml", "batches": []}
+    return yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+
+
+def iter_character_payloads() -> list[tuple[Path, dict]]:
+    registry = load_character_registry()
+    plot_dir = ROOT / "plot"
+    base_path = plot_dir / str(registry.get("base_roster") or "characters.yaml")
+    payloads = [(base_path, yaml.safe_load(base_path.read_text(encoding="utf-8")) or {})]
+    batch_dir = plot_dir / str(registry.get("batch_directory") or "character_batches")
+    for item in registry.get("batches") or []:
+        path = batch_dir / str(item.get("path") or "")
+        if not path.is_file():
+            raise SystemExit(f"character batch missing: {path.relative_to(ROOT)}")
+        payload = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+        expected = int(item.get("expected_count") or 0)
+        actual = len(payload.get("characters") or [])
+        if expected and actual != expected:
+            raise SystemExit(f"character batch count mismatch: {path.name} ({actual} != {expected})")
+        payloads.append((path, payload))
+    return payloads
+
+
 def load_characters() -> list[dict]:
-    data = yaml.safe_load((ROOT / "plot/characters.yaml").read_text(encoding="utf-8")) or {}
-    chars = data.get("characters") or []
-    for c in chars:
-        c["aliases"] = [str(a) for a in (c.get("aliases") or [])]
+    chars: list[dict] = []
+    seen_ids: set[str] = set()
+    seen_names: set[str] = set()
+    for path, payload in iter_character_payloads():
+        for raw in payload.get("characters") or []:
+            char = dict(raw)
+            char["aliases"] = [str(alias) for alias in (char.get("aliases") or [])]
+            char_id = str(char.get("id") or "").strip()
+            name = str(char.get("name") or "").strip()
+            if not char_id or not name:
+                raise SystemExit(f"character missing id/name: {path.relative_to(ROOT)}")
+            if char_id in seen_ids or name in seen_names:
+                raise SystemExit(f"duplicate character id/name: {char_id} / {name}")
+            seen_ids.add(char_id)
+            seen_names.add(name)
+            chars.append(char)
     return chars
+
+
+def load_character_sources() -> dict[str, dict]:
+    sources: dict[str, dict] = {}
+    for path, payload in iter_character_payloads()[1:]:
+        for char_id, source in (payload.get("sources") or {}).items():
+            key = str(char_id).strip()
+            if key in sources:
+                raise SystemExit(f"duplicate character source: {key} ({path.relative_to(ROOT)})")
+            sources[key] = dict(source or {})
+    return sources
+
+
+def validate_character_catalog(chars: list[dict], sources: dict[str, dict]) -> None:
+    registry = load_character_registry()
+    base_path = ROOT / "plot" / str(registry.get("base_roster") or "characters.yaml")
+    base = yaml.safe_load(base_path.read_text(encoding="utf-8")) or {}
+    base_ids = {str(char.get("id") or "") for char in (base.get("characters") or [])}
+    added = [char for char in chars if char["id"] not in base_ids]
+    expected_total = len(base_ids) + sum(
+        int(item.get("expected_count") or 0) for item in (registry.get("batches") or [])
+    )
+    if len(chars) != expected_total:
+        raise SystemExit(f"character catalog count mismatch: {len(chars)} != {expected_total}")
+    if set(sources) != {char["id"] for char in added}:
+        raise SystemExit("character source ids do not exactly match the added roster")
+
+    required_text = ("name", "work", "appearance", "blurb", "intro", "work_intro", "filth_seed")
+    alias_owners: dict[str, str] = {}
+    for char in chars:
+        for field in required_text:
+            if not str(char.get(field) or "").strip():
+                raise SystemExit(f"character field missing: {char['id']}.{field}")
+        for alias in [char["name"], *(char.get("aliases") or [])]:
+            key = str(alias).strip().casefold()
+            if not key:
+                continue
+            owner = alias_owners.setdefault(key, char["id"])
+            if owner != char["id"]:
+                raise SystemExit(f"character alias collision: {alias} ({owner} / {char['id']})")
+
+    for char in added:
+        source = sources[char["id"]]
+        if not source.get("category") or not source.get("primary") or not source.get("notes"):
+            raise SystemExit(f"character source incomplete: {char['id']}")
 
 
 def load_meeting_modes() -> list[dict]:
@@ -371,7 +454,10 @@ def render_character_profile(c: dict) -> str:
         f"    别名: {aliases}",
         "    性别: 女",
         f"    作品: {work_line}",
-        f"    年龄: {age}",
+    ]
+    if age:
+        lines.append(f"    年龄: {age}")
+    lines.extend([
         f"    身份: {blurb or '见原作；本卡开局为初遇对象'}",
         "    与{{user}}关系: 开局无旧识",
         "",
@@ -382,7 +468,7 @@ def render_character_profile(c: dict) -> str:
         f"    - {appearance}" if appearance else "    - （见原作辨识特征）",
         "",
         "  背景设定:",
-    ]
+    ])
     if work_intro:
         lines.append(f"    作品简介: {work_intro}")
     if background:
@@ -740,14 +826,15 @@ def main() -> None:
     if not TEMPLATE.is_file():
         raise SystemExit(f"模板不存在: {TEMPLATE}\n请设置 SHENGTANG_TEMPLATE")
 
+    validate_character_catalog(load_characters(), load_character_sources())
     sync_cover_assets()
     sync_static_dist()
 
     card = json.loads(TEMPLATE.read_text(encoding="utf-8"))
     card["name"] = CARD_NAME
-    card["description"] = "捏同人开局：圣堂牧师 × 热门动漫女性初遇。角色年龄、身份与关系按所选原著时间点记录。"
+    card["description"] = "跨时代随机初遇：设定{{user}}的净化能力，由圣堂从150名女性角色中揭晓本局来客与故事。"
     card["personality"] = ""
-    card["scenario"] = "圣言堂。{{user}}是能净化污秽的牧师；初遇一名二次元女性，按封面所选相遇方式与原著人设开局。"
+    card["scenario"] = "圣堂会随时代改变外在形态，但始终保留净化体系、跨界节点、仪式规则与长期据点。{{user}}设定能力后，其余开局要素随机生成。"
     card["first_mes"] = COVER_HTML
     card["mes_example"] = ""
     card["creatorcomment"] = "圣堂初遇 / custom_begining"
