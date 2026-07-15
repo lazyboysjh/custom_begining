@@ -499,9 +499,9 @@ button { -webkit-tap-highlight-color: transparent; }
     <header class="topbar">
       <div class="scene"><b id="scene">—</b><span id="sceneMeta">—</span></div>
       <div class="toolbar">
-        <button class="icon-btn" id="btnPrevRole" type="button" title="上一位" aria-label="上一位角色">‹</button>
-        <button class="icon-btn primary" id="btnRolePicker" type="button" title="全部角色" aria-label="全部角色">⌘</button>
-        <button class="icon-btn" id="btnNextRole" type="button" title="下一位" aria-label="下一位角色">›</button>
+        <button class="icon-btn" id="btnPrevRole" type="button" title="上一位来客" aria-label="上一位来客">‹</button>
+        <button class="icon-btn primary" id="btnRolePicker" type="button" title="切换来客" aria-label="切换来客">⌘</button>
+        <button class="icon-btn" id="btnNextRole" type="button" title="下一位来客" aria-label="下一位来客">›</button>
       </div>
     </header>
     <nav class="role-strip" aria-label="当前出场角色">
@@ -509,9 +509,9 @@ button { -webkit-tap-highlight-color: transparent; }
       <span class="role-count" id="roleCount">0 人</span>
     </nav>
     <div class="opening-context" aria-label="开局背景">
-      <span><small>故事</small><b id="storyType">—</b></span>
+      <span><small>篇章</small><b id="storyType">—</b></span>
       <span><small>氛围</small><b id="storyAtmosphere">—</b></span>
-      <span><small>圣堂</small><b id="sanctumForm">—</b></span>
+      <span><small>场所</small><b id="sanctumForm">—</b></span>
       <span><small>能力</small><b id="abilitySummary">—</b></span>
     </div>
     <div class="content">
@@ -525,24 +525,24 @@ button { -webkit-tap-highlight-color: transparent; }
       </section>
       <section class="detail-pane">
         <div class="fact"><span>此刻</span><b id="mood">—</b></div>
-        <div class="fact"><span>目标</span><b id="goal">—</b></div>
-        <div class="fact"><span>判断</span><b id="judgement">—</b></div>
-        <div class="fact"><span>边界</span><b id="boundary">—</b></div>
-        <div class="fact"><span>污秽</span><b id="filthType">—</b></div>
+        <div class="fact"><span>所求</span><b id="goal">—</b></div>
+        <div class="fact"><span>观感</span><b id="judgement">—</b></div>
+        <div class="fact"><span>界限</span><b id="boundary">—</b></div>
+        <div class="fact"><span>异象</span><b id="filthType">—</b></div>
       </section>
     </div>
     <footer class="actions">
-      <button type="button" class="command-btn" id="btnDraw">枢纽抽卡</button>
-      <button type="button" class="command-btn primary" id="btnTogether">相聚一刻</button>
+      <button type="button" class="command-btn" id="btnDraw">召来新客</button>
+      <button type="button" class="command-btn primary" id="btnTogether">推进当前幕</button>
       <div class="action-note" id="drawNote"></div>
     </footer>
-    <aside class="role-picker" id="rolePicker" aria-label="全部角色">
-      <input class="role-search" id="roleSearch" type="search" placeholder="搜索当前出场角色" autocomplete="off" />
+    <aside class="role-picker" id="rolePicker" aria-label="切换来客">
+      <input class="role-search" id="roleSearch" type="search" placeholder="搜索在场来客" autocomplete="off" />
       <div class="role-list" id="roleList"></div>
     </aside>
   </section>
 </div>
-<div class="status-state status-empty" id="emptyState">当前场景暂无角色。</div>
+<div class="status-state status-empty" id="emptyState">此刻尚无来客。</div>
 <div class="status-state status-error" id="errorState"><span id="errorCopy">状态暂不可用。</span></div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 <script>
@@ -2295,7 +2295,7 @@ function buildTogetherPrompt(stat) {
   const role = getRoleState(stat, focus);
   const focusPath = jsonPointerSegment(focus);
   return [
-    "【圣堂初遇｜相聚一刻】承接当前剧情，不重置变量或新增无关人物。",
+    "【圣堂初遇｜推进当前幕】承接当前剧情，不重置变量或新增无关人物。",
     `当前场景：${getPath(stat, "世界.场景", "圣言堂")}；焦点：${focus}；同场：${present.join("、") || "暂无"}。`,
     `焦点角色目标：${role.当前目标 || "未记录"}；判断：${role.对user判断 || "未形成"}；边界：${role.当前边界 || "未说明"}。`,
     "先推进各角色自己的目标与风险判断，再写相处。多人可以产生不同甚至冲突的反应；不围着讨好{{user}}转，禁止捷径吹捧和秒信/奉承。",
@@ -2327,10 +2327,10 @@ async function onDrawEncounter() {
 async function onTogetherMoment() {
   if (drawing || !presentRoles(currentStat).length) return;
   setActionBusy(true);
-  document.getElementById("drawNote").textContent = "正在推进当前场景";
+  document.getElementById("drawNote").textContent = "正在续写当前幕";
   try {
     const sent = await dispatchSend(buildTogetherPrompt(currentStat));
-    toast(sent ? "已发送相聚一刻" : "当前为界面预览");
+    toast(sent ? "已开始续写当前幕" : "当前为界面预览");
   } catch (error) { console.error(error); toast("发送失败，请重试"); }
   document.getElementById("drawNote").textContent = "";
   setActionBusy(false);

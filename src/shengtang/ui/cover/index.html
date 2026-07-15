@@ -931,9 +931,9 @@ select:focus {
       <div class="hero">
         <div class="hero-glass">
           <h1>圣堂初遇</h1>
-          <p class="hook">她踏入烛火与彩窗之间。<em>表面是净化污秽的仪式</em>——真正开始的，是你以圣职为名的靠近。</p>
+          <p class="hook">圣堂会回应一次尚未发生的相遇。<em>设定你的能力</em>，其余交给命运揭晓。</p>
           <div class="foot" style="justify-content:flex-start;margin-top:22px;background:none;border:0;padding:0;position:static;">
-            <button class="btn primary" id="btnEnter" style="width:auto">进入圣堂</button>
+            <button class="btn primary" id="btnEnter" style="width:auto">开始初遇</button>
           </div>
         </div>
       </div>
@@ -946,7 +946,7 @@ select:focus {
       <div class="brand">OPENING RITUAL</div>
       <div class="ornament"></div>
       <div class="section-title">你的能力</div>
-      <p class="hint">选择净化方式，或写下属于你的能力。其余一切将在仪式中揭晓。</p>
+      <p class="hint">选择你的净化能力。时代、场所、故事与来客将在下一步揭晓。</p>
       <div class="panel ability-panel">
         <div class="ability-modes" role="group" aria-label="能力设置方式">
           <button class="ability-mode active" type="button" data-ability-mode="preset">预设</button>
@@ -965,8 +965,8 @@ select:focus {
     <div class="foot">
       <div class="foot-msg" id="warn" role="status" aria-live="polite"></div>
       <button class="btn ghost" data-back="1">返回</button>
-      <button class="btn ghost" id="btnRandomStart">一键随机开始</button>
-      <button class="btn primary" id="btnStart">生成开局</button>
+      <button class="btn ghost" id="btnRandomStart">随机启程</button>
+      <button class="btn primary" id="btnStart">揭晓初遇</button>
     </div>
   </section>
 
@@ -976,7 +976,7 @@ select:focus {
       <div class="brand">SANCTUM OPENING</div>
       <div class="ornament"></div>
       <div class="panel reveal-stage" id="revealStage" aria-live="polite">
-        <div class="reveal-kicker">圣堂启示</div>
+        <div class="reveal-kicker">来客将至</div>
         <div class="reveal-reel" id="revealReel" aria-hidden="true"></div>
         <h2 class="reveal-name" id="revealName">正在辨认来客</h2>
         <div class="reveal-work" id="revealWork"></div>
@@ -984,13 +984,13 @@ select:focus {
         <div class="reveal-context" id="revealContext"></div>
       </div>
       <div class="panel loading-card">
-        <h2 id="generationTitle">正在生成开局</h2>
-        <p id="generationStatus">已提交生成请求，请稍等。</p>
+        <h2 id="generationTitle">正在编织初遇</h2>
+        <p id="generationStatus">故事正在回应，请稍候。</p>
         <div class="meter" id="generationMeter" aria-hidden="true"><i></i></div>
       </div>
     </div>
     <div class="foot">
-      <button class="btn ghost" id="btnCancelGeneration">取消并返回</button>
+      <button class="btn ghost" id="btnCancelGeneration">返回重选</button>
     </div>
   </section>
 </div>
@@ -5851,7 +5851,7 @@ function setGenerationState(title, status, done = false) {
   if (titleEl) titleEl.textContent = title || "";
   if (statusEl) statusEl.textContent = status || "";
   if (meter) meter.style.display = done ? "none" : "block";
-  if (cancel) cancel.textContent = done ? "返回选择" : "取消并返回";
+  if (cancel) cancel.textContent = "返回重选";
 }
 
 /** 首楼只用短辨识，完整档案交给世界书触发 */
@@ -6215,11 +6215,11 @@ async function startGame(randomAll = false) {
     state.starting = false;
     if (startButton) {
       startButton.disabled = false;
-      startButton.textContent = "生成开局";
+      startButton.textContent = "揭晓初遇";
     }
     if (randomButton) {
       randomButton.disabled = false;
-      randomButton.textContent = "一键随机开始";
+      randomButton.textContent = "随机启程";
     }
   };
   if (warn) warn.textContent = "";
@@ -6240,10 +6240,10 @@ async function startGame(randomAll = false) {
   state.starting = true;
   if (startButton) {
     startButton.disabled = true;
-    startButton.textContent = "生成中…";
+    startButton.textContent = "揭晓中…";
   }
   if (randomButton) randomButton.disabled = true;
-  setGenerationState("正在生成开局", "正在准备本次世界与故事。", false);
+  setGenerationState("正在编织初遇", "正在准备本次世界与故事。", false);
   showPage(4);
 
   const patchBlock = [
@@ -6296,14 +6296,14 @@ async function startGame(randomAll = false) {
       const onStream = (fullText, generationId) => {
         if (generationId !== run.generationId || run.cancelled) return;
         const length = String(fullText || "").length;
-        setGenerationState("正在生成开局", length ? `故事正在展开 · ${length} 字` : "正在等待故事回应。", false);
+        setGenerationState("正在编织初遇", length ? `故事正在展开 · ${length} 字` : "正在等待故事回应。", false);
       };
       run.streamHandle = eventOn(streamEvt, onStream);
     }
 
     const oldData = await waitOpeningMvuData(Mvu, 6000);
     const initializedData = (await Mvu.parseMessage(patchBlock, oldData)) || oldData;
-    setGenerationState("正在生成开局", "世界已经确定，正在写作首段剧情。", false);
+    setGenerationState("正在编织初遇", "世界已经确定，正在写作首段剧情。", false);
     const raw = await runGeneration(
       generateFn({ user_input: prompt, should_stream: true, generation_id: generationId }),
       run,
@@ -6313,7 +6313,7 @@ async function startGame(randomAll = false) {
     if (!text) throw new Error("生成内容为空，请重试。");
     run.generationDone = true;
     await revealPromise;
-    setGenerationState("正在整理开局", "正在整理故事内容，请稍候。", false);
+    setGenerationState("正在整理初遇", "正在整理故事内容，请稍候。", false);
     assertOpeningCanCommit(run, getMsgs);
     const finalData = (await Mvu.parseMessage(text, initializedData)) || initializedData;
     assertOpeningCanCommit(run, getMsgs);
@@ -6324,11 +6324,12 @@ async function startGame(randomAll = false) {
     );
     activeOpening = null;
     state.starting = false;
-    setGenerationState("开局已生成", "开局内容已经准备完成。", true);
+    setGenerationState("初遇已就绪", "故事已经准备完成。", true);
   } catch (error) {
     stopOpening(error && error.message ? error.message : String(error));
-    if (warn) warn.textContent = "生成失败：" + (error && error.message ? error.message : String(error));
-    setGenerationState("生成失败", error && error.message ? error.message : String(error), true);
+    console.error(error);
+    if (warn) warn.textContent = "暂时无法揭晓，请返回重选后再试。";
+    setGenerationState("暂时无法揭晓", "请返回重选后再试。", true);
     resetButtons();
   }
 }
@@ -6355,9 +6356,9 @@ function init() {
     state.starting = false;
     const startButton = $("#btnStart");
     const randomButton = $("#btnRandomStart");
-    if (startButton) { startButton.disabled = false; startButton.textContent = "生成开局"; }
-    if (randomButton) { randomButton.disabled = false; randomButton.textContent = "一键随机开始"; }
-    setGenerationState("正在生成开局", "已提交生成请求，请稍等。");
+    if (startButton) { startButton.disabled = false; startButton.textContent = "揭晓初遇"; }
+    if (randomButton) { randomButton.disabled = false; randomButton.textContent = "随机启程"; }
+    setGenerationState("正在编织初遇", "故事正在回应，请稍候。");
     showPage(2);
   };
   $$("[data-back]").forEach(b => b.onclick = () => showPage(Number(b.dataset.back)));
