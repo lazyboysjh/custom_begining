@@ -2330,7 +2330,7 @@ async function onTogetherMoment() {
   document.getElementById("drawNote").textContent = "正在续写当前幕";
   try {
     const sent = await dispatchSend(buildTogetherPrompt(currentStat));
-    toast(sent ? "已开始续写当前幕" : "当前为界面预览");
+    toast(sent ? "已开始续写当前幕" : "请先打开消息发送功能，再续写当前幕。");
   } catch (error) { console.error(error); toast("发送失败，请重试"); }
   document.getElementById("drawNote").textContent = "";
   setActionBusy(false);
