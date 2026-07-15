@@ -63,11 +63,25 @@ class CharacterCatalogTests(unittest.TestCase):
                 (ROOT / "plot/characters.yaml").read_text(encoding="utf-8")
             )["characters"]
         }
+        recent_ids = {
+            char["id"]
+            for char in yaml.safe_load(
+                (ROOT / "plot/character_batches/recent_anime.yaml").read_text(encoding="utf-8")
+            )["characters"]
+        }
         required_text = ("name", "work", "appearance", "blurb", "intro", "work_intro", "filth_seed")
         for char in (item for item in CHARS if item["id"] not in base_ids):
             for field in required_text:
                 self.assertTrue(str(char.get(field) or "").strip(), f"{char['id']}: {field}")
             self.assertGreaterEqual(len(char.get("aliases") or []), 3, char["id"])
+            if char["id"] in recent_ids:
+                aliases = {
+                    str(alias).strip().casefold()
+                    for alias in (char.get("aliases") or [])
+                    if str(alias).strip()
+                }
+                self.assertNotIn(char["name"].strip().casefold(), aliases, char["id"])
+                self.assertGreaterEqual(len(aliases), 3, char["id"])
             self.assertGreaterEqual(len(char.get("background") or []), 3, char["id"])
             self.assertGreaterEqual(len(char.get("relations") or []), 3, char["id"])
             self.assertEqual(char["relations"][0], "与{{user}}：开局无旧识", char["id"])

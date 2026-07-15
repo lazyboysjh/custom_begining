@@ -108,3 +108,75 @@ git diff --check
 - 《蓝箱》《莉可丽丝》《胆大党》《BLEACH》《鬼灭之刃》《进击的巨人》等官方站以动态角色总页承载多角色，URL 不总提供稳定单角色锚点；仍为版权方官方页，未用百科替代主来源。
 - 蕾塞的正式动画角色页来自 2025 年剧场版，但 `year: 2022` 按批次 schema 记录《电锯人》动画系列首播年份；notes 明确人物采用剧场版版本。
 - 中文姓名沿用设计规格指定译名，日文官方名与罗马字写入别名，避免自行替换用户给定名称。
+
+## 2026-07-15 审查修复
+
+### 修复内容
+
+- 将小鞠知花、鹿野千夏、伊地知虹夏、小南、珠世、甘露寺蜜璃、家入硝子、草薙素子的正式名别名分别替换为不同称呼；Task 2 的 50 人现均满足别名去重后至少 3 个且不含正式 `name`。
+- 在 `scripts/test_shengtang_regressions.py` 中保留全部新增批次原有完整性检查，并对 `recent_anime.yaml` 的 50 人新增别名去重、排除正式名的回归断言。
+- 西尔维娅·舍伍德的主来源改为可访问的动画官网入口 `https://spy-family.net/tvseries/`；2026-07-15 实际打开后确认返回 TV 动画官方站并包含 CHARACTER 导航。
+- 禅院真希锁定涩谷事变前状态：正文作品简介删除事变后转折，关系删除“最终托付”，来源 notes 删除“尚未动画化”并明确排除事变伤势及后续家族、能力变化；外貌继续采用高马尾、红框眼镜、高专制服与咒具的稳定造型。
+- 浜冈梓和志喜屋梦子的第三条 background 改为各自明确目标；照美冥 appearance 的“熔遁”订正为“溶遁”。
+- 调用既有 `build_worldbook_entries()` 重生成受影响的 12 份角色档案，未改 UI，也未触碰其他协作者的未跟踪目录。
+
+### TDD 与验证结果
+
+测试增强后的首次红灯落在旧批次蒂法，证明原先按全部非基础角色施加新规则会扩大 Task 2 范围：
+
+```text
+FAIL: test_added_profiles_are_individually_complete
+AssertionError: '蒂法·洛克哈特' unexpectedly found in {'第七天堂老板娘', '蒂法', 'tifa', '蒂法·洛克哈特'} : tifa_lockhart
+Ran 7 tests in 0.460s
+FAILED (failures=1)
+```
+
+将新增规则精确绑定 Task 2 的 `recent_anime.yaml` 后再次运行，红灯准确命中本次缺陷：
+
+```text
+FAIL: test_added_profiles_are_individually_complete
+AssertionError: '小鞠知花' unexpectedly found in {'文艺部的小鞠', 'chika komari', '小鞠知花'} : komari_chika
+Ran 7 tests in 0.611s
+FAILED (failures=1)
+```
+
+生产数据修复及档案重生成命令：
+
+```powershell
+python -c "from build_shengtang_card import build_worldbook_entries; entries = build_worldbook_entries(); print(f'regenerated profiles; entries={len(entries)}')"
+```
+
+```text
+regenerated profiles; entries=213
+```
+
+最终指定测试：
+
+```powershell
+python -m unittest scripts.test_shengtang_regressions.CharacterCatalogTests
+```
+
+```text
+.......
+----------------------------------------------------------------------
+Ran 7 tests in 0.530s
+
+OK
+```
+
+结构自检输出：
+
+```text
+recent_alias_violations= []
+characters= 50 sources= 50
+```
+
+最终执行 `git diff --check`，无输出且退出码为 0。
+
+### 审查自检与资料边界
+
+- [x] 八名被点名角色均有至少 3 个不同且不等于正式名的别名；同一规则覆盖并通过 Task 2 全部 50 人。
+- [x] 真希正文、外貌、关系和来源 notes 均停留在涩谷事变前，不含过时动画进度判断。
+- [x] 两条 background 明确表达角色自身目标；照美冥术语已统一为“溶遁”。
+- [x] 西尔维娅来源使用可访问官方 TV 动画页；该入口是作品总页而非稳定单角色锚点，因此仍以 notes 限定为动画已呈现的 WISE 管理官阶段。
+- [x] 受影响世界书由仓库生成器输出，YAML 和 Markdown 保持 UTF-8。
