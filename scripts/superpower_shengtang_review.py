@@ -67,7 +67,7 @@ def main() -> int:
         # 基本信息必要字段
         basic = section(text.replace("角色档案:\n", ""), "基本信息") if "角色档案:" in text else ""
         # simpler checks on full text
-        for key in ("姓名:", "性别:", "作品:", "年龄:", "与{{user}}关系:"):
+        for key in ("姓名:", "性别:", "作品:", "与{{user}}关系:"):
             if key not in text:
                 errs.append(f"{name}: 基本信息缺 {key}")
 

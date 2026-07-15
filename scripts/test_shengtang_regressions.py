@@ -83,6 +83,11 @@ class CharacterCatalogTests(unittest.TestCase):
         for name in ("杨幂", "刘诗诗", "唐嫣", "刘亦菲", "赵丽颖", "迪丽热巴"):
             self.assertNotIn(name, roster_text)
 
+    def test_generated_profiles_omit_blank_age_fields(self) -> None:
+        for char in CHARS:
+            profile = (ROOT / "worldbook" / "角色" / f"{char['name']}.md").read_text(encoding="utf-8")
+            self.assertNotIn("    年龄: \n", profile, char["name"])
+
 
 class OpeningOptionTests(unittest.TestCase):
     def setUp(self) -> None:
