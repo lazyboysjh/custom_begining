@@ -47,6 +47,8 @@ class CharacterCatalogTests(unittest.TestCase):
             "揭晓初遇",
             "召来新客",
             "推进当前幕",
+            "返回重选",
+            "初遇已就绪",
         ):
             self.assertNotIn(obsolete, COVER + STATUS)
         for expected in (
@@ -57,6 +59,8 @@ class CharacterCatalogTests(unittest.TestCase):
             "再摇一位~",
             "故事继续走~",
             "看看其他人",
+            "再想一下",
+            "人来啦，开演~",
         ):
             self.assertIn(expected, COVER + STATUS)
 
@@ -76,7 +80,7 @@ class CharacterCatalogTests(unittest.TestCase):
         for marker in (
             "演绎校准",
             "先呈现角色自己的目标与风险判断",
-            "评价依据亲历且可验证的行为",
+            "评价依据亲历且可验证的具体事实",
             "关系变化对应明确事件",
         ):
             self.assertIn(marker, core)
@@ -620,8 +624,8 @@ class AntiSycophancyTests(unittest.TestCase):
             self.assertNotIn(forbidden, STATUS)
 
     def test_opening_prompt_blocks_instant_devotion(self) -> None:
-        self.assertIn("不等于可爱、可信或值得献身", COVER)
-        self.assertIn("只有你", COVER)
+        self.assertIn("认可效果本身，关系仍按事件推进", COVER)
+        self.assertIn("特殊感来自连续相处、共同承担和反复验证", COVER)
         self.assertIn("openingGoal(", COVER)
         self.assertNotIn("clipVoice(enc.背景 || enc.简介, 72)", COVER)
 
@@ -641,13 +645,13 @@ class AntiSycophancyTests(unittest.TestCase):
             self.assertIn(field, schema)
             self.assertIn(field, COVER)
             self.assertIn(field, update_rules)
-        for rule in ("评价依据亲历且可验证的行为", "关系变化对应明确事件", "本轮至少让她作出一个"):
+        for rule in ("评价依据亲历且可验证的具体事实", "关系变化对应明确事件", "本轮至少让她作出一个"):
             self.assertIn(rule, writing_rules)
 
     def test_anti_user_flattery_is_enforced_at_all_prompt_layers(self) -> None:
         for marker in (
             "角色自己的目标",
-            "评价依据亲历且可验证的行为",
+            "评价依据亲历且可验证的具体事实",
             "原作重要关系持续影响判断",
             "关系变化对应明确事件",
             "认可具体事实",
@@ -688,6 +692,19 @@ class AntiSycophancyTests(unittest.TestCase):
         expected = {char["name"] for char in CHARS}
         self.assertEqual(generated, expected)
 
+    def test_character_worldbook_entries_follow_multirole_activation_rules(self) -> None:
+        entries = CARD["data"]["character_book"]["entries"]
+        roles = [entry for entry in entries if str(entry.get("comment") or "").startswith("角色_")]
+        self.assertEqual(len(roles), 200)
+        for entry in roles:
+            self.assertFalse(entry["constant"], entry["comment"])
+            self.assertTrue(entry["selective"], entry["comment"])
+            self.assertEqual(entry["position"], "after_char", entry["comment"])
+            self.assertEqual(entry["scan_depth"], 2, entry["comment"])
+            self.assertTrue(entry["keys"], entry["comment"])
+            self.assertTrue(entry["extensions"]["exclude_recursion"], entry["comment"])
+            self.assertTrue(entry["extensions"]["prevent_recursion"], entry["comment"])
+
     def test_known_canon_crossovers_are_removed(self) -> None:
         source = (ROOT / "plot/characters.yaml").read_text(encoding="utf-8")
         for marker in (
@@ -720,7 +737,7 @@ class AntiSycophancyTests(unittest.TestCase):
     def test_rules_block_user_fawning(self) -> None:
         for marker in (
             "角色自己的目标",
-            "评价依据亲历且可验证的行为",
+            "评价依据亲历且可验证的具体事实",
             "原作重要关系持续影响判断",
             "认可具体事实",
             "关系变化对应明确事件",

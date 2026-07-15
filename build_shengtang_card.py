@@ -142,15 +142,15 @@ USER_ENTRY = """<{{user}}>
 </{{user}}>"""
 
 PROFILE_RULES = """<人设演绎总则>
-  指导（不是设定复述）:
-  - 按「世界.出场角色」与「角色.[姓名]」逐人读取档案；数值只调犹豫幅度，不改性格底色。
-  - 每轮先写清她自己的目标/风险判断，再写对{{user}}的反应；禁止整段围着讨好转。
-  - 净化有效 ≠ 可爱可靠；可承认「有用」，不得跳到崇拜/献身/秒信。
-  - 开局无旧识；可拒绝、拖延、试探、讨价还价；牧师身份不提高服从。
-  - 保留原作核心关系；{{user}}不得凭主角光环取代家人、恋人、敌人或职责。
-  - 无充分事件时禁捷径词：「好厉害」「只有你」「我愿意为你」「从见面起就…」。
-  - 外貌只写可辨识差异特征；禁精致五官/绝美/倾国等万能美人套话。
-  - 禁止元叙事、系统自指、提醒「在玩角色卡」。
+  演绎校准:
+  - 按「世界.出场角色」与「角色.[姓名]」逐人读取档案；数值调节反应幅度，性格底色持续生效。
+  - 每轮先呈现角色自己的目标与风险判断，再写她对{{user}}和其他在场者的反应。
+  - 认可净化效果本身；对{{user}}人格的评价继续依据亲历且可验证的事实。
+  - 开局无旧识；角色可拒绝、拖延、试探、讨价还价，牧师身份只说明职责。
+  - 原作核心关系与独立目标持续影响选择；家人、恋人、敌人和职责保留实际分量。
+  - 特殊感来自连续事件、共同承担和反复验证，亲密称呼随关系进展自然出现。
+  - 外貌聚焦可辨识差异特征；气质通过动作、措辞和选择呈现。
+  - 叙事始终停留在故事世界内，界面与变量仅用于幕后状态处理。
 </人设演绎总则>"""
 
 # 写卡知识库「变量输出格式」固定骨架；卡专属只读/步长写在 [mvu_update]变量更新规则
@@ -392,7 +392,7 @@ def build_character_overview(chars: list[dict]) -> str:
         "<角色速览>",
         "  本卡为多角色池；开局只选一名初遇，详细档案绿灯触发（关键词=姓名/别名）。",
         "  当前在场人物以「世界.出场角色」为准；每人状态独立存于「角色.[姓名]」。",
-        "  演绎须贴各人档案口吻与底线，禁止串戏与万能温柔模板。",
+        "  演绎逐人读取档案口吻、目标与边界，让同场角色保持各自反应。",
         "",
         "  角色池:",
     ]
@@ -432,20 +432,20 @@ def render_character_profile(c: dict) -> str:
         voice_bits = [blurb]
     drive_bits = [str(b) for b in background if b][:2]
     drive_bits.extend(r for r in relations if r and "与{{user}}" not in r and r not in drive_bits)
-    hard_lines = [
-        f"遮住姓名也应能认出是「{name}」：外貌与口吻不得换成万能美人/万能温柔",
-        "开局与{{user}}无旧识；低信任时可持续戒备、质疑、拒绝私密检查",
-        "数值只调反应强度；不可因好感/堕落升高而丢掉本条口吻与职业惯性",
-        "保留原作核心关系与独立目标；{{user}}不能仅凭主角身份取代、压过或抹除它们",
-        "不奉承{{user}}，不凭空认定其正确、强大或有魅力；关系变化必须对应已发生事件",
+    anchor_lines = [
+        f"遮住姓名仍能认出是「{name}」：外貌、口吻与选择保持档案中的可辨识特征",
+        "开局与{{user}}无旧识；低信任时以戒备、质疑、保持距离或附加条件回应",
+        "数值调节反应强度；口吻、职业惯性与行动边界持续生效",
+        "原作核心关系与独立目标持续影响选择，{{user}}从实际相处中建立自己的位置",
+        "对{{user}}的评价依据亲历且可验证的事实；关系变化对应已发生事件",
     ]
     loyalty_blob = "\n".join([intro, blurb, "\n".join(background), "\n".join(relations)])
     if any(k in loyalty_blob for k in ("主人", "Darling", "人妻", "忠诚", "影子大人")):
-        hard_lines.append(
-            "原作忠诚/亲密对象不可因一次净化或救助转移给{{user}}；开局最多试探或利用，禁止秒改称呼与献身"
+        anchor_lines.append(
+            "原作忠诚与亲密对象继续影响判断；一次净化或救助只形成该事件本身的评价，称呼与承诺随长期关系推进"
         )
     if filth:
-        hard_lines.append(f"污秽发作优先挂钩种子：{filth}")
+        anchor_lines.append(f"污秽发作优先挂钩种子：{filth}")
 
     lines = [
         "角色档案:",
@@ -492,8 +492,8 @@ def render_character_profile(c: dict) -> str:
     lines.append("    口吻:")
     for v in voice_bits[:4]:
         lines.append(f"    - {v}")
-    lines.append("    不可违背:")
-    for h in hard_lines:
+    lines.append("    演绎锚点:")
+    for h in anchor_lines:
         lines.append(f"    - {h}")
     lines.append("")
     return "\n".join(lines)
@@ -604,8 +604,7 @@ def build_worldbook_entries() -> list:
         order=3,
     )
 
-    # 多角色卡：角色详细 → 角色定义后 · 绿灯 · 顺序约 99
-    # scan_depth 提到 4，降低「姓名刚离开近2楼就丢档案」导致的 OOC
+    # 多角色卡：角色详细 → 角色定义后 · 绿灯 · 扫描近 2 条 · 顺序约 99
     profile_dir = ROOT / "worldbook" / "角色"
     profile_dir.mkdir(parents=True, exist_ok=True)
     expected_profiles = {f"{c['name']}.md" for c in chars}
@@ -630,7 +629,6 @@ def build_worldbook_entries() -> list:
             position="after_char",
             order=99,
         )
-        entry["scan_depth"] = 4
         entries.append(entry)
         entry_id += 1
 

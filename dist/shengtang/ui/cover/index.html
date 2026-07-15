@@ -933,7 +933,7 @@ select:focus {
           <h1>圣堂初遇</h1>
           <p class="hook">圣堂会回应一次尚未发生的相遇。<em>设定你的能力</em>，其余交给命运揭晓。</p>
           <div class="foot" style="justify-content:flex-start;margin-top:22px;background:none;border:0;padding:0;position:static;">
-            <button class="btn primary" id="btnEnter" style="width:auto">开始初遇</button>
+            <button class="btn primary" id="btnEnter" style="width:auto">开始召唤啦~</button>
           </div>
         </div>
       </div>
@@ -965,8 +965,8 @@ select:focus {
     <div class="foot">
       <div class="foot-msg" id="warn" role="status" aria-live="polite"></div>
       <button class="btn ghost" data-back="1">返回</button>
-      <button class="btn ghost" id="btnRandomStart">随机启程</button>
-      <button class="btn primary" id="btnStart">揭晓初遇</button>
+      <button class="btn ghost" id="btnRandomStart">命运随便摇~</button>
+      <button class="btn primary" id="btnStart">看看谁来啦</button>
     </div>
   </section>
 
@@ -976,7 +976,7 @@ select:focus {
       <div class="brand">SANCTUM OPENING</div>
       <div class="ornament"></div>
       <div class="panel reveal-stage" id="revealStage" aria-live="polite">
-        <div class="reveal-kicker">来客将至</div>
+        <div class="reveal-kicker">神秘嘉宾加载中</div>
         <div class="reveal-reel" id="revealReel" aria-hidden="true"></div>
         <h2 class="reveal-name" id="revealName">正在辨认来客</h2>
         <div class="reveal-work" id="revealWork"></div>
@@ -984,13 +984,13 @@ select:focus {
         <div class="reveal-context" id="revealContext"></div>
       </div>
       <div class="panel loading-card">
-        <h2 id="generationTitle">正在编织初遇</h2>
+        <h2 id="generationTitle">正在摇人，请稍候~</h2>
         <p id="generationStatus">故事正在回应，请稍候。</p>
         <div class="meter" id="generationMeter" aria-hidden="true"><i></i></div>
       </div>
     </div>
     <div class="foot">
-      <button class="btn ghost" id="btnCancelGeneration">返回重选</button>
+      <button class="btn ghost" id="btnCancelGeneration">再想一下</button>
     </div>
   </section>
 </div>
@@ -7209,7 +7209,7 @@ function setGenerationState(title, status, done = false) {
   if (titleEl) titleEl.textContent = title || "";
   if (statusEl) statusEl.textContent = status || "";
   if (meter) meter.style.display = done ? "none" : "block";
-  if (cancel) cancel.textContent = "返回重选";
+  if (cancel) cancel.textContent = "再想一下";
 }
 
 /** 首楼只用短辨识，完整档案交给世界书触发 */
@@ -7363,21 +7363,21 @@ function buildOpeningPrompt(config, persona, enc) {
     `原作经历锚点：${enc.背景}`,
     `外貌锚点：${enc.外貌}`,
     `原始异常灵感：${enc.污秽类型}`,
-    "【开场必须自然完成的因果链】",
-    "1. 解释她为何出现在当前世界，不能默认用突然穿越或失忆醒来。",
+    "【开场因果链】",
+    "1. 用具体事件解释她为何出现在当前世界，并交代选择、代价或线索来源。",
     "2. 建立她在当前时代的身份、社会关系与现实约束。",
     "3. 通过具体事件说明她为何与圣堂发生联系。",
-    "4. 让她围绕自己的主动追求采取行动，而不是等待{{user}}安排。",
+    "4. 让她围绕自己的主动追求采取行动，再与{{user}}形成交集。",
     "5. 说明异常如何进入因果链，并把原始异常灵感重构成当前题材可理解的表现。",
     "【跨时代改写规则】",
-    "- 保留角色核心性格、语言习惯、价值冲突、独立目标和拒绝边界；不能只保留名字与外貌。",
-    "- 原作能力必须保留功能核心；表现不适配时转译为当前时代功能相近的术法、技术、身份资源或专业能力。",
-    "- 原作经历可以映射为本世界功能相近的经历，但不得覆盖角色由此形成的人格矛盾。",
-    "- 圣堂必须保留净化体系、跨界节点、仪式规则和长期据点四项本质，外形与社会职能按当前时代重构。",
-    "- 初见保持陌生与证据不足；不奉承、不秒信、不自动把{{user}}当特殊人物，{{user}}可被怀疑、拒绝、利用或反驳。",
-    "- 净化有效不等于可爱、可信或值得献身；禁止无事件依据写出「好厉害」「只有你理解我」「我愿意为你」。",
+    "- 角色核心性格、语言习惯、价值冲突、独立目标和行动边界持续生效。",
+    "- 原作能力保留功能核心；表现不适配时转译为当前时代功能相近的术法、技术、身份资源或专业能力。",
+    "- 原作经历可映射为本世界功能相近的经历，由这些经历形成的人格矛盾继续驱动选择。",
+    "- 圣堂保留净化体系、跨界节点、仪式规则和长期据点四项本质，外形与社会职能按当前时代重构。",
+    "- 评价基于亲历且可验证的事实；初见从陌生、求证、试探或保持距离开始。",
+    "- 认可效果本身，关系仍按事件推进；特殊感来自连续相处、共同承担和反复验证。",
     "- 从正在发生的事件起笔，结尾停在需要{{user}}回应或决策的位置。",
-    `- 末尾输出一个 <UpdateVariable>（Analysis + JSONPatch），根据正文更新 /角色/${rolePath}/污秽类型、/角色/${rolePath}/当前心态、/角色/${rolePath}/仪式阶段、/角色/${rolePath}/当前目标、/角色/${rolePath}/对user判断、/角色/${rolePath}/当前边界；只能写正文已经公开或角色实际感知的变化。`,
+    `- 末尾输出一个 <UpdateVariable>（Analysis + JSONPatch），根据正文更新 /角色/${rolePath}/污秽类型、/角色/${rolePath}/当前心态、/角色/${rolePath}/仪式阶段、/角色/${rolePath}/当前目标、/角色/${rolePath}/对user判断、/角色/${rolePath}/当前边界；每项更新对应正文已经公开或角色实际感知的变化。`,
   ].join("\n");
 }
 
@@ -7573,11 +7573,11 @@ async function startGame(randomAll = false) {
     state.starting = false;
     if (startButton) {
       startButton.disabled = false;
-      startButton.textContent = "揭晓初遇";
+      startButton.textContent = "看看谁来啦";
     }
     if (randomButton) {
       randomButton.disabled = false;
-      randomButton.textContent = "随机启程";
+      randomButton.textContent = "命运随便摇~";
     }
   };
   if (warn) warn.textContent = "";
@@ -7601,7 +7601,7 @@ async function startGame(randomAll = false) {
     startButton.textContent = "揭晓中…";
   }
   if (randomButton) randomButton.disabled = true;
-  setGenerationState("正在编织初遇", "正在准备本次世界与故事。", false);
+  setGenerationState("正在摇人，请稍候~", "命运正在认真翻名单。", false);
   showPage(4);
 
   const patchBlock = [
@@ -7654,14 +7654,14 @@ async function startGame(randomAll = false) {
       const onStream = (fullText, generationId) => {
         if (generationId !== run.generationId || run.cancelled) return;
         const length = String(fullText || "").length;
-        setGenerationState("正在编织初遇", length ? `故事正在展开 · ${length} 字` : "正在等待故事回应。", false);
+        setGenerationState("故事正在冒泡~", length ? `已经写到 ${length} 字啦` : "灵感正在赶来的路上。", false);
       };
       run.streamHandle = eventOn(streamEvt, onStream);
     }
 
     const oldData = await waitOpeningMvuData(Mvu, 6000);
     const initializedData = (await Mvu.parseMessage(patchBlock, oldData)) || oldData;
-    setGenerationState("正在编织初遇", "世界已经确定，正在写作首段剧情。", false);
+    setGenerationState("人选敲定啦~", "正在安排她闪亮登场。", false);
     const raw = await runGeneration(
       generateFn({ user_input: prompt, should_stream: true, generation_id: generationId }),
       run,
@@ -7682,12 +7682,12 @@ async function startGame(randomAll = false) {
     );
     activeOpening = null;
     state.starting = false;
-    setGenerationState("初遇已就绪", "故事已经准备完成。", true);
+    setGenerationState("人来啦，开演~", "舞台搭好啦，轮到你登场。", true);
   } catch (error) {
     stopOpening(error && error.message ? error.message : String(error));
     console.error(error);
-    if (warn) warn.textContent = "暂时无法揭晓，请返回重选后再试。";
-    setGenerationState("暂时无法揭晓", "请返回重选后再试。", true);
+    if (warn) warn.textContent = "暂时无法揭晓，请点“再想一下”后重试。";
+    setGenerationState("暂时无法揭晓", "点“再想一下”后重试。", true);
     resetButtons();
   }
 }
@@ -7714,9 +7714,9 @@ function init() {
     state.starting = false;
     const startButton = $("#btnStart");
     const randomButton = $("#btnRandomStart");
-    if (startButton) { startButton.disabled = false; startButton.textContent = "揭晓初遇"; }
-    if (randomButton) { randomButton.disabled = false; randomButton.textContent = "随机启程"; }
-    setGenerationState("正在编织初遇", "故事正在回应，请稍候。");
+    if (startButton) { startButton.disabled = false; startButton.textContent = "看看谁来啦"; }
+    if (randomButton) { randomButton.disabled = false; randomButton.textContent = "命运随便摇~"; }
+    setGenerationState("故事正在冒泡~", "马上就好，再等它一下下。");
     showPage(2);
   };
   $$("[data-back]").forEach(b => b.onclick = () => showPage(Number(b.dataset.back)));

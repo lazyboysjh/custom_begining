@@ -179,11 +179,17 @@ def main() -> int:
                 errs.append(f"{e.get('comment')} 应为 selective 绿灯")
             if not e.get("keys"):
                 errs.append(f"{e.get('comment')} 缺 keys")
-            if not e.get("constant") and e.get("scan_depth") != 4:
-                errs.append(f"{e.get('comment')} scan_depth={e.get('scan_depth')}，本卡应为 4")
+            if not e.get("constant") and e.get("scan_depth") != 2:
+                errs.append(f"{e.get('comment')} scan_depth={e.get('scan_depth')}，多角色绿灯应为 2")
         for e in role_entries:
             ct = e.get("content") or ""
-            for required in ("演绎锚点:", "口吻:", "不可违背:"):
+            for required in (
+                "演绎锚点:",
+                "口吻:",
+                "原作核心关系与独立目标持续影响选择",
+                "对{{user}}的评价依据亲历且可验证的事实",
+                "关系变化对应已发生事件",
+            ):
                 if required not in ct:
                     errs.append(f"{e.get('comment')}: 缺人设锚点「{required}」")
         write_e = next((e for e in entries if e.get("comment") == "写作与人设规则"), None)
@@ -191,11 +197,11 @@ def main() -> int:
             wt = write_e.get("content") or ""
             for required in (
                 "人设优先级",
-                "防 OOC",
-                "防媚{{user}}",
-                "不默认赞同{{user}}",
-                "关系变化必须有可指认事件",
-                "高信任只降低戒备",
+                "演绎校准",
+                "关系校准",
+                "评价依据亲历且可验证的具体事实",
+                "关系变化对应明确事件",
+                "高信任降低戒备程度",
             ):
                 if required not in wt:
                     errs.append(f"写作与人设规则缺「{required}」")

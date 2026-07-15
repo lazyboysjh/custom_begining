@@ -2781,10 +2781,10 @@ function buildEncounterPrompt(character, stat) {
   const rolePath = jsonPointerSegment(character.name);
   const insertRole = existing ? "" : `{ \"op\": \"insert\", \"path\": \"/角色/${rolePath}\", \"value\": ${JSON.stringify(roleValue)} },`;
   return [
-    "【圣堂初遇｜偶遇】承接当前剧情，不重置主线或已有角色。",
+    "【圣堂初遇｜偶遇】承接当前剧情，保留主线与已有角色。",
     `新人：${character.name}（${character.work || "未知作品"}）；当前场景：${world.场景 || world.教会名 || "圣言堂"}；同场：${present.join("、") || "暂无"}。`,
-    "先写新人的独立目的、戒备和入场反应，再写与{{user}}及实际在场者的交集。口吻贴原作，不围着讨好{{user}}转；禁止捷径吹捧、秒信/奉承和无事件亲密跳变。",
-    "末尾输出一个 <UpdateVariable>。首次出现先建立独立角色档案，再把姓名加入出场数组；已有档案不得覆盖。关系数值仅按该角色实际感知更新，无依据则不更新。",
+    "先处理自己的目标、戒备和入场反应，再写与{{user}}及实际在场者的交集。口吻贴原作，评价基于可验证事实，关系变化对应本轮事件。",
+    "末尾输出一个 <UpdateVariable>。首次出现先建立独立角色档案，再把姓名加入出场数组；已有档案保留旧值。关系数值按该角色实际感知的事件分别更新。",
     `<JSONPatch>[${insertRole}{ \"op\": \"insert\", \"path\": \"/世界/出场角色/-\", \"value\": ${JSON.stringify(character.name)} }]</JSONPatch>`,
   ].join("\n\n");
 }
@@ -2798,8 +2798,8 @@ function buildTogetherPrompt(stat) {
     "【圣堂初遇｜故事接着走】承接当前剧情，保留已有变量与在场人物。",
     `当前场景：${getPath(stat, "世界.场景", "圣言堂")}；焦点：${focus}；同场：${present.join("、") || "暂无"}。`,
     `焦点角色目标：${role.当前目标 || "未记录"}；判断：${role.对user判断 || "未形成"}；边界：${role.当前边界 || "未说明"}。`,
-    "先推进各角色自己的目标与风险判断，再写相处。多人可以产生不同甚至冲突的反应；不围着讨好{{user}}转，禁止捷径吹捧和秒信/奉承。",
-    `变量只更新实际感知并产生反应的 /角色/${focusPath} 或其他明确参与者；每项变化必须有各自依据，无依据则不更新。未出场角色保持不变。`,
+    "先处理自己的目标与风险判断，再写相处。多人可以产生不同甚至冲突的反应；评价基于可验证事实，关系变化对应本轮事件。",
+    `变量更新实际感知并产生反应的 /角色/${focusPath} 或其他明确参与者；每项变化分别对应各自依据，未出场角色保持原值。`,
   ].join("\n\n");
 }
 
