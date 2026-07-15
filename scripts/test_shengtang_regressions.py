@@ -244,6 +244,39 @@ class ProductUiTests(unittest.TestCase):
         self.assertIn("prefers-reduced-motion: reduce", COVER)
         self.assertIn("prefers-reduced-motion: reduce", STATUS)
 
+    def test_c2_surfaces_share_material_button_tokens(self) -> None:
+        for token in (
+            "--st-btn-bg",
+            "--st-btn-edge",
+            "--st-btn-shadow",
+            "--st-btn-active-shadow",
+        ):
+            self.assertIn(token, COVER)
+            self.assertIn(token, STATUS)
+
+    def test_c2_buttons_cover_all_interaction_states(self) -> None:
+        for marker in (":hover", ":active", ":focus-visible", ":disabled"):
+            self.assertIn(f".btn{marker}", COVER)
+        for selector in (".icon-btn", ".command-btn", ".role-chip"):
+            for marker in (":hover", ":active", ":focus-visible", ":disabled"):
+                self.assertIn(f"{selector}{marker}", STATUS)
+
+    def test_c2_has_phone_tablet_and_desktop_container_rules(self) -> None:
+        for surface in (COVER, STATUS):
+            self.assertIn("@media (max-width: 760px)", surface)
+            self.assertIn("@media (max-width: 480px)", surface)
+            self.assertIn("@container", surface)
+
+    def test_generation_copy_does_not_expose_internal_processes(self) -> None:
+        for forbidden in (
+            "正在初始化变量并请求模型生成",
+            "变量已初始化，正在写作首段剧情",
+            "正在解析 MVU 变量并替换封面楼层",
+            "0 楼已替换为生成结果",
+            "MVU 未初始化，请确认变量框架已启用",
+        ):
+            self.assertNotIn(forbidden, COVER)
+
 
 class BuildIsolationTests(unittest.TestCase):
     def test_static_copy_script_is_valid_javascript(self) -> None:

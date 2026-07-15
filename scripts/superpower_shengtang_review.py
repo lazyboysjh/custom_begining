@@ -317,6 +317,31 @@ def main() -> int:
         oks.append("page-body 滚动条已主题化")
 
     status_html = (ROOT / "src/shengtang/ui/status/index.html").read_text(encoding="utf-8")
+    c2_error_count = len(errs)
+    for token in ("--st-btn-bg", "--st-btn-edge", "--st-btn-shadow", "--st-btn-active-shadow"):
+        if token not in cover or token not in status_html:
+            errs.append(f"封面与状态栏缺 C2 共享材质 token: {token}")
+    for marker in (":hover", ":active", ":focus-visible", ":disabled"):
+        if f".btn{marker}" not in cover:
+            errs.append(f"封面按钮缺交互状态: {marker}")
+    for selector in (".icon-btn", ".command-btn", ".role-chip"):
+        for marker in (":hover", ":active", ":focus-visible", ":disabled"):
+            if f"{selector}{marker}" not in status_html:
+                errs.append(f"状态栏 {selector} 缺交互状态: {marker}")
+    for surface_name, surface in (("封面", cover), ("状态栏", status_html)):
+        for marker in ("@media (max-width: 760px)", "@media (max-width: 480px)", "@container"):
+            if marker not in surface:
+                errs.append(f"{surface_name}缺响应式规则: {marker}")
+    for forbidden in (
+        "正在初始化变量并请求模型生成",
+        "变量已初始化，正在写作首段剧情",
+        "正在解析 MVU 变量并替换封面楼层",
+        "0 楼已替换为生成结果",
+    ):
+        if forbidden in cover:
+            errs.append(f"封面暴露内部过程文案: {forbidden}")
+    if len(errs) == c2_error_count:
+        oks.append("封面与状态栏 C2 材质、按钮状态和响应式规则已齐")
     if "setInterval(" in status_html:
         errs.append("状态栏仍使用永久轮询")
     elif "VARIABLE_UPDATE_ENDED" in status_html and "pagehide" in status_html and ".stop()" in status_html:
