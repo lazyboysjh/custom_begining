@@ -37,10 +37,49 @@ class CharacterCatalogTests(unittest.TestCase):
         self.assertEqual(set(recent["sources"]), {char["id"] for char in recent["characters"]})
 
     def test_revised_ui_copy_is_present_and_obsolete_copy_is_removed(self) -> None:
-        for obsolete in ("枢纽抽卡", "相聚一刻", "一键随机开始", "生成开局"):
+        for obsolete in (
+            "枢纽抽卡",
+            "相聚一刻",
+            "一键随机开始",
+            "生成开局",
+            "开始初遇",
+            "随机启程",
+            "揭晓初遇",
+            "召来新客",
+            "推进当前幕",
+        ):
             self.assertNotIn(obsolete, COVER + STATUS)
-        for expected in ("召来新客", "推进当前幕", "随机启程", "揭晓初遇", "正在编织初遇"):
+        for expected in (
+            "开始召唤啦~",
+            "命运随便摇~",
+            "看看谁来啦",
+            "神秘嘉宾加载中",
+            "再摇一位~",
+            "故事继续走~",
+            "看看其他人",
+        ):
             self.assertIn(expected, COVER + STATUS)
+
+    def test_core_worldbook_uses_positive_guidance_language(self) -> None:
+        core = "\n".join(
+            (ROOT / path).read_text(encoding="utf-8")
+            for path in (
+                "worldbook/00_世界观.md",
+                "worldbook/01_净化与污秽.md",
+                "worldbook/02_写作与人设规则.md",
+                "worldbook/03_数值影响.md",
+                "plot/mvu_update.yaml",
+            )
+        )
+        for directive in ("禁止", "不得", "严禁", "不可违背"):
+            self.assertNotIn(directive, core)
+        for marker in (
+            "演绎校准",
+            "先呈现角色自己的目标与风险判断",
+            "评价依据亲历且可验证的行为",
+            "关系变化对应明确事件",
+        ):
+            self.assertIn(marker, core)
 
     def test_new_batches_have_complete_source_records(self) -> None:
         base = yaml.safe_load((ROOT / "plot/characters.yaml").read_text(encoding="utf-8"))["characters"]
@@ -565,15 +604,15 @@ class CharacterSourceTests(unittest.TestCase):
 
 
 class AntiSycophancyTests(unittest.TestCase):
-    def test_writing_rules_ban_flattery_shortcuts(self) -> None:
+    def test_writing_rules_guide_evidence_based_relationships(self) -> None:
         rules = (ROOT / "worldbook/02_写作与人设规则.md").read_text(encoding="utf-8")
-        for marker in ("防媚{{user}}", "只有你理解我", "好厉害", "删掉后仍像该角色吗", "万能美人"):
+        for marker in ("关系校准", "具体事实", "明确事件", "角色自己的目标", "可辨识特征"):
             self.assertIn(marker, rules)
 
     def test_numeric_rules_do_not_force_obedience(self) -> None:
         numeric = (ROOT / "worldbook/03_数值影响.md").read_text(encoding="utf-8")
-        self.assertIn("不是无脑服从", numeric)
-        self.assertIn("自动吹捧、讨好或秒信", numeric)
+        self.assertIn("仍按角色口吻表达判断与异议", numeric)
+        self.assertIn("评价继续依据已发生事件", numeric)
         self.assertNotIn("依从度高", numeric)
 
     def test_status_impact_copy_does_not_push_obedience(self) -> None:
@@ -587,7 +626,7 @@ class AntiSycophancyTests(unittest.TestCase):
         self.assertNotIn("clipVoice(enc.背景 || enc.简介, 72)", COVER)
 
     def test_status_action_prompts_block_flattery(self) -> None:
-        for marker in ("不围着讨好{{user}}转", "禁止捷径吹捧", "无依据则不更新", "秒信/奉承"):
+        for marker in ("先处理自己的目标", "评价基于可验证事实", "关系变化对应本轮事件"):
             self.assertIn(marker, STATUS)
 
     def test_anti_sycophancy_state_is_persistent(self) -> None:
@@ -602,29 +641,29 @@ class AntiSycophancyTests(unittest.TestCase):
             self.assertIn(field, schema)
             self.assertIn(field, COVER)
             self.assertIn(field, update_rules)
-        for rule in ("不默认赞同{{user}}", "关系变化必须有可指认事件", "本轮至少让她作出一个"):
+        for rule in ("评价依据亲历且可验证的行为", "关系变化对应明确事件", "本轮至少让她作出一个"):
             self.assertIn(rule, writing_rules)
 
     def test_anti_user_flattery_is_enforced_at_all_prompt_layers(self) -> None:
         for marker in (
-            "不是围着{{user}}运转的奖励装置",
-            "不默认赞同{{user}}",
-            "{{user}}不自动替代原作重要关系",
-            "关系变化必须有可指认事件",
-            "反媚不等于强行敌视",
-            "写前暗检",
+            "角色自己的目标",
+            "评价依据亲历且可验证的行为",
+            "原作重要关系持续影响判断",
+            "关系变化对应明确事件",
+            "认可具体事实",
+            "写前校准",
         ):
             self.assertIn(marker, WRITE_RULES)
-        for marker in ("禁止整段围着讨好转", "不得跳到崇拜/献身/秒信", "禁捷径词"):
+        for marker in ("先呈现角色自己的目标与风险判断", "认可净化效果本身", "特殊感来自连续事件"):
             self.assertIn(marker, BUILD)
-        for marker in ("不奉承、不秒信、不自动把{{user}}当特殊人物", "不等于可爱、可信或值得献身"):
+        for marker in ("评价基于亲历且可验证的事实", "认可效果本身，关系仍按事件推进"):
             self.assertIn(marker, COVER)
 
     def test_relationship_updates_require_evidence_and_small_steps(self) -> None:
-        self.assertIn("禁止每回合惯性上涨", MVU_RULES)
+        self.assertIn("数值保持原值", MVU_RULES)
         self.assertIn("单次通常不超过 ±2", MVU_RULES)
-        self.assertIn("不得仅凭数值跨档自动升级关系称呼", MVU_RULES)
-        self.assertIn("不得为了奖励{{user}}而同时上调多项关系数值", MVU_RULES)
+        self.assertIn("关系称呼只随实际关系事件调整", MVU_RULES)
+        self.assertIn("每项变化分别对应本回合可观察依据", MVU_RULES)
 
     def test_every_generated_profile_preserves_agency(self) -> None:
         missing: list[str] = []
@@ -635,9 +674,10 @@ class AntiSycophancyTests(unittest.TestCase):
                 continue
             text = path.read_text(encoding="utf-8")
             for marker in (
-                "保留原作核心关系与独立目标",
-                "不奉承{{user}}",
-                "关系变化必须对应已发生事件",
+                "演绎锚点",
+                "原作核心关系与独立目标持续影响选择",
+                "对{{user}}的评价依据亲历且可验证的事实",
+                "关系变化对应已发生事件",
             ):
                 if marker not in text:
                     missing.append(f"{char['name']}: {marker}")
@@ -679,20 +719,20 @@ class AntiSycophancyTests(unittest.TestCase):
 
     def test_rules_block_user_fawning(self) -> None:
         for marker in (
-            "角色有独立目标",
-            "不默认赞同{{user}}",
-            "{{user}}不自动替代原作重要关系",
-            "不得凭空赋予{{user}}魅力",
-            "关系变化必须有可指认事件",
+            "角色自己的目标",
+            "评价依据亲历且可验证的行为",
+            "原作重要关系持续影响判断",
+            "认可具体事实",
+            "关系变化对应明确事件",
         ):
             self.assertIn(marker, WRITING_RULES)
-        self.assertIn("禁止每回合惯性上涨", MVU_RULES)
-        self.assertIn("当前心态不能只围绕{{user}}", MVU_RULES)
+        self.assertIn("未发生有效事件时数值保持原值", MVU_RULES)
+        self.assertIn("当前心态同时保留角色自身目标", MVU_RULES)
 
     def test_profiles_include_independent_motivation_anchor(self) -> None:
         self.assertIn("行动驱力:", BUILD)
         self.assertIn("原作核心关系", BUILD)
-        self.assertIn("不奉承、不秒信、不自动把{{user}}当特殊人物", COVER)
+        self.assertIn("评价基于亲历且可验证的事实", COVER)
 
 
 if __name__ == "__main__":
