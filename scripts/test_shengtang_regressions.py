@@ -26,10 +26,21 @@ WRITING_RULES = WRITE_RULES
 
 
 class CharacterCatalogTests(unittest.TestCase):
-    def test_roster_has_exactly_150_unique_characters(self) -> None:
-        self.assertEqual(len(CHARS), 150)
-        self.assertEqual(len({char["id"] for char in CHARS}), 150)
-        self.assertEqual(len({char["name"] for char in CHARS}), 150)
+    def test_roster_has_exactly_200_unique_characters(self) -> None:
+        self.assertEqual(len(CHARS), 200)
+        self.assertEqual(len({char["id"] for char in CHARS}), 200)
+        self.assertEqual(len({char["name"] for char in CHARS}), 200)
+        recent = yaml.safe_load(
+            (ROOT / "plot/character_batches/recent_anime.yaml").read_text(encoding="utf-8")
+        )
+        self.assertEqual(len(recent["characters"]), 50)
+        self.assertEqual(set(recent["sources"]), {char["id"] for char in recent["characters"]})
+
+    def test_revised_ui_copy_is_present_and_obsolete_copy_is_removed(self) -> None:
+        for obsolete in ("枢纽抽卡", "相聚一刻", "一键随机开始", "生成开局"):
+            self.assertNotIn(obsolete, COVER + STATUS)
+        for expected in ("召来新客", "推进当前幕", "随机启程", "揭晓初遇", "正在编织初遇"):
+            self.assertIn(expected, COVER + STATUS)
 
     def test_new_batches_have_complete_source_records(self) -> None:
         base = yaml.safe_load((ROOT / "plot/characters.yaml").read_text(encoding="utf-8"))["characters"]
