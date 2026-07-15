@@ -14,6 +14,9 @@ batches:
 - path: cn_screen_fiction.yaml
   category: 中国影视虚构角色
   expected_count: 12
+- path: recent_anime.yaml
+  category: 近年动画与高人气角色
+  expected_count: 50
 source_policy:
   primary_first: true
   secondary_only_for_gaps: true

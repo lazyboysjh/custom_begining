@@ -48,7 +48,7 @@ class CharacterCatalogTests(unittest.TestCase):
         added = [char for char in CHARS if char["id"] not in base_ids]
         sources = load_character_sources()
         self.assertEqual(len(base), 78)
-        self.assertEqual(len(added), 72)
+        self.assertEqual(len(added), 122)
         self.assertEqual(set(sources), {char["id"] for char in added})
         for char in added:
             source = sources[char["id"]]
