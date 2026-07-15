@@ -126,6 +126,18 @@ class StatusLifecycleTests(unittest.TestCase):
 
 
 class MultiRoleStateTests(unittest.TestCase):
+    def test_schema_and_initvar_include_public_opening_context(self) -> None:
+        for key, initial in (
+            ("时代背景", "待生成"),
+            ("故事类型", "待生成"),
+            ("故事氛围", "待生成"),
+            ("圣堂形态", "圣言堂"),
+            ("开局摘要", "待生成"),
+        ):
+            self.assertIn(f"{key}: z.string().prefault('{initial}')", MVU_SCHEMA)
+            self.assertEqual(INITVAR["世界"][key], initial)
+            self.assertIn(key, MVU_RULES)
+
     def test_schema_has_present_role_array_and_role_record(self) -> None:
         self.assertIn("z.array(z.string())", MVU_SCHEMA)
         self.assertIn("z.record(", MVU_SCHEMA)
