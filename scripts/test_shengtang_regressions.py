@@ -386,7 +386,7 @@ process.stdout.write(JSON.stringify(Schema.parse(input)[world][present]));
             "activeRoleName",
             "renderRoleSwitcher",
             'id="rolePicker"',
-            'aria-label="全部角色"',
+            'aria-label="切换来客"',
         ):
             self.assertIn(marker, STATUS)
 

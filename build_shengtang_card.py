@@ -832,7 +832,7 @@ def main() -> None:
 
     card = json.loads(TEMPLATE.read_text(encoding="utf-8"))
     card["name"] = CARD_NAME
-    card["description"] = "跨时代随机初遇：设定{{user}}的净化能力，由圣堂从150名女性角色中揭晓本局来客与故事。"
+    card["description"] = f"跨时代随机初遇：设定{{{{user}}}}的净化能力，由圣堂从{len(load_characters())}名女性角色中揭晓来客与故事。"
     card["personality"] = ""
     card["scenario"] = "圣堂会随时代改变外在形态，但始终保留净化体系、跨界节点、仪式规则与长期据点。{{user}}设定能力后，其余开局要素随机生成。"
     card["first_mes"] = COVER_HTML
