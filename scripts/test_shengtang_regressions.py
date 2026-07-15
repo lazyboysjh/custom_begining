@@ -23,6 +23,42 @@ INITVAR = yaml.safe_load((ROOT / "plot/initvar.yaml").read_text(encoding="utf-8"
 WRITING_RULES = WRITE_RULES
 
 
+class OpeningOptionTests(unittest.TestCase):
+    def setUp(self) -> None:
+        path = ROOT / "plot/opening_options.yaml"
+        self.assertTrue(path.exists(), "缺 plot/opening_options.yaml")
+        self.options = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+
+    def test_story_types_are_exactly_thirty_distinct_structures(self) -> None:
+        stories = self.options.get("story_types") or []
+        self.assertEqual(len(stories), 30)
+        self.assertEqual(len({item["id"] for item in stories}), 30)
+        self.assertEqual(len({item["title"] for item in stories}), 30)
+        for item in stories:
+            self.assertTrue(item.get("core_goal"))
+            self.assertTrue(item.get("failure_stakes"))
+            self.assertTrue(item.get("prompt"))
+
+    def test_opening_dimensions_are_complete(self) -> None:
+        self.assertEqual(len(self.options.get("atmospheres") or []), 10)
+        for key in (
+            "atmospheres",
+            "eras",
+            "sanctum_forms",
+            "integration_modes",
+            "ability_presets",
+        ):
+            values = self.options.get(key) or []
+            self.assertGreater(len(values), 0, key)
+            self.assertEqual(len({item["id"] for item in values}), len(values), key)
+
+    def test_opening_options_have_one_cover_sync_block(self) -> None:
+        self.assertEqual(COVER.count("SYNC_BEGIN:OPENING_OPTIONS"), 1)
+        self.assertEqual(COVER.count("SYNC_END:OPENING_OPTIONS"), 1)
+        self.assertIn("const OPENING_OPTIONS =", COVER)
+        self.assertIn("load_opening_options", BUILD)
+
+
 class OpeningLifecycleTests(unittest.TestCase):
     def test_never_deletes_chat_floors(self) -> None:
         self.assertNotIn("deleteExtraFloors", COVER)

@@ -936,34 +936,538 @@ select:focus {
 </div>
 
 <script>
-/* === SYNC_BEGIN:MEETING_MODES === */
-const MEETING_MODES = [
-  {
-    "id": "seek_purify",
-    "title": "求净上门",
-    "cover": "她带着污秽征兆来到教堂，主动求你净化。",
-    "prompt": "落点：告解室或礼拜堂内侧。对方主动上门，身上已有可感征兆（黑纹、异香、低语、体温异常等择一写透）。\n{{user}}以牧师接待：问症→察看→准备净化。戏在照面与反应上，勿写成人物介绍。\n"
-  },
-  {
-    "id": "isekai_fall",
-    "title": "异界坠落",
-    "cover": "她突然出现在礼拜堂/告解室，像被什么撕开缝隙丢进来。",
-    "prompt": "落点：礼拜堂中殿或告解室。对方刚坠落/现身，衣着贴原作，对教堂与{{user}}陌生，或戒备或晕眩。\n污秽已附着或正从裂缝渗入。{{user}}以「此地安全、我能净化」介入，先稳住场面。\n"
-  },
-  {
-    "id": "hub_cross",
-    "title": "枢纽穿行",
-    "cover": "教堂连通她的世界；你踏入接点，或她被拽到圣堂这一侧。",
-    "prompt": "落点：地下密室/彩窗后接点，或对方世界边缘与圣堂重叠处。\n双方因枢纽相遇；污秽可来自接点本身。{{user}}可操作接点与净化，但权责≠魅力或服从；对方可怀疑、讨价、拒绝跟随。\n"
-  },
-  {
-    "id": "daily_crack",
-    "title": "日常破绽",
-    "cover": "先以信徒、路人或委托相遇；净化时才暴露污秽。",
-    "prompt": "落点：外廊、堂区诊室或委托现场。前半像普通相遇（问路、捐献、护卫、借宿）。\n转折：察看伤口/听告解/握手祝福时暴露污秽，再转入更私密的仪式空间。\n"
-  }
-];
-/* === SYNC_END:MEETING_MODES === */
+/* === SYNC_BEGIN:OPENING_OPTIONS === */
+const OPENING_OPTIONS = {
+  "story_types": [
+    {
+      "id": "court_intrigue",
+      "title": "宫廷权谋",
+      "core_goal": "在派系与继承争端中取得关键证据或政治主动",
+      "failure_stakes": "身份暴露、盟友失势或圣堂被权力吞并",
+      "prompt": "让礼制、派系和公开身份限制行动；胜负依靠选择、证据与联盟，不靠单次净化解决。"
+    },
+    {
+      "id": "martial_feud",
+      "title": "江湖恩怨",
+      "core_goal": "查清旧案并在门派追杀中决定复仇或止战",
+      "failure_stakes": "仇怨扩大、门派覆灭或女主被迫回到旧身份",
+      "prompt": "用江湖声望、师门规矩与追杀压力推进，净化只能处理异常，不能替代恩怨抉择。"
+    },
+    {
+      "id": "cultivation_trial",
+      "title": "宗门修行",
+      "core_goal": "通过试炼并揭开功法、秘境或宗门规则的异常",
+      "failure_stakes": "修为受损、试炼淘汰或宗门秘密失控",
+      "prompt": "将净化体系重构为问心、镇魔或经脉校正，并让竞争者拥有独立胜负目标。"
+    },
+    {
+      "id": "historical_tide",
+      "title": "历史风云",
+      "core_goal": "在时代巨变中保护具体的人、承诺或证据",
+      "failure_stakes": "被历史洪流吞没、立场破裂或关键记录消失",
+      "prompt": "以明确时代秩序和真实生活压力塑造选择，避免把历史只当服装背景。"
+    },
+    {
+      "id": "wartime_espionage",
+      "title": "战争谍报",
+      "core_goal": "完成情报传递、策反或破坏任务并辨认内鬼",
+      "failure_stakes": "情报泄露、行动队覆灭或战争局势逆转",
+      "prompt": "建立双重身份、错误情报和限时行动，双方不能因初见就交换全部秘密。"
+    },
+    {
+      "id": "urban_mystery",
+      "title": "都市悬疑",
+      "core_goal": "找出连续异常事件之间的共同因果",
+      "failure_stakes": "下一名受害者出现、证据被抹除或污染扩散",
+      "prompt": "从普通城市生活中的细小破绽入手，让线索能够被验证、误读和重新解释。"
+    },
+    {
+      "id": "criminal_investigation",
+      "title": "刑侦探案",
+      "core_goal": "建立证据链并锁定真正的作案者或操纵者",
+      "failure_stakes": "错捕、证据失效或案件超过追诉窗口",
+      "prompt": "区分物证、证词和超自然感知；净化感知不得直接等同于法律证据。"
+    },
+    {
+      "id": "undercover_crime",
+      "title": "犯罪卧底",
+      "core_goal": "维持伪装并接近组织核心目标",
+      "failure_stakes": "双重身份曝光、同伴被牺牲或自身立场动摇",
+      "prompt": "让每次接触同时服务伪装与调查，女主拥有自己的上线、任务和撤退条件。"
+    },
+    {
+      "id": "courtroom_trial",
+      "title": "法庭审判",
+      "core_goal": "通过证据、证人和辩论改变案件结论",
+      "failure_stakes": "无辜者定罪、危险者获释或圣堂资格被撤销",
+      "prompt": "把冲突放在公开规则下，仪式结果需要转化为可陈述、可质疑的事实。"
+    },
+    {
+      "id": "medical_crisis",
+      "title": "医疗危机",
+      "core_goal": "识别未知病症并在资源有限时制定治疗方案",
+      "failure_stakes": "病情扩散、错误治疗或隔离秩序崩溃",
+      "prompt": "明确诊断不确定性、患者自主意愿和治疗代价，净化不是无条件万能药。"
+    },
+    {
+      "id": "campus_youth",
+      "title": "校园青春",
+      "core_goal": "完成社团、比赛或集体事件并处理流言造成的关系压力",
+      "failure_stakes": "团体解散、机会错失或真实问题被舆论掩盖",
+      "prompt": "用具体日程、同伴网络和公开评价推进，不把校园只写成两人独处场所。"
+    },
+    {
+      "id": "entertainment_storm",
+      "title": "娱乐圈风波",
+      "core_goal": "完成项目并查清舆论、资本或剧组异常的操纵源",
+      "failure_stakes": "项目停摆、职业形象受损或他人被推出承担责任",
+      "prompt": "区分公开形象、工作关系和私人判断，避免凭空编造现实人物私生活。"
+    },
+    {
+      "id": "workplace_game",
+      "title": "职场博弈",
+      "core_goal": "推进关键项目并识别组织中的利益冲突",
+      "failure_stakes": "项目失败、团队瓦解或成果被夺取",
+      "prompt": "让专业能力、流程和组织权力真正影响结果，不以恋爱替代职业目标。"
+    },
+    {
+      "id": "corporate_dynasty",
+      "title": "豪门商战",
+      "core_goal": "在继承、并购和家族契约中保住主动权",
+      "failure_stakes": "控制权易手、秘密曝光或家族成员被利用",
+      "prompt": "让资产、董事会、舆论和亲缘义务构成多方制衡，避免单一霸总模板。"
+    },
+    {
+      "id": "competitive_arena",
+      "title": "竞技赛事",
+      "core_goal": "在明确赛制中晋级并发现影响公平的异常",
+      "failure_stakes": "淘汰、伤病或赛事被幕后势力控制",
+      "prompt": "给出可理解的赛制、对手和训练过程，角色关系不能抹掉竞技胜负心。"
+    },
+    {
+      "id": "settlement_building",
+      "title": "经营建设",
+      "core_goal": "把濒临崩溃的据点、组织或店铺经营到可持续",
+      "failure_stakes": "资源耗尽、成员离散或据点失去庇护功能",
+      "prompt": "用资源、人员、声誉和阶段目标推进，让圣堂成为可改变的长期空间。"
+    },
+    {
+      "id": "relic_hunt",
+      "title": "夺宝冒险",
+      "core_goal": "穿过遗迹机关并决定圣物归属",
+      "failure_stakes": "竞争者夺宝、遗迹坍塌或圣物被错误唤醒",
+      "prompt": "设计空间谜题、竞争队伍和归属冲突，宝物必须改变后续选择而非只作奖励。"
+    },
+    {
+      "id": "road_journey",
+      "title": "公路旅程",
+      "core_goal": "在不断变化的地点中完成护送、追踪或归乡",
+      "failure_stakes": "错过窗口、路线被截断或同行目标分裂",
+      "prompt": "每个停靠点都推进人物判断与主线线索，旅程本身必须产生变化。"
+    },
+    {
+      "id": "wilderness_survival",
+      "title": "荒野求生",
+      "core_goal": "获得水、食物、庇护并找到离开路径",
+      "failure_stakes": "资源耗尽、伤势恶化或队伍失去方向",
+      "prompt": "让环境、体力和技能决定行动边界，净化能力也必须消耗资源。"
+    },
+    {
+      "id": "disaster_escape",
+      "title": "灾难逃亡",
+      "core_goal": "在不断恶化的灾害中带关键人员抵达安全区",
+      "failure_stakes": "通道关闭、次生灾害发生或救援秩序崩溃",
+      "prompt": "保持时间压力和群体选择，不能让主角只围绕单一女主忽略现场后果。"
+    },
+    {
+      "id": "apocalypse_survival",
+      "title": "末日生存",
+      "core_goal": "建立可持续据点并处理外部威胁与内部规则",
+      "failure_stakes": "据点失守、资源链断裂或派系冲突内爆",
+      "prompt": "区分短期生存与长期治理，让女主拥有对据点未来的明确立场。"
+    },
+    {
+      "id": "locked_room_horror",
+      "title": "密闭惊魂",
+      "core_goal": "找出封闭空间的规则与隐藏出口",
+      "failure_stakes": "成员依次消失、规则触发或空间永久封闭",
+      "prompt": "给出有限地图、可追踪线索与逐步变化的规则，避免纯靠突然惊吓。"
+    },
+    {
+      "id": "dark_fairytale",
+      "title": "黑暗童话",
+      "core_goal": "识别象征规则并以代价打破诅咒结局",
+      "failure_stakes": "身份被童话角色吞没、契约兑现或循环重启",
+      "prompt": "让物件、称谓和承诺具有规则意义，语言保持寓言感但因果必须可理解。"
+    },
+    {
+      "id": "mythic_anomaly",
+      "title": "神话志怪",
+      "core_goal": "查明神怪事件背后的因果、香火或旧约",
+      "failure_stakes": "因果反噬、神怪失序或人间秩序被改写",
+      "prompt": "使用具体地域传说、祭祀逻辑和人神边界，不能把所有存在统一写成西式恶魔。"
+    },
+    {
+      "id": "epic_fantasy",
+      "title": "奇幻史诗",
+      "core_goal": "围绕王国、种族或魔法危机完成阶段性战略目标",
+      "failure_stakes": "城邦陷落、联盟破裂或世界规则继续崩坏",
+      "prompt": "让宏大冲突落到本局可执行任务，同时保留各阵营独立利益。"
+    },
+    {
+      "id": "cosmic_investigation",
+      "title": "克苏鲁调查",
+      "core_goal": "在认知风险下拼合不可完全理解的真相",
+      "failure_stakes": "认知污染、错误召唤或调查者失去现实判断",
+      "prompt": "通过记录矛盾、感官异常和知识代价制造恐惧，不直接堆砌怪物名称。"
+    },
+    {
+      "id": "rule_instance",
+      "title": "无限副本",
+      "core_goal": "识别关卡规则并完成可验证的通关条件",
+      "failure_stakes": "淘汰、规则惩罚或被永久同化为副本角色",
+      "prompt": "明示部分规则并允许推理剩余规则，系统不能临时增加无解惩罚。"
+    },
+    {
+      "id": "cyber_crime",
+      "title": "赛博犯罪",
+      "core_goal": "追踪意识、记忆或数据犯罪并突破企业控制",
+      "failure_stakes": "人格备份被篡改、身份注销或城市系统接管",
+      "prompt": "将净化对应为认知校验与污染隔离，同时保留身体、阶层和数据所有权问题。"
+    },
+    {
+      "id": "stellar_expedition",
+      "title": "星际冒险",
+      "core_goal": "完成航行、接触或遗迹任务并维持船员共同体",
+      "failure_stakes": "航线中断、生态系统失衡或外交冲突升级",
+      "prompt": "用通信延迟、资源循环和文明差异塑造选择，星舰圣堂必须有实际职能。"
+    },
+    {
+      "id": "temporal_paradox",
+      "title": "时空悖论",
+      "core_goal": "找出时间异常的锚点并决定保留哪条因果链",
+      "failure_stakes": "记忆互斥、重要人物消失或循环永久闭合",
+      "prompt": "明确时间规则与可观察变化，角色不能凭作者旁白直接知道全部世界线。"
+    }
+  ],
+  "atmospheres": [
+    {
+      "id": "forbidden_tension",
+      "title": "禁忌拉扯",
+      "prompt": "让社会身份或明确承诺构成真实阻力，不用无理由羞耻替代冲突。"
+    },
+    {
+      "id": "enemies_cooperate",
+      "title": "敌对转合作",
+      "prompt": "双方先有可说明的立场冲突，再因共同目标逐步建立有限合作。"
+    },
+    {
+      "id": "contract_bond",
+      "title": "契约关系",
+      "prompt": "契约规定权利、义务、期限和退出代价，不能等同于服从。"
+    },
+    {
+      "id": "forced_proximity",
+      "title": "强制共处",
+      "prompt": "外部条件限制空间或行动，但角色仍保留拒绝、谈判和独立计划。"
+    },
+    {
+      "id": "slow_redemption",
+      "title": "慢热救赎",
+      "prompt": "用多次可验证行动积累信任，避免一次净化解决全部创伤。"
+    },
+    {
+      "id": "suspense_duel",
+      "title": "悬疑博弈",
+      "prompt": "双方掌握不同信息并互相试探，真相通过证据逐步公开。"
+    },
+    {
+      "id": "dangerous_symbiosis",
+      "title": "危险共生",
+      "prompt": "双方能力或生存条件互补，同时明确依赖的风险与反制方式。"
+    },
+    {
+      "id": "dark_fable",
+      "title": "黑暗寓言",
+      "prompt": "使用象征、规则和代价营造压迫感，保持事件因果清晰。"
+    },
+    {
+      "id": "identity_contrast",
+      "title": "身份反差",
+      "prompt": "公开身份与真实能力产生戏剧冲突，但不把角色写成单一反差笑料。"
+    },
+    {
+      "id": "intimate_daily",
+      "title": "日常暧昧",
+      "prompt": "用共同任务中的细节和边界试探推进关系，不跳过陌生阶段。"
+    }
+  ],
+  "eras": [
+    {
+      "id": "mythic_dawn",
+      "title": "神话洪荒",
+      "prompt": "神、人、妖与祭祀规则仍在形成。"
+    },
+    {
+      "id": "ancient_empire",
+      "title": "古代帝国",
+      "prompt": "皇权、宗族、礼制与地方秩序共同作用。"
+    },
+    {
+      "id": "martial_dynasty",
+      "title": "武侠王朝",
+      "prompt": "朝廷法度与江湖规矩并存。"
+    },
+    {
+      "id": "cultivation_age",
+      "title": "仙门时代",
+      "prompt": "宗门、灵脉与凡俗王朝相互制衡。"
+    },
+    {
+      "id": "age_of_sail",
+      "title": "航海时代",
+      "prompt": "远洋贸易、殖民据点与未知海域扩张。"
+    },
+    {
+      "id": "industrial_age",
+      "title": "蒸汽工业",
+      "prompt": "工厂、铁路、阶级和新技术改变生活。"
+    },
+    {
+      "id": "republican_city",
+      "title": "民国都市",
+      "prompt": "租界、报馆、帮会与新旧观念冲突。"
+    },
+    {
+      "id": "late_twentieth",
+      "title": "二十世纪末",
+      "prompt": "大众传媒、城市化与传统社区并存。"
+    },
+    {
+      "id": "contemporary",
+      "title": "当代世界",
+      "prompt": "网络舆论、职业系统与现代法治构成现实约束。"
+    },
+    {
+      "id": "near_future",
+      "title": "近未来",
+      "prompt": "自动化、增强现实与治理技术进入日常。"
+    },
+    {
+      "id": "cyberpunk",
+      "title": "赛博都市",
+      "prompt": "企业权力、义体与数据身份决定社会位置。"
+    },
+    {
+      "id": "post_apocalypse",
+      "title": "末日余生",
+      "prompt": "旧文明残骸、资源链和新共同体争夺未来。"
+    },
+    {
+      "id": "spacefaring",
+      "title": "星际时代",
+      "prompt": "星舰、殖民地与多文明接触成为常态。"
+    },
+    {
+      "id": "dream_realm",
+      "title": "梦境纪元",
+      "prompt": "记忆、象征与现实规则持续互相渗透。"
+    },
+    {
+      "id": "mixed_timeline",
+      "title": "错位时代",
+      "prompt": "多个时代的技术、文化和历史同时存在且有明确成因。"
+    }
+  ],
+  "sanctum_forms": [
+    {
+      "id": "imperial_divination",
+      "title": "钦天净仪院",
+      "prompt": "负责天象、灾异与皇室秘密仪式。"
+    },
+    {
+      "id": "mountain_temple",
+      "title": "荒山古刹",
+      "prompt": "依靠旧经卷、香火与山门结界维持净化。"
+    },
+    {
+      "id": "demon_bureau",
+      "title": "镇异司",
+      "prompt": "以官署档案、巡查和收容流程处理异常。"
+    },
+    {
+      "id": "hidden_clinic",
+      "title": "夜间诊所",
+      "prompt": "用现代诊疗外观掩护异常诊断与净化。"
+    },
+    {
+      "id": "urban_church",
+      "title": "圣言堂",
+      "prompt": "以礼拜堂、告解室、档案室和地下仪式区运作。"
+    },
+    {
+      "id": "private_foundation",
+      "title": "私人救助基金会",
+      "prompt": "以社会援助、研究项目和秘密转介连接事件。"
+    },
+    {
+      "id": "mobile_sanctuary",
+      "title": "移动圣所",
+      "prompt": "车队、列车或舰船上的模块化净化据点。"
+    },
+    {
+      "id": "field_hospital",
+      "title": "战地净化站",
+      "prompt": "在救治、隔离与撤离压力中执行仪式。"
+    },
+    {
+      "id": "arcane_cathedral",
+      "title": "奥术圣殿",
+      "prompt": "用魔法阵、誓约和圣物管理超自然污染。"
+    },
+    {
+      "id": "sect_heart_hall",
+      "title": "问心殿",
+      "prompt": "以心境试炼、灵脉和镇魔法器处理异常。"
+    },
+    {
+      "id": "underground_shelter",
+      "title": "地下避难所",
+      "prompt": "兼具资源配给、医疗隔离和社区治理职能。"
+    },
+    {
+      "id": "cognition_center",
+      "title": "意识净化中心",
+      "prompt": "校验人格、隔离记忆病毒并审计数据污染。"
+    },
+    {
+      "id": "starship_chapel",
+      "title": "星舰礼拜舱",
+      "prompt": "维持船员心理、生态仪式与外星污染隔离。"
+    },
+    {
+      "id": "underworld_ferry",
+      "title": "冥府渡口",
+      "prompt": "管理亡者因果、记忆凭证和重返人间的契约。"
+    },
+    {
+      "id": "dream_sanctum",
+      "title": "无坐标圣堂",
+      "prompt": "只在共同梦境与精神危机中出现。"
+    }
+  ],
+  "integration_modes": [
+    {
+      "id": "native_reframe",
+      "title": "原生重构",
+      "prompt": "她一直属于当前世界，原作经历被重构为功能相近的本地经历。"
+    },
+    {
+      "id": "temporal_transfer",
+      "title": "时空迁移",
+      "prompt": "她保留原作记忆，经由可追踪事故、召唤或节点来到这里。"
+    },
+    {
+      "id": "reincarnated_echo",
+      "title": "转生再临",
+      "prompt": "她拥有新人生，同时被原作人格、能力或记忆碎片影响。"
+    },
+    {
+      "id": "identity_overlay",
+      "title": "身份覆盖",
+      "prompt": "她进入当前世界另一个自己的身份，并面对已有社会关系。"
+    },
+    {
+      "id": "world_convergence",
+      "title": "世界融合",
+      "prompt": "两个世界发生局部重叠，双方规则都留下可观察痕迹。"
+    },
+    {
+      "id": "sanctum_recall",
+      "title": "圣堂召回",
+      "prompt": "她曾与圣堂订立未完成契约，如今因具体条件再次出现。"
+    },
+    {
+      "id": "rewritten_history",
+      "title": "历史改写",
+      "prompt": "世界认为她一直存在，仅少数记忆或物证显示历史被改写。"
+    },
+    {
+      "id": "active_mission",
+      "title": "任务投放",
+      "prompt": "她主动跨界执行追捕、调查、逃亡、护送或夺取任务。"
+    }
+  ],
+  "ability_presets": [
+    {
+      "id": "impurity_sense",
+      "title": "污秽感知",
+      "summary": "能辨认情绪、灵魂与能量中的异常残留，并追踪其来源。"
+    },
+    {
+      "id": "ritual_purification",
+      "title": "仪式净化",
+      "summary": "通过准备完整的仪式逐层剥离污染，稳定但需要时间与条件。"
+    },
+    {
+      "id": "pain_transfer",
+      "title": "代偿转移",
+      "summary": "将目标承受的异常暂时转移到自身或媒介，见效快但需要承担代价。"
+    },
+    {
+      "id": "memory_dive",
+      "title": "记忆潜行",
+      "summary": "进入目标记忆寻找污染锚点，无法保证看到的记忆完全真实。"
+    },
+    {
+      "id": "oath_binding",
+      "title": "誓约术",
+      "summary": "让双方自愿约定转化为可执行的仪式规则，违约会触发对等代价。"
+    },
+    {
+      "id": "relic_resonance",
+      "title": "圣物共鸣",
+      "summary": "借不同圣物放大侦测、封印或治疗效果，能力取决于携带媒介。"
+    },
+    {
+      "id": "boundary_field",
+      "title": "结界构筑",
+      "summary": "建立隔离污染与保护人员的领域，范围越大维持成本越高。"
+    },
+    {
+      "id": "true_name",
+      "title": "真名解析",
+      "summary": "从语言、记录和行为中解析异常真名，掌握越准确净化越有效。"
+    },
+    {
+      "id": "dream_guidance",
+      "title": "梦境引导",
+      "summary": "在睡眠和共同梦境中与目标交流，适合处理无法直接触及的精神异常。"
+    },
+    {
+      "id": "causal_stitch",
+      "title": "因果缝合",
+      "summary": "修复异常造成的局部因果断裂，但不能随意重写既成历史。"
+    },
+    {
+      "id": "adaptive_grace",
+      "title": "时代适应",
+      "summary": "净化能力会自动转译为当前世界能够理解和承载的技术或术法。"
+    },
+    {
+      "id": "sanctuary_gate",
+      "title": "圣堂门扉",
+      "summary": "在条件满足时开启通往圣堂或其他节点的短暂通道，无法绕过强封锁。"
+    }
+  ]
+};
+/* === SYNC_END:OPENING_OPTIONS === */
+const MEETING_MODES = OPENING_OPTIONS.story_types.map(({ id, title, core_goal, prompt }) => ({
+  id,
+  title,
+  cover: core_goal,
+  prompt,
+}));
 /* === SYNC_BEGIN:CHARACTERS === */
 const CHARACTERS = [
   {

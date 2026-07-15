@@ -288,6 +288,22 @@ def load_meeting_modes() -> list[dict]:
     return list(data.get("modes") or [])
 
 
+def load_opening_options() -> dict[str, list[dict]]:
+    data = yaml.safe_load((ROOT / "plot/opening_options.yaml").read_text(encoding="utf-8")) or {}
+    required = (
+        "story_types",
+        "atmospheres",
+        "eras",
+        "sanctum_forms",
+        "integration_modes",
+        "ability_presets",
+    )
+    missing = [key for key in required if not data.get(key)]
+    if missing:
+        raise SystemExit(f"opening options missing: {', '.join(missing)}")
+    return {key: list(data[key]) for key in required}
+
+
 def build_character_overview(chars: list[dict]) -> str:
     lines = [
         "<角色速览>",
@@ -536,17 +552,17 @@ def build_worldbook_entries() -> list:
 
 
 def sync_cover_assets() -> None:
-    modes = load_meeting_modes()
+    options = load_opening_options()
     chars = load_characters()
     cover = ROOT / "src/shengtang/ui/cover/index.html"
     text = cover.read_text(encoding="utf-8")
 
-    modes_js = "const MEETING_MODES = " + json.dumps(modes, ensure_ascii=False, indent=2) + ";"
+    options_js = "const OPENING_OPTIONS = " + json.dumps(options, ensure_ascii=False, indent=2) + ";"
     chars_js = "const CHARACTERS = " + json.dumps(chars, ensure_ascii=False, indent=2) + ";"
 
-    text, modes_count = re.subn(
-        r"/\* === SYNC_BEGIN:MEETING_MODES === \*/.*?/\* === SYNC_END:MEETING_MODES === \*/",
-        lambda _m: "/* === SYNC_BEGIN:MEETING_MODES === */\n" + modes_js + "\n/* === SYNC_END:MEETING_MODES === */",
+    text, options_count = re.subn(
+        r"/\* === SYNC_BEGIN:OPENING_OPTIONS === \*/.*?/\* === SYNC_END:OPENING_OPTIONS === \*/",
+        lambda _m: "/* === SYNC_BEGIN:OPENING_OPTIONS === */\n" + options_js + "\n/* === SYNC_END:OPENING_OPTIONS === */",
         text,
         count=1,
         flags=re.S,
@@ -558,12 +574,12 @@ def sync_cover_assets() -> None:
         count=1,
         flags=re.S,
     )
-    if modes_count != 1 or chars_count != 1:
+    if options_count != 1 or chars_count != 1:
         raise SystemExit(
-            f"cover sync markers invalid: meeting_modes={modes_count}, characters={chars_count}"
+            f"cover sync markers invalid: opening_options={options_count}, characters={chars_count}"
         )
     cover.write_text(text, encoding="utf-8")
-    print(f"synced cover data: {len(modes)} modes, {len(chars)} characters")
+    print(f"synced cover data: {len(options['story_types'])} story types, {len(chars)} characters")
 
     # 状态栏抽卡角色池（精简字段）
     roster = [
