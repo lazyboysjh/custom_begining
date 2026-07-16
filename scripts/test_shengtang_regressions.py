@@ -607,10 +607,11 @@ class ProductUiTests(unittest.TestCase):
     def test_status_texture_preserves_readability_on_light_hosts(self) -> None:
         self.assertIn("20260716184427370.png", STATUS)
         black_gold = STATUS[STATUS.index("/* Black-gold preview") :]
-        self.assertIn("rgba(12,12,16,.22)", black_gold)
+        self.assertIn("rgba(10,10,13,.9)", black_gold)
         self.assertIn("mix-blend-mode: normal", black_gold.split('html[data-status-bg="a"]', 1)[0])
-        self.assertIn("opacity: .92", black_gold.split('html[data-status-bg="a"]', 1)[0])
+        self.assertIn("opacity: .28", black_gold.split('html[data-status-bg="a"]', 1)[0])
         self.assertIn("backdrop-filter: none", black_gold.split('html[data-status-bg="a"]', 1)[0])
+        self.assertIn("background: rgba(8,9,12,.78)", black_gold)
         self.assertNotIn("grayscale(1)", STATUS)
         self.assertIn("@container (max-width: 820px)", black_gold)
         self.assertIn("@container (max-width: 520px)", black_gold)
@@ -618,8 +619,9 @@ class ProductUiTests(unittest.TestCase):
         self.assertNotIn("background-size: auto 320px", black_gold)
 
     def test_status_topbar_shows_world_meta_without_action_note(self) -> None:
-        for marker in ('class="meta-strip"', 'id="metaEra"', 'id="metaAtmosphere"', 'id="metaAbility"', "renderWorldMeta", "_开局配置", "时代背景", "故事氛围", "能力摘要", "圣堂名称"):
+        for marker in ('class="meta-strip"', 'id="metaStory"', 'id="metaAtmosphere"', 'id="metaAbility"', "renderWorldMeta", "_开局配置", "故事类型", "故事氛围", "能力摘要", "圣堂名称"):
             self.assertIn(marker, STATUS)
+        self.assertNotIn('id="metaEra"', STATUS)
         self.assertNotIn('id="drawNote"', STATUS)
         self.assertNotIn("action-note", STATUS[STATUS.index("<footer class=\"actions\">"):STATUS.index("</footer>", STATUS.index("<footer class=\"actions\">"))])
 
@@ -667,8 +669,34 @@ class ProductUiTests(unittest.TestCase):
     def test_status_actions_are_unambiguous(self) -> None:
         self.assertIn("新角色入场", STATUS)
         self.assertIn("推进剧情", STATUS)
+        self.assertIn("friendlyDrawMessage", STATUS)
+        self.assertIn("friendlyAdvanceMessage", STATUS)
+        self.assertIn("dispatchAction", STATUS)
+        self.assertIn("injects:", STATUS)
+        self.assertNotIn("dispatchSend(", STATUS)
         self.assertNotIn("再摇一位~", STATUS)
         self.assertNotIn("故事继续走~", STATUS)
+
+    def test_status_action_prompts_stay_hidden_from_user_message(self) -> None:
+        self.assertIn("【新角色入场】请让「", STATUS)
+        self.assertIn("【推进剧情｜", STATUS)
+        self.assertIn("buildEncounterPrompt", STATUS)
+        self.assertIn("buildTogetherPrompt", STATUS)
+        # 技术提示走 injects，不直接塞进用户可见楼层
+        self.assertIn("content: hidden", STATUS)
+        draw = STATUS[STATUS.index("function onDrawEncounter"):STATUS.index("async function onTogetherMoment")]
+        self.assertIn("friendlyDrawMessage(character)", draw)
+        self.assertIn("buildEncounterPrompt(character, currentStat)", draw)
+        together = STATUS[STATUS.index("async function onTogetherMoment"):STATUS.index("window.addEventListener(\"pagehide\"")]
+        self.assertIn("friendlyAdvanceMessage(scenario)", together)
+        self.assertIn("buildTogetherPrompt(currentStat, scenario)", together)
+
+    def test_xi_shi_appearance_is_visual_not_meta_commentary(self) -> None:
+        self.assertNotIn("早期文献强调其美", STATUS)
+        self.assertNotIn("本卡不用“捧心”", STATUS)
+        self.assertNotIn("早期文献强调其美", COVER)
+        self.assertIn("乌发如瀑", STATUS)
+        self.assertIn("乌发如瀑", COVER)
 
     def test_cover_and_status_buttons_use_inline_lucide_icons(self) -> None:
         self.assertGreaterEqual(COVER.count('class="ui-icon"'), 5)

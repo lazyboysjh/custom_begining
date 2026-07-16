@@ -955,38 +955,34 @@ button { -webkit-tap-highlight-color: transparent; }
 }
 .st-shell {
   color: var(--st-text);
-  border-color: rgba(246,220,177,.14);
-  background: rgba(12,12,16,.22);
+  border-color: rgba(246,220,177,.16);
+  background: rgba(10,10,13,.9);
   box-shadow:
     inset 0 1px rgba(255,249,236,.08),
-    inset 0 0 0 1px rgba(246,220,177,.05),
+    inset 0 0 0 1px rgba(246,220,177,.06),
     0 18px 40px rgba(0,0,0,.5);
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
 }
 .st-shell::before {
   background: url("https://raw.githubusercontent.com/lazyboysjh/image/main/20260716184427370.png") 72% center / cover no-repeat;
-  opacity: .92;
-  filter: saturate(1.05) contrast(1.08) brightness(1.04);
+  opacity: .28;
+  filter: saturate(.9) contrast(1.04) brightness(.92);
   mix-blend-mode: normal;
   -webkit-mask-image: none;
   mask-image: none;
 }
 .st-shell::after {
-  background:
-    linear-gradient(105deg, rgba(10,10,13,.72) 0%, rgba(10,10,13,.36) 36%, rgba(10,10,13,.1) 64%, transparent 86%),
-    linear-gradient(0deg, rgba(10,10,13,.48) 0%, transparent 38%);
+  background: rgba(8,9,12,.78);
 }
 .topbar,
 .role-strip,
 .actions {
   color: var(--st-text);
   border-color: rgba(246,220,177,.12);
-  background:
-    linear-gradient(180deg, rgba(255,246,230,.05), transparent 48%),
-    rgba(13,13,16,.48);
-  backdrop-filter: blur(10px) saturate(1.12);
-  -webkit-backdrop-filter: blur(10px) saturate(1.12);
+  background: rgba(12,12,16,.72);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
 }
 .scene b,
 .identity-copy h2 { color: var(--st-text); font-family: var(--st-font-serif); }
@@ -1028,7 +1024,7 @@ button { -webkit-tap-highlight-color: transparent; }
 .identity-band {
   color: var(--st-text);
   border-color: rgba(224,194,139,.09);
-  background: rgba(14,14,17,.34);
+  background: rgba(14,14,17,.72);
 }
 .opening-context span { border-color: rgba(224,194,139,.08); }
 .opening-context small { color: #7f7a72; }
@@ -1040,20 +1036,20 @@ button { -webkit-tap-highlight-color: transparent; }
 }
 .relationship {
   border-color: #d19a56;
-  background: rgba(13,13,16,.38);
+  background: rgba(13,13,16,.72);
 }
 .relationship span { color: #8c877f; }
 .relationship b { color: #ead8b4; }
 .stat-pane,
 .record-pane {
   color: var(--st-text);
-  background: rgba(10,10,13,.44);
+  background: rgba(10,10,13,.78);
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
 }
 .record-pane {
   border-color: rgba(224,194,139,.1);
-  background: rgba(10,10,13,.54);
+  background: rgba(10,10,13,.82);
 }
 .metric {
   border-color: rgba(255,255,255,.06);
@@ -1089,40 +1085,40 @@ button { -webkit-tap-highlight-color: transparent; }
 }
 @container (max-width: 820px) {
   .st-shell::before {
-    opacity: .88;
+    opacity: .22;
     background-position: 72% center;
     background-size: cover;
     -webkit-mask-image: none;
     mask-image: none;
   }
   .st-shell::after {
-    background:
-      linear-gradient(90deg, rgba(10,10,13,.72) 0%, rgba(10,10,13,.38) 42%, rgba(10,10,13,.14) 72%, transparent 90%),
-      linear-gradient(0deg, rgba(10,10,13,.5) 0%, transparent 36%);
+    background: rgba(8,9,12,.82);
   }
   .topbar { grid-template-columns: 1fr; gap: 10px; }
   .meta-strip { justify-content: flex-start; }
   .meta { max-width: none; flex: 1 1 30%; }
   .stat-pane,
-  .record-pane { background: rgba(10,10,13,.48); }
+  .record-pane { background: rgba(10,10,13,.72); }
 }
 @container (max-width: 520px) {
-  .st-shell::before { opacity: .9; }
+  .st-shell::before { opacity: .18; }
+  .st-shell::after { background: rgba(8,9,12,.86); }
   .stat-pane,
-  .record-pane { background: rgba(10,10,13,.52); }
+  .record-pane { background: rgba(10,10,13,.78); }
 }
 html[data-status-bg="a"] .st-shell::before {
   background-image: url("https://raw.githubusercontent.com/lazyboysjh/image/main/20260716184427370.png");
-  opacity: .88;
-  filter: saturate(.92) brightness(1.04) contrast(1.1);
+  opacity: .28;
+  filter: saturate(.9) brightness(.92) contrast(1.04);
   mix-blend-mode: normal;
 }
 html[data-status-bg="b"] .st-shell::before {
   background-image: url("https://raw.githubusercontent.com/lazyboysjh/image/main/20260716184427370.png");
+  opacity: .28;
 }
 @container (max-width: 700px) {
   html[data-status-bg="a"] .st-shell::before {
-    opacity: .74;
+    opacity: .2;
     background-position: 72% center;
   }
 }
@@ -1172,7 +1168,7 @@ html[data-status-bg="b"] .st-shell::before {
     <header class="topbar">
       <div class="scene"><b id="scene">—</b></div>
       <div class="meta-strip" aria-label="开局设定">
-        <div class="meta"><small>时代</small><b id="metaEra">—</b></div>
+        <div class="meta"><small>故事</small><b id="metaStory">—</b></div>
         <div class="meta"><small>氛围</small><b id="metaAtmosphere">—</b></div>
         <div class="meta ability"><small>主角能力</small><b id="metaAbility">—</b></div>
       </div>
@@ -2177,7 +2173,7 @@ const ROSTER = [
     "id": "xi_shi",
     "name": "西施",
     "work": "越绝书/吴越春秋及西施传说",
-    "appearance": "早期文献强调其美而少有精确容貌描写，后世常塑为若耶溪畔浣纱女子：素衣、乌发、体态轻盈，入吴后改着宫廷礼服；本卡不用“捧心”传说替代其全部神态。",
+    "appearance": "乌发如瀑、眉眼清丽，身形轻盈；浣纱时常着素衣，入吴后可换华服宫装，步态仍带水乡女子的柔软。",
     "accent": "#4d8790"
   },
   {
@@ -2744,21 +2740,44 @@ function selectRole(name) {
 
 function metaLabel(value, max = 16) {
   const text = String(value || "").trim();
-  if (!text || text === "待生成") return "—";
+  if (!text || text === "待生成") return "";
   const short = text.split(/[；;。]/)[0].trim() || text;
   return short.length <= max ? short : `${short.slice(0, max)}…`;
+}
+
+function firstMetaLabel(values, max = 12) {
+  for (const value of values) {
+    const label = metaLabel(value, max);
+    if (label) return label;
+  }
+  return "—";
+}
+
+function storyFromScene(scene) {
+  const text = String(scene || "").trim();
+  if (!text || !text.includes("·")) return "";
+  return text.split("·").slice(1).join("·").trim();
 }
 
 function renderWorldMeta(stat) {
   const world = stat && stat.世界 ? stat.世界 : {};
   const opening = world._开局配置 || {};
   const hero = stat && stat.主角 ? stat.主角 : {};
-  const era = document.getElementById("metaEra");
+  const story = document.getElementById("metaStory");
   const atmosphere = document.getElementById("metaAtmosphere");
   const ability = document.getElementById("metaAbility");
-  if (era) era.textContent = metaLabel(opening.时代背景, 12);
-  if (atmosphere) atmosphere.textContent = metaLabel(opening.故事氛围, 12);
-  if (ability) ability.textContent = metaLabel(hero.能力摘要, 14);
+  // 优先展示故事类型（比时代背景更贴近开局抽样结果）；旧档或缺失时回退场景后缀/时代
+  if (story) {
+    story.textContent = firstMetaLabel([
+      opening.故事类型,
+      opening.时代背景,
+      storyFromScene(world.场景),
+    ], 12);
+  }
+  if (atmosphere) {
+    atmosphere.textContent = firstMetaLabel([opening.故事氛围], 12);
+  }
+  if (ability) ability.textContent = firstMetaLabel([hero.能力摘要], 14);
 }
 
 function populateCharacterData() {
@@ -2816,11 +2835,53 @@ function getTriggerSlash() {
   return null;
 }
 
-function dispatchSend(text) {
+function getGenerateFn() {
+  try { if (typeof generate === "function") return generate; } catch (_) {}
+  try { if (window.parent && typeof window.parent.generate === "function") return window.parent.generate.bind(window.parent); } catch (_) {}
+  try { if (window.top && typeof window.top.generate === "function") return window.top.generate.bind(window.top); } catch (_) {}
+  return null;
+}
+
+function slashSafe(text) {
+  return String(text || "").replace(/<\/?q>/gi, "").trim().replace(/\|/g, "｜");
+}
+
+async function dispatchAction(visibleText, prompt) {
+  const visible = String(visibleText || "").trim();
+  const hidden = String(prompt || "").trim();
+  if (!visible || !hidden) return false;
+
+  const generateFn = getGenerateFn();
+  if (generateFn) {
+    await generateFn({
+      user_input: visible,
+      should_stream: true,
+      injects: [{
+        role: "system",
+        content: hidden,
+        position: "in_chat",
+        depth: 0,
+        should_scan: true,
+      }],
+    });
+    return true;
+  }
+
   const trigger = getTriggerSlash();
-  if (!trigger) return Promise.resolve(false);
-  const safe = String(text || "").replace(/<\/?q>/gi, "").trim().replace(/\|/g, "｜");
-  return Promise.resolve(trigger(`/send ${safe}|/trigger`)).then(() => true);
+  if (!trigger) return false;
+  const safeVisible = slashSafe(visible);
+  const safeHidden = slashSafe(hidden).replace(/\r?\n/g, " ");
+  await trigger(`/inject id=shengtang-action position=chat depth=0 role=system ephemeral=true ${safeHidden}`);
+  await trigger(`/send ${safeVisible}|/trigger`);
+  return true;
+}
+
+function friendlyDrawMessage(character) {
+  return `【新角色入场】请让「${character.name}」进入当前场景，与在场众人自然相遇。`;
+}
+
+function friendlyAdvanceMessage(scenario) {
+  return `【推进剧情｜${scenario.title}】请承接当前剧情继续往下写。`;
 }
 
 function jsonPointerSegment(value) {
@@ -2903,7 +2964,10 @@ async function onDrawEncounter() {
   if (!character) { toast("当前没有可加入的角色"); return; }
   setActionBusy(true);
   try {
-    const sent = await dispatchSend(buildEncounterPrompt(character, currentStat));
+    const sent = await dispatchAction(
+      friendlyDrawMessage(character),
+      buildEncounterPrompt(character, currentStat),
+    );
     toast(sent ? `已安排 ${character.name} 入场` : `预览角色：${character.name}`);
   } catch (error) { console.error(error); toast("发送失败，请重试"); }
   setActionBusy(false);
@@ -2914,7 +2978,10 @@ async function onTogetherMoment() {
   const scenario = pickAdvanceScenario(currentStat);
   setActionBusy(true);
   try {
-    const sent = await dispatchSend(buildTogetherPrompt(currentStat, scenario));
+    const sent = await dispatchAction(
+      friendlyAdvanceMessage(scenario),
+      buildTogetherPrompt(currentStat, scenario),
+    );
     toast(sent ? scenario.success : `预览推进：${scenario.title}`);
   } catch (error) { console.error(error); toast("发送失败，请重试"); }
   setActionBusy(false);
