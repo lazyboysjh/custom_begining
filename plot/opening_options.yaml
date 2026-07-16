@@ -207,15 +207,21 @@ integration_modes:
   - { id: active_mission, title: 任务投放, prompt: 她主动跨界执行追捕、调查、逃亡、护送或夺取任务。 }
 
 ability_presets:
-  - { id: impurity_sense, title: 污秽感知, summary: 能辨认情绪、灵魂与能量中的异常残留，并追踪其来源。 }
-  - { id: ritual_purification, title: 仪式净化, summary: 通过准备完整的仪式逐层剥离污染，稳定但需要时间与条件。 }
-  - { id: pain_transfer, title: 代偿转移, summary: 将目标承受的异常暂时转移到自身或媒介，见效快但需要承担代价。 }
-  - { id: memory_dive, title: 记忆潜行, summary: 进入目标记忆寻找污染锚点，无法保证看到的记忆完全真实。 }
-  - { id: oath_binding, title: 誓约术, summary: 让双方自愿约定转化为可执行的仪式规则，违约会触发对等代价。 }
-  - { id: relic_resonance, title: 圣物共鸣, summary: 借不同圣物放大侦测、封印或治疗效果，能力取决于携带媒介。 }
-  - { id: boundary_field, title: 结界构筑, summary: 建立隔离污染与保护人员的领域，范围越大维持成本越高。 }
-  - { id: true_name, title: 真名解析, summary: 从语言、记录和行为中解析异常真名，掌握越准确净化越有效。 }
-  - { id: dream_guidance, title: 梦境引导, summary: 在睡眠和共同梦境中与目标交流，适合处理无法直接触及的精神异常。 }
-  - { id: causal_stitch, title: 因果缝合, summary: 修复异常造成的局部因果断裂，但不能随意重写既成历史。 }
-  - { id: adaptive_grace, title: 时代适应, summary: 净化能力会自动转译为当前世界能够理解和承载的技术或术法。 }
-  - { id: sanctuary_gate, title: 圣堂门扉, summary: 在条件满足时开启通往圣堂或其他节点的短暂通道，无法绕过强封锁。 }
+  - { id: hypnosis, title: 催眠, summary: 通过目光、声音或重复暗示影响目标的注意、判断与行动；越违背其核心意愿的指令越容易被抵抗或事后察觉。 }
+  - { id: common_sense_rewrite, title: 常识改写, summary: 将一条指定规则暂时写入目标对日常世界的理解，使异常显得理所当然；范围越大、矛盾越多，改写越不稳定。 }
+  - { id: memory_edit, title: 记忆编辑, summary: 读取、模糊、替换或补写一段具体记忆；情绪残留与外部证据不会自动消失，可能让目标发现记忆存在断层。 }
+  - { id: time_stop, title: 时间暂停, summary: 让周围时间短暂停滞，自身可以在静止领域内行动；持续越久负担越大，强大存在可能保留感知甚至有限行动。 }
+  - { id: rule_override, title: 规则覆写, summary: 在有限范围内声明一条临时规则并让现实执行，例如“谎言会发光”；规则必须明确，代价随影响范围与持续时间上升。 }
+  - { id: dream_invasion, title: 梦境侵入, summary: 进入他人梦境并塑造场景、身份与感官体验；梦境会受潜意识反击，醒来后仍可能留下可辨认的情绪与碎片记忆。 }
+  - { id: mind_reading, title: 读心, summary: 捕捉目标当下最强烈的念头、情绪与心理意象；无法直接获得其全部记忆，刻意训练或精神干扰会制造噪声。 }
+  - { id: truth_command, title: 真言敕令, summary: 让听见命令的人在短时间内难以说谎或回避指定问题；沉默、误解与主观错误仍然存在。 }
+  - { id: emotional_resonance, title: 情绪共鸣, summary: 放大、平息或转移一个明确情绪，并感知它的来源；强行扭转会产生反弹，也可能让自身沾染同类情绪。 }
+  - { id: probability_tilt, title: 概率偏转, summary: 让一件本来可能发生的小概率事件更容易出现；不能凭空创造不可能，连续使用会积累意外与连锁巧合。 }
+  - { id: fate_edit, title: 命运批注, summary: 为某个具体事件添加一次倾向性结果，例如“今晚会再次相遇”；批注只能推动可能性，且常以意料之外的路径兑现。 }
+  - { id: spatial_room, title: 空间支配, summary: 在视野或标记范围内交换位置、折叠距离并封闭出口；陌生空间和持续扩张会显著降低精度。 }
+  - { id: phase_walk, title: 虚化穿行, summary: 让自身或接触物短暂脱离实体碰撞，用于穿墙、避险或隐藏；虚化期间难以直接影响现实物体。 }
+  - { id: clone_projection, title: 分身投影, summary: 创造共享感官的实体或幻象分身执行不同任务；分身越多，每个个体的稳定性与判断精度越低。 }
+  - { id: transformation, title: 万象拟态, summary: 改变自身外貌、声音与生理特征以适应身份或环境；无法自动复制目标的记忆、习惯和特殊能力。 }
+  - { id: sensory_link, title: 感官共享, summary: 与指定目标共享视觉、听觉、触觉或痛感，也可以暂时遮蔽其中一项；距离和强烈刺激会干扰连接。 }
+  - { id: contract_mark, title: 契约刻印, summary: 将双方明确说出的条件化为可追踪的约束与回报；条款中的歧义会按双方真实理解产生偏差。 }
+  - { id: portal_gate, title: 任意门, summary: 在两个已知或被标记的位置之间开启短暂通道；未知目的地、强封锁与跨世界距离会提高失败风险。 }

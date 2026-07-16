@@ -16,9 +16,11 @@ ROOT = Path(__file__).resolve().parents[1]
 COVER = (ROOT / "src/shengtang/ui/cover/index.html").read_text(encoding="utf-8")
 STATUS = (ROOT / "src/shengtang/ui/status/index.html").read_text(encoding="utf-8")
 BUILD = (ROOT / "build_shengtang_card.py").read_text(encoding="utf-8")
+REVIEW = (ROOT / "scripts/superpower_shengtang_review.py").read_text(encoding="utf-8")
 CARD = json.loads((ROOT / "圣堂初遇.json").read_text(encoding="utf-8"))
 CHARS = load_characters()
 WRITE_RULES = (ROOT / "worldbook/02_写作与人设规则.md").read_text(encoding="utf-8")
+STYLE_RULES = (ROOT / "worldbook/04_文风规则.md").read_text(encoding="utf-8") if (ROOT / "worldbook/04_文风规则.md").is_file() else ""
 MVU_RULES = (ROOT / "plot/mvu_update.yaml").read_text(encoding="utf-8")
 MVU_SCHEMA = (ROOT / "plot/schema.mvu.js").read_text(encoding="utf-8")
 INITVAR = yaml.safe_load((ROOT / "plot/initvar.yaml").read_text(encoding="utf-8"))
@@ -26,6 +28,10 @@ WRITING_RULES = WRITE_RULES
 
 
 class CharacterCatalogTests(unittest.TestCase):
+    def test_card_builder_defaults_to_frontend_publish_ref(self) -> None:
+        self.assertIn('["git", "rev-parse", "origin/main"]', BUILD)
+        self.assertNotIn('["git", "rev-parse", "HEAD"]', BUILD)
+
     def test_roster_has_exactly_200_unique_characters(self) -> None:
         self.assertEqual(len(CHARS), 200)
         self.assertEqual(len({char["id"] for char in CHARS}), 200)
@@ -49,18 +55,20 @@ class CharacterCatalogTests(unittest.TestCase):
             "推进当前幕",
             "返回重选",
             "初遇已就绪",
+            "带上这个能力~",
+            "就按我写的来~",
+            "全部随机开演~",
         ):
             self.assertNotIn(obsolete, COVER + STATUS)
         for expected in (
             "开始召唤啦~",
-            "命运随便摇~",
-            "看看谁来啦",
-            "神秘嘉宾加载中",
-            "再摇一位~",
-            "故事继续走~",
-            "看看其他人",
+            "随机一个~",
+            "那就开始吧~",
+            "召唤仪式进行中",
+            "新角色入场",
+            "推进剧情",
             "再想一下",
-            "人来啦，开演~",
+            "来客已现身~",
         ):
             self.assertIn(expected, COVER + STATUS)
 
@@ -78,7 +86,7 @@ class CharacterCatalogTests(unittest.TestCase):
         for directive in ("禁止", "不得", "严禁", "不可违背"):
             self.assertNotIn(directive, core)
         for marker in (
-            "演绎校准",
+            "关系校准",
             "先呈现角色自己的目标与风险判断",
             "评价依据亲历且可验证的具体事实",
             "关系变化对应明确事件",
@@ -186,6 +194,11 @@ class OpeningOptionTests(unittest.TestCase):
             self.assertGreater(len(values), 0, key)
             self.assertEqual(len({item["id"] for item in values}), len(values), key)
 
+    def test_ability_presets_are_playable_special_powers(self) -> None:
+        titles = {item["title"] for item in self.options.get("ability_presets") or []}
+        for title in ("催眠", "常识改写", "记忆编辑", "时间暂停", "规则覆写", "梦境侵入"):
+            self.assertIn(title, titles)
+
     def test_opening_options_have_one_cover_sync_block(self) -> None:
         self.assertEqual(COVER.count("SYNC_BEGIN:OPENING_OPTIONS"), 1)
         self.assertEqual(COVER.count("SYNC_END:OPENING_OPTIONS"), 1)
@@ -194,6 +207,10 @@ class OpeningOptionTests(unittest.TestCase):
 
 
 class OpeningLifecycleTests(unittest.TestCase):
+    def test_constant_worldbook_does_not_embed_character_roster(self) -> None:
+        self.assertNotIn("def build_character_overview", BUILD)
+        self.assertNotIn('"角色速览"', BUILD)
+
     def test_cover_samples_all_random_dimensions_without_manual_heroine_picker(self) -> None:
         self.assertNotIn('id="modeGrid"', COVER)
         self.assertNotIn('id="charGrid"', COVER)
@@ -210,12 +227,21 @@ class OpeningLifecycleTests(unittest.TestCase):
         ):
             self.assertIn(marker, COVER)
 
-    def test_normal_and_one_click_random_start_share_locked_config(self) -> None:
-        self.assertIn('id="btnRandomStart"', COVER)
-        self.assertIn("async function startGame(randomAll = false)", COVER)
-        self.assertIn("sampleOpeningConfig({ randomAbility: randomAll })", COVER)
+    def test_ability_picker_combines_presets_editing_and_real_random_action(self) -> None:
+        self.assertNotIn('id="btnRandomStart"', COVER)
+        self.assertNotIn('data-ability-mode=', COVER)
+        self.assertNotIn('abilityMode:', COVER)
+        self.assertIn('id="btnRandomAbility"', COVER)
+        self.assertIn('id="abilityCustom"', COVER)
+        self.assertIn('<option value="custom">自定义能力</option>', COVER)
+        self.assertIn('preset.value = "custom"', COVER)
+        self.assertIn("function randomizeAbility()", COVER)
+        self.assertIn("syncAbilityFromPreset", COVER)
+        self.assertIn("async function startGame()", COVER)
+        self.assertIn("sampleOpeningConfig({ randomAbility: false })", COVER)
+        self.assertIn("那就开始吧~", COVER)
         self.assertIn("config:", COVER)
-        self.assertIn("activeOpening.config", COVER)
+        self.assertIn("const revealPromise = startReveal(config)", COVER)
 
     def test_cross_era_prompt_requires_complete_causal_chain(self) -> None:
         for marker in (
@@ -231,13 +257,40 @@ class OpeningLifecycleTests(unittest.TestCase):
 
     def test_opening_patches_persist_public_random_context(self) -> None:
         for path in (
+            "/世界/_开局配置/时代背景",
+            "/世界/_开局配置/故事类型",
+            "/世界/_开局配置/故事氛围",
+            "/世界/_开局配置/圣堂形态",
+            "/世界/_开局配置/世界融入方式",
+            "/世界/圣堂名称",
+        ):
+            self.assertIn(path, COVER)
+        for obsolete_path in (
+            "/世界/相遇方式",
+            "/世界/教会名",
             "/世界/时代背景",
             "/世界/故事类型",
             "/世界/故事氛围",
             "/世界/圣堂形态",
             "/世界/开局摘要",
         ):
-            self.assertIn(path, COVER)
+            self.assertNotIn(obsolete_path, COVER)
+
+    def test_cover_exposes_all_editable_hero_fields_with_defaults(self) -> None:
+        expected = {
+            "heroName": "",
+            "heroIdentity": "教堂牧师",
+            "heroAppearance": "帅气的高中生",
+            "heroPersonality": "阴暗好色",
+            "heroStyle": "温和耐心，以救人为先",
+            "heroThought": "性压抑的高中男生",
+        }
+        for field_id, value in expected.items():
+            self.assertIn(f'id="{field_id}"', COVER)
+            if value:
+                self.assertIn(value, COVER)
+        self.assertIn('id="abilityCustom"', COVER)
+        self.assertIn('function inputText(', COVER)
 
     def test_never_deletes_chat_floors(self) -> None:
         self.assertNotIn("deleteExtraFloors", COVER)
@@ -248,6 +301,17 @@ class OpeningLifecycleTests(unittest.TestCase):
         self.assertRegex(COVER, r"STREAM_TOKEN_RECEIVED_FULLY[\s\S]+generationId")
         self.assertIn("stopGenerationById", COVER)
         self.assertIn("pagehide", COVER)
+        self.assertIn("revealFinishTimer", COVER)
+        self.assertRegex(COVER, r"clearTimeout\(state\.revealFinishTimer\)")
+        self.assertIn("function clearRevealTimers()", COVER)
+        self.assertGreaterEqual(COVER.count("clearRevealTimers()"), 4)
+
+    def test_stream_progress_is_throttled_and_reveal_starts_immediately(self) -> None:
+        self.assertIn("function scheduleStreamProgress", COVER)
+        start = COVER.index("async function startGame(")
+        reveal = COVER.index("startReveal(config)", start)
+        wait_mvu = COVER.index("await waitMvu(", start)
+        self.assertLess(reveal, wait_mvu)
 
     def test_stream_does_not_replace_floor_zero(self) -> None:
         listener = re.search(
@@ -278,19 +342,16 @@ class OpeningLifecycleTests(unittest.TestCase):
 
 
 class StatusLifecycleTests(unittest.TestCase):
-    def test_status_renders_public_opening_context_and_ability(self) -> None:
-        for marker in (
-            'id="storyType"',
-            'id="storyAtmosphere"',
-            'id="sanctumForm"',
-            'id="abilitySummary"',
-            "world.故事类型",
-            "world.故事氛围",
-            "world.圣堂形态",
-            "currentStat.主角",
-        ):
+    def test_status_renders_only_useful_role_details(self) -> None:
+        for marker in ('id="appearance"', 'id="currentState"', 'id="innerThought"'):
             self.assertIn(marker, STATUS)
-        self.assertNotIn('id="integrationMode"', STATUS)
+        for obsolete in (
+            'class="opening-context"', 'id="storyType"', 'id="storyAtmosphere"',
+            'id="sanctumForm"', 'id="abilitySummary"', 'id="relation"',
+            'id="phase"', 'id="mood"', 'id="goal"', 'id="judgement"',
+            'id="boundary"', 'id="filthType"',
+        ):
+            self.assertNotIn(obsolete, STATUS)
 
     def test_status_has_no_render_blocking_font_dependency(self) -> None:
         self.assertNotIn("fonts.googleapis.com", STATUS)
@@ -319,17 +380,43 @@ class StatusLifecycleTests(unittest.TestCase):
 
 
 class MultiRoleStateTests(unittest.TestCase):
-    def test_schema_and_initvar_include_public_opening_context(self) -> None:
+    def test_role_schema_is_compact_and_includes_user_relationship(self) -> None:
+        for field in ("外貌", "当前状态", "心里想法", "与user关系"):
+            self.assertIn(field, MVU_SCHEMA)
+            self.assertIn(field, MVU_RULES)
+        role_schema = MVU_SCHEMA[MVU_SCHEMA.index("角色: z.preprocess("):]
+        for field in ("作品", "是否自定义", "当前目标", "对user判断", "当前边界", "仪式阶段"):
+            self.assertNotIn(field, role_schema)
+        self.assertIn("与user关系: z.string().prefault('陌生')", role_schema)
+        self.assertIn('与user关系: "陌生"', COVER)
+        self.assertIn('与user关系: "陌生"', STATUS)
+        for marker in ("信任: 0", "好感度: 0", "堕落值: 0", "依存度: 0"):
+            self.assertIn(marker, COVER)
+            self.assertIn(marker, STATUS)
+
+    def test_frontend_rosters_are_compact(self) -> None:
+        cover_roster = COVER[COVER.index("SYNC_BEGIN:CHARACTERS"):COVER.index("SYNC_END:CHARACTERS")]
+        status_roster = STATUS[STATUS.index("SYNC_BEGIN:ROSTER"):STATUS.index("SYNC_END:ROSTER")]
+        for forbidden in ('"intro":', '"background":', '"aliases":', '"age_note":'):
+            self.assertNotIn(forbidden, cover_roster)
+            self.assertNotIn(forbidden, status_roster)
+
+    def test_schema_and_initvar_use_readonly_opening_context(self) -> None:
+        opening = INITVAR["世界"]["_开局配置"]
         for key, initial in (
             ("时代背景", "待生成"),
             ("故事类型", "待生成"),
             ("故事氛围", "待生成"),
             ("圣堂形态", "圣言堂"),
-            ("开局摘要", "待生成"),
+            ("世界融入方式", "待生成"),
         ):
             self.assertIn(f"{key}: z.string().prefault('{initial}')", MVU_SCHEMA)
-            self.assertEqual(INITVAR["世界"][key], initial)
-            self.assertIn(key, MVU_RULES)
+            self.assertEqual(opening[key], initial)
+            self.assertNotIn(key, MVU_RULES)
+        self.assertEqual(INITVAR["世界"]["圣堂名称"], "圣言堂")
+        self.assertIn("圣堂名称: z.string().prefault('圣言堂')", MVU_SCHEMA)
+        for removed in ("相遇方式", "教会名", "时代背景", "故事类型", "故事氛围", "圣堂形态", "开局摘要", "同场角色"):
+            self.assertNotIn(removed, {key: None for key in INITVAR["世界"] if key != "_开局配置"})
 
     def test_schema_has_present_role_array_and_role_record(self) -> None:
         self.assertIn("z.array(z.string())", MVU_SCHEMA)
@@ -339,15 +426,15 @@ class MultiRoleStateTests(unittest.TestCase):
         self.assertEqual(INITVAR["角色"], {})
 
     def test_schema_normalizes_null_compound_values_from_mvu_initialization(self) -> None:
-        self.assertIn(
-            "出场角色: z.preprocess(value => value == null ? [] : value",
+        self.assertRegex(
             MVU_SCHEMA,
+            r"出场角色:\s*z\.preprocess\(\s*value => value == null \? \[\] : value",
         )
         self.assertRegex(
             MVU_SCHEMA,
             r"角色:\s*z\.preprocess\(\s*value => value == null \? \{\} : value",
         )
-        for key in ("世界", "主角", "初遇"):
+        for key in ("世界", "主角"):
             self.assertRegex(
                 MVU_SCHEMA,
                 rf"{key}:\s*z\.preprocess\(\s*value => value == null \? \{{\}} : value",
@@ -356,15 +443,47 @@ class MultiRoleStateTests(unittest.TestCase):
     def test_schema_defines_no_detached_zod_subschemas(self) -> None:
         self.assertEqual(re.findall(r"const\s+(\w+)\s*=\s*z\b", MVU_SCHEMA), ["Schema"])
 
-    def test_schema_migrates_and_normalizes_legacy_state(self) -> None:
-        for marker in (
-            "同场角色",
-            "初遇",
-            "new Set",
-            "delete data.初遇",
-            "delete data.世界.同场角色",
-        ):
+    def test_schema_contains_only_new_world_structure(self) -> None:
+        for obsolete in ("同场角色", "初遇:", "相遇方式:", "教会名:", "开局摘要:"):
+            self.assertNotIn(obsolete, MVU_SCHEMA)
+        for marker in ("_开局配置", "世界融入方式", "圣堂名称", "new Set", ".trim()", "filter(Boolean)"):
             self.assertIn(marker, MVU_SCHEMA)
+
+    def test_schema_normalizes_present_names_and_is_idempotent(self) -> None:
+        script = r"""
+const fs = require('fs');
+global.z = require('zod');
+global._ = require('lodash');
+let source = fs.readFileSync('plot/schema.mvu.js', 'utf8')
+  .replace(/^import[^\n]+\n/, '')
+  .replace('export const Schema', 'global.Schema')
+  .replace(/\n\$\(\(\) => \{[\s\S]*$/, '');
+new Function(source)();
+const input = {世界: {出场角色: [' 甲 ', '', '甲', '乙']}, 主角: {}, 角色: {}};
+const once = Schema.parse(input);
+const twice = Schema.parse(once);
+process.stdout.write(JSON.stringify({
+  names: once.世界.出场角色,
+  idempotent: JSON.stringify(once) === JSON.stringify(twice),
+}));
+"""
+        result = subprocess.run(
+            ["node", "-e", script],
+            cwd=ROOT,
+            check=True,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+        )
+        payload = json.loads(result.stdout)
+        self.assertEqual(payload["names"], ["甲", "乙"])
+        self.assertTrue(payload["idempotent"])
+
+    def test_release_review_matches_new_schema_contract(self) -> None:
+        for marker in ('"_开局配置"', '"世界融入方式"', '"圣堂名称"'):
+            self.assertIn(marker, REVIEW)
+        for obsolete in ('"当前目标"', '"对user判断"', '"当前边界"', '"初遇: z.preprocess("'):
+            self.assertNotIn(obsolete, REVIEW)
 
     def test_schema_keeps_present_name_during_incremental_role_creation(self) -> None:
         script = r"""
@@ -428,8 +547,8 @@ process.stdout.write(JSON.stringify(Schema.parse(input)[world][present]));
             "stat_data.角色",
             "activeRoleName",
             "renderRoleSwitcher",
-            'id="rolePicker"',
-            'aria-label="看看其他人"',
+            'id="roleQuick"',
+            'id="relationship"',
         ):
             self.assertIn(marker, STATUS)
 
@@ -457,6 +576,135 @@ process.stdout.write(JSON.stringify(Schema.parse(input)[world][present]));
 
 
 class ProductUiTests(unittest.TestCase):
+    def test_cover_uses_full_visual_identity_and_author_credit(self) -> None:
+        self.assertIn("万界圣堂", COVER)
+        self.assertIn("今天谁来忏悔？", COVER)
+        self.assertIn("AUTHOR · AME", COVER)
+        self.assertIn("e61846de-b855-4950-b543-672c7d714263.png", COVER)
+        self.assertIn("20260716012410626.png", STATUS)
+        self.assertIn('class="cover-credit"', COVER)
+
+    def test_cover_subpages_continue_the_visual_background(self) -> None:
+        self.assertIn('.page:not([data-page="1"])::before', COVER)
+        self.assertIn("isolation: isolate", COVER)
+        self.assertGreaterEqual(COVER.count("e61846de-b855-4950-b543-672c7d714263.png"), 3)
+
+    def test_cover_subpage_controls_use_warm_smoked_glass(self) -> None:
+        self.assertIn('.page:not([data-page="1"]) .panel', COVER)
+        self.assertIn("--ability-glass:", COVER)
+        self.assertIn('.page[data-page="2"] .ability-random', COVER)
+        self.assertIn("saturate(1.32)", COVER)
+
+    def test_ability_page_uses_unframed_aligned_content_spacing(self) -> None:
+        self.assertIn('.page[data-page="2"] .page-body', COVER)
+        self.assertIn('class="ability-heading"', COVER)
+        self.assertIn('.page[data-page="2"] .ability-heading,', COVER)
+        self.assertNotIn("OPENING RITUAL", COVER)
+        self.assertIn("border-radius: 0", COVER)
+        self.assertIn("border: 0", COVER[COVER.index('.page[data-page="2"] .ability-panel'):])
+        self.assertIn("padding: 28px 30px 10px", COVER)
+
+    def test_status_texture_preserves_readability_on_light_hosts(self) -> None:
+        self.assertIn("20260716014729194.png", STATUS)
+        black_gold = STATUS[STATUS.index("/* Black-gold preview") :]
+        self.assertIn("rgba(14,14,17,.28)", black_gold)
+        self.assertIn("mix-blend-mode: normal", black_gold.split('html[data-status-bg="a"]', 1)[0])
+        self.assertIn("opacity: .92", black_gold.split('html[data-status-bg="a"]', 1)[0])
+        self.assertIn("backdrop-filter: none", black_gold.split('html[data-status-bg="a"]', 1)[0])
+        self.assertNotIn("grayscale(1)", STATUS)
+        self.assertIn("@container (max-width: 820px)", black_gold)
+        self.assertIn("@container (max-width: 520px)", black_gold)
+        self.assertIn("mask-image: none", black_gold)
+        self.assertNotIn("background-size: auto 320px", black_gold)
+
+    def test_status_topbar_shows_world_meta_without_action_note(self) -> None:
+        for marker in ('class="meta-strip"', 'id="metaEra"', 'id="metaAtmosphere"', 'id="metaAbility"', "renderWorldMeta", "_开局配置", "时代背景", "故事氛围", "能力摘要", "圣堂名称"):
+            self.assertIn(marker, STATUS)
+        self.assertNotIn('id="drawNote"', STATUS)
+        self.assertNotIn("action-note", STATUS[STATUS.index("<footer class=\"actions\">"):STATUS.index("</footer>", STATUS.index("<footer class=\"actions\">"))])
+
+    def test_cover_home_dedupes_english_brand_copy(self) -> None:
+        self.assertNotIn("SANCTUM OF MANY WORLDS", COVER)
+        self.assertIn("SANCTUM ENCOUNTER", COVER)
+
+    def test_cover_summon_stage_exposes_halo_fx_layer(self) -> None:
+        for marker in ('class="summon-fx"', 'class="summon-beam"', 'class="summon-ring"', 'class="summon-dust"', "@keyframes ringPulse", "@keyframes beamPulse"):
+            self.assertIn(marker, COVER)
+
+    def test_status_exposes_two_adaptive_background_previews(self) -> None:
+        self.assertIn("20260716014701973.png", STATUS)
+        self.assertIn("20260716014729194.png", STATUS)
+        self.assertIn('dataset.statusBg = bg', STATUS)
+        self.assertIn('html[data-status-bg="a"] .st-shell::before', STATUS)
+        self.assertIn('html[data-status-bg="b"] .st-shell::before', STATUS)
+
+    def test_compact_generation_and_status_controls_remain_usable(self) -> None:
+        self.assertIn('.page[data-page="4"] .page-body {', COVER)
+        self.assertIn('justify-content: flex-start', COVER[COVER.index('.page[data-page="4"] .page-body {'):])
+        self.assertIn('.summon-progress { flex: 0 0 auto;', COVER)
+        self.assertIn('@media (max-height: 620px)', COVER)
+        self.assertIn('grid-template-rows: minmax(210px,auto) auto', COVER)
+        self.assertIn('<span>新角色入场</span>', STATUS)
+        self.assertIn('white-space: nowrap', STATUS[STATUS.index('/* Compact tavern iframe polish. */'):])
+
+    def test_cover_generation_copy_stays_inside_summoning_theme(self) -> None:
+        for expected in ("召唤仪式进行中", "正在召唤，请稍候~", "异界回响正在聚形", "来客已现身~", "初遇已展开，轮到你回应"):
+            self.assertIn(expected, COVER)
+        for out_of_theme in ("正在摇人", "翻名单", "冒泡", "已经写到", "灵感正在赶来的路上", "人来啦", "舞台搭好"):
+            self.assertNotIn(out_of_theme, COVER)
+
+    def test_status_uses_rpg_layout_without_redundant_top_controls(self) -> None:
+        for marker in ('class="character-hero"', 'class="rpg-grid"', 'id="relationship"', "与你的关系", "角色属性", "现场记录"):
+            self.assertIn(marker, STATUS)
+        for obsolete in ('id="sceneMeta"', 'id="btnPrevRole"', 'id="btnNextRole"', 'id="btnRolePicker"', 'id="rolePicker"'):
+            self.assertNotIn(obsolete, STATUS)
+        self.assertIn("names.map(name =>", STATUS)
+        self.assertNotIn("names.slice(0, 6)", STATUS)
+
+    def test_status_actions_are_unambiguous(self) -> None:
+        self.assertIn("新角色入场", STATUS)
+        self.assertIn("推进剧情", STATUS)
+        self.assertNotIn("再摇一位~", STATUS)
+        self.assertNotIn("故事继续走~", STATUS)
+
+    def test_cover_and_status_buttons_use_inline_lucide_icons(self) -> None:
+        self.assertGreaterEqual(COVER.count('class="ui-icon"'), 5)
+        self.assertGreaterEqual(STATUS.count('class="ui-icon"'), 2)
+        for marker in ("lucide-arrow-left", "lucide-shuffle", "lucide-sparkles", "lucide-rotate-ccw"):
+            self.assertIn(marker, COVER)
+        for marker in ("lucide-user-round-plus", "lucide-wand-sparkles"):
+            self.assertIn(marker, STATUS)
+
+    def test_cover_reveal_uses_one_fixed_gacha_stage(self) -> None:
+        for marker in ('class="summon-stage"', 'class="summon-sigil"', 'class="summon-card"', 'class="summon-progress"'):
+            self.assertIn(marker, COVER)
+        self.assertEqual(COVER.count('id="revealStage"'), 1)
+        self.assertEqual(COVER.count('id="generationMeter"'), 1)
+        self.assertIn("summon-resolved", COVER)
+
+    def test_gacha_sweep_animates_composited_properties_only(self) -> None:
+        sweep = COVER[COVER.index("@keyframes summonSweep"):COVER.index("@keyframes sigilTurn")]
+        self.assertIn("transform:", sweep)
+        self.assertNotIn("background-position", sweep)
+
+    def test_status_advance_uses_filtered_random_scenarios(self) -> None:
+        self.assertIn("const ADVANCE_SCENARIOS = [", STATUS)
+        self.assertEqual(STATUS.count("requiresMultiple: true"), 1)
+        self.assertGreaterEqual(STATUS.count("instruction:"), 8)
+        self.assertIn("function pickAdvanceScenario(stat)", STATUS)
+        self.assertIn("present.length > 1", STATUS)
+        self.assertIn("buildTogetherPrompt(currentStat, scenario)", STATUS)
+
+    def test_active_role_chip_uses_soft_rail_instead_of_bright_outline(self) -> None:
+        active = STATUS[STATUS.index(".role-chip.active {"):STATUS.index(".role-chip.active::after")]
+        self.assertIn("border-color: rgba(255,255,255,.1)", active)
+        self.assertIn("bottom: 0", STATUS)
+
+    def test_cover_native_select_options_keep_dark_contrast(self) -> None:
+        self.assertIn("color-scheme: dark", COVER)
+        self.assertRegex(COVER, r"select\s+option\s*\{[^}]*background:")
+        self.assertRegex(COVER, r"select\s+option\s*\{[^}]*color:")
+
     def test_cover_and_status_share_product_tokens(self) -> None:
         for token in (
             "--st-bg",
@@ -608,10 +856,47 @@ class CharacterSourceTests(unittest.TestCase):
 
 
 class AntiSycophancyTests(unittest.TestCase):
-    def test_writing_rules_guide_evidence_based_relationships(self) -> None:
+    def test_writing_rules_keep_only_required_sections(self) -> None:
         rules = (ROOT / "worldbook/02_写作与人设规则.md").read_text(encoding="utf-8")
-        for marker in ("关系校准", "具体事实", "明确事件", "角色自己的目标", "可辨识特征"):
+        for marker in ("关系校准:", "写前校准（过程留在幕后）:", "净化戏份:"):
             self.assertIn(marker, rules)
+        for removed in ("人设优先级", "演绎校准:", "表达校准:", "数值用法:"):
+            self.assertNotIn(removed, rules)
+
+    def test_style_entry_preserves_requested_copy_and_depth(self) -> None:
+        requested = (
+            "以日式轻小说的风格创作正文。",
+            "大量创作主角的内心戏。这些内心戏以诙谐幽默、轻松愉快的角度反馈他者言行或吐槽事件。内心戏无需特殊说明是主角内心所想，自然融入故事，无需括号或其他特殊符号包裹。",
+            "对白采用口语化短句，多感叹词和语气词，节奏明快",
+            "在日常中保持清淡、俏皮的非日常感",
+            "严肃性总是被消解，不得使故事过于 压抑/黑暗/沉重",
+            "主要采用短段落，内心戏和对白总是另起一行独立成段，偶尔可以省略发言人",
+            "对出场的女性角色生动细腻的描写体现其外貌特点和神态等凸显其人物魅力，对其突出魅力部分，如巨乳、白皙长腿等可进行画面特写",
+            "若遇到需要表明发言人的情景，使用多样的人称代词，灵活构造对白的引语标签",
+        )
+        for line in requested:
+            self.assertIn(f"- {line}", STYLE_RULES)
+        entry = next(item for item in CARD["data"]["character_book"]["entries"] if item["comment"] == "文风规则")
+        self.assertTrue(entry["constant"])
+        self.assertEqual(entry["position"], "at_depth")
+        self.assertEqual(entry["depth"], 0)
+        self.assertEqual(entry["insertion_order"], 4)
+
+    def test_worldbook_uses_new_variable_paths_and_full_user_profile(self) -> None:
+        worldview = (ROOT / "worldbook/00_世界观.md").read_text(encoding="utf-8")
+        self.assertIn("世界._开局配置.圣堂形态", worldview)
+        self.assertIn("世界._开局配置.时代背景", worldview)
+        self.assertNotIn("世界.圣堂形态", worldview)
+        self.assertNotIn("世界.时代背景", worldview)
+        user_start = BUILD.index('USER_ENTRY = """')
+        user_entry = BUILD[user_start:BUILD.index("# 写卡知识库", user_start)]
+        for field in ("姓名", "身份", "年龄外观", "性格倾向", "表面作风", "私下心思", "能力摘要"):
+            self.assertIn(field, user_entry)
+        self.assertNotIn("默认教堂牧师", user_entry)
+
+    def test_redundant_global_persona_entry_is_removed(self) -> None:
+        self.assertNotIn('add(\n        "人设演绎总则"', BUILD)
+        self.assertNotIn("PROFILE_RULES =", BUILD)
 
     def test_numeric_rules_do_not_force_obedience(self) -> None:
         numeric = (ROOT / "worldbook/03_数值影响.md").read_text(encoding="utf-8")
@@ -641,7 +926,7 @@ class AntiSycophancyTests(unittest.TestCase):
         )
         update_rules = (ROOT / "plot/mvu_update.yaml").read_text(encoding="utf-8")
         writing_rules = (ROOT / "worldbook/02_写作与人设规则.md").read_text(encoding="utf-8")
-        for field in ("当前目标", "对user判断", "当前边界"):
+        for field in ("当前状态", "心里想法"):
             self.assertIn(field, schema)
             self.assertIn(field, COVER)
             self.assertIn(field, update_rules)
@@ -654,37 +939,34 @@ class AntiSycophancyTests(unittest.TestCase):
             "评价依据亲历且可验证的具体事实",
             "原作重要关系持续影响判断",
             "关系变化对应明确事件",
-            "认可具体事实",
             "写前校准",
         ):
             self.assertIn(marker, WRITE_RULES)
-        for marker in ("先呈现角色自己的目标与风险判断", "认可净化效果本身", "特殊感来自连续事件"):
-            self.assertIn(marker, BUILD)
         for marker in ("评价基于亲历且可验证的事实", "认可效果本身，关系仍按事件推进"):
             self.assertIn(marker, COVER)
 
     def test_relationship_updates_require_evidence_and_small_steps(self) -> None:
         self.assertIn("数值保持原值", MVU_RULES)
         self.assertIn("单次通常不超过 ±2", MVU_RULES)
-        self.assertIn("关系称呼只随实际关系事件调整", MVU_RULES)
+        self.assertIn("实际感知到事件", MVU_RULES)
         self.assertIn("每项变化分别对应本回合可观察依据", MVU_RULES)
 
-    def test_every_generated_profile_preserves_agency(self) -> None:
+    def test_every_generated_profile_uses_four_knowledge_base_sections(self) -> None:
         missing: list[str] = []
+        required = ("基本信息:", "外貌特征:", "背景设定:", "关系设定:")
+        forbidden = ("角色介绍:", "演绎锚点:", "行动驱力:", "口吻:")
         for char in CHARS:
             path = ROOT / "worldbook/角色" / f"{char['name']}.md"
             if not path.is_file():
                 missing.append(f"{char['name']}: 缺生成档案")
                 continue
             text = path.read_text(encoding="utf-8")
-            for marker in (
-                "演绎锚点",
-                "原作核心关系与独立目标持续影响选择",
-                "对{{user}}的评价依据亲历且可验证的事实",
-                "关系变化对应已发生事件",
-            ):
+            for marker in required:
                 if marker not in text:
-                    missing.append(f"{char['name']}: {marker}")
+                    missing.append(f"{char['name']}: 缺 {marker}")
+            for marker in forbidden:
+                if marker in text:
+                    missing.append(f"{char['name']}: 仍含 {marker}")
         self.assertEqual(missing, [])
 
     def test_generated_profile_set_matches_roster(self) -> None:
@@ -739,16 +1021,17 @@ class AntiSycophancyTests(unittest.TestCase):
             "角色自己的目标",
             "评价依据亲历且可验证的具体事实",
             "原作重要关系持续影响判断",
-            "认可具体事实",
             "关系变化对应明确事件",
         ):
             self.assertIn(marker, WRITING_RULES)
         self.assertIn("未发生有效事件时数值保持原值", MVU_RULES)
-        self.assertIn("当前心态同时保留角色自身目标", MVU_RULES)
+        self.assertIn("基于角色亲历信息与原作性格", MVU_RULES)
 
-    def test_profiles_include_independent_motivation_anchor(self) -> None:
-        self.assertIn("行动驱力:", BUILD)
-        self.assertIn("原作核心关系", BUILD)
+    def test_profiles_use_knowledge_base_four_sections(self) -> None:
+        for marker in ("基本信息:", "外貌特征:", "背景设定:", "关系设定:"):
+            self.assertIn(marker, BUILD)
+        for forbidden in ("角色介绍:", "演绎锚点:", "行动驱力:", "口吻:"):
+            self.assertNotIn(forbidden, BUILD)
         self.assertIn("评价基于亲历且可验证的事实", COVER)
 
 

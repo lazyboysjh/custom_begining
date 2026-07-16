@@ -24,13 +24,21 @@ def default_cdn_ref() -> str:
     if (ROOT / ".git").is_dir():
         try:
             return subprocess.check_output(
-                ["git", "rev-parse", "HEAD"],
+                ["git", "rev-parse", "origin/main"],
                 cwd=ROOT,
                 text=True,
                 stderr=subprocess.DEVNULL,
             ).strip()
         except (subprocess.CalledProcessError, FileNotFoundError):
             pass
+
+    if OUT.is_file():
+        match = re.search(
+            r"custom_begining@([0-9a-f]{40})/dist/shengtang/ui",
+            OUT.read_text(encoding="utf-8"),
+        )
+        if match:
+            return match.group(1)
     return "main"
 
 
@@ -137,21 +145,9 @@ VAR_LIST = """---
 </status_current_variables>"""
 
 USER_ENTRY = """<{{user}}>
-  姓名、身份、表面作风、私下心思见 主角 变量。正文称 {{user}}。
-  默认教堂牧师，能净化污秽；仪式可真实驱除，也可被借机越界。
+  姓名、身份、年龄外观、性格倾向、表面作风、私下心思、能力摘要均见 主角 变量。正文称 {{user}}。
+  净化能力与仪式边界以 主角.能力摘要 和正文已建立事实为准。
 </{{user}}>"""
-
-PROFILE_RULES = """<人设演绎总则>
-  演绎校准:
-  - 按「世界.出场角色」与「角色.[姓名]」逐人读取档案；数值调节反应幅度，性格底色持续生效。
-  - 每轮先呈现角色自己的目标与风险判断，再写她对{{user}}和其他在场者的反应。
-  - 认可净化效果本身；对{{user}}人格的评价继续依据亲历且可验证的事实。
-  - 开局无旧识；角色可拒绝、拖延、试探、讨价还价，牧师身份只说明职责。
-  - 原作核心关系与独立目标持续影响选择；家人、恋人、敌人和职责保留实际分量。
-  - 特殊感来自连续事件、共同承担和反复验证，亲密称呼随关系进展自然出现。
-  - 外貌聚焦可辨识差异特征；气质通过动作、措辞和选择呈现。
-  - 叙事始终停留在故事世界内，界面与变量仅用于幕后状态处理。
-</人设演绎总则>"""
 
 # 写卡知识库「变量输出格式」固定骨架；卡专属只读/步长写在 [mvu_update]变量更新规则
 MVU_FORMAT = """---
@@ -387,26 +383,6 @@ def load_opening_options() -> dict[str, list[dict]]:
     return {key: list(data[key]) for key in required}
 
 
-def build_character_overview(chars: list[dict]) -> str:
-    lines = [
-        "<角色速览>",
-        "  本卡为多角色池；开局只选一名初遇，详细档案绿灯触发（关键词=姓名/别名）。",
-        "  当前在场人物以「世界.出场角色」为准；每人状态独立存于「角色.[姓名]」。",
-        "  演绎逐人读取档案口吻、目标与边界，让同场角色保持各自反应。",
-        "",
-        "  角色池:",
-    ]
-    for c in chars:
-        name = c.get("name") or ""
-        work = c.get("work") or ""
-        blurb = (c.get("blurb") or "").strip().replace("\n", " ")
-        if len(blurb) > 36:
-            blurb = blurb[:36] + "…"
-        lines.append(f"  - {name}（{work}）：{blurb}")
-    lines.append("</角色速览>")
-    return "\n".join(lines)
-
-
 def render_character_profile(c: dict) -> str:
     name = c["name"]
     aliases = "、".join(str(a) for a in (c.get("aliases") or []))
@@ -426,27 +402,6 @@ def render_character_profile(c: dict) -> str:
     filth = (c.get("filth_seed") or "").strip()
     blurb = (c.get("blurb") or "").strip()
 
-    # 演绎锚点：从既有字段提炼，避免空喊「原作感」
-    voice_bits = [r for r in relations if r and "与{{user}}" not in r and "开局" not in r]
-    if not voice_bits and blurb:
-        voice_bits = [blurb]
-    drive_bits = [str(b) for b in background if b][:2]
-    drive_bits.extend(r for r in relations if r and "与{{user}}" not in r and r not in drive_bits)
-    anchor_lines = [
-        f"遮住姓名仍能认出是「{name}」：外貌、口吻与选择保持档案中的可辨识特征",
-        "开局与{{user}}无旧识；低信任时以戒备、质疑、保持距离或附加条件回应",
-        "数值调节反应强度；口吻、职业惯性与行动边界持续生效",
-        "原作核心关系与独立目标持续影响选择，{{user}}从实际相处中建立自己的位置",
-        "对{{user}}的评价依据亲历且可验证的事实；关系变化对应已发生事件",
-    ]
-    loyalty_blob = "\n".join([intro, blurb, "\n".join(background), "\n".join(relations)])
-    if any(k in loyalty_blob for k in ("主人", "Darling", "人妻", "忠诚", "影子大人")):
-        anchor_lines.append(
-            "原作忠诚与亲密对象继续影响判断；一次净化或救助只形成该事件本身的评价，称呼与承诺随长期关系推进"
-        )
-    if filth:
-        anchor_lines.append(f"污秽发作优先挂钩种子：{filth}")
-
     lines = [
         "角色档案:",
         "  基本信息:",
@@ -461,14 +416,13 @@ def render_character_profile(c: dict) -> str:
         f"    身份: {blurb or '见原作；本卡开局为初遇对象'}",
         "    与{{user}}关系: 开局无旧识",
         "",
-        "  角色介绍:",
-        f"    {intro}",
-        "",
         "  外貌特征:",
         f"    - {appearance}" if appearance else "    - （见原作辨识特征）",
         "",
         "  背景设定:",
     ])
+    if intro:
+        lines.append(f"    简介: {intro}")
     if work_intro:
         lines.append(f"    作品简介: {work_intro}")
     if background:
@@ -484,17 +438,6 @@ def render_character_profile(c: dict) -> str:
             lines.append(f"    - {r}")
     else:
         lines.append("    - 与{{user}}：开局无旧识")
-    lines.append("")
-    lines.append("  演绎锚点:")
-    lines.append("    行动驱力:")
-    for d in drive_bits[:4]:
-        lines.append(f"    - {d}")
-    lines.append("    口吻:")
-    for v in voice_bits[:4]:
-        lines.append(f"    - {v}")
-    lines.append("    演绎锚点:")
-    for h in anchor_lines:
-        lines.append(f"    - {h}")
     lines.append("")
     return "\n".join(lines)
 
@@ -571,13 +514,6 @@ def build_worldbook_entries() -> list:
         position="before_char",
         order=2,
     )
-    add(
-        "角色速览",
-        build_character_overview(chars),
-        constant=True,
-        position="before_char",
-        order=4,
-    )
     # 写作指导 / 数值反应：D0（知识库：指导类放 D0，不塞设定位）
     add(
         "写作与人设规则",
@@ -596,12 +532,12 @@ def build_worldbook_entries() -> list:
         order=2,
     )
     add(
-        "人设演绎总则",
-        PROFILE_RULES.strip(),
+        "文风规则",
+        (ROOT / "worldbook/04_文风规则.md").read_text(encoding="utf-8"),
         constant=True,
         position="at_depth",
         depth=0,
-        order=3,
+        order=4,
     )
 
     # 多角色卡：角色详细 → 角色定义后 · 绿灯 · 扫描近 2 条 · 顺序约 99
@@ -642,7 +578,19 @@ def sync_cover_assets() -> None:
     text = cover.read_text(encoding="utf-8")
 
     options_js = "const OPENING_OPTIONS = " + json.dumps(options, ensure_ascii=False, indent=2) + ";"
-    chars_js = "const CHARACTERS = " + json.dumps(chars, ensure_ascii=False, indent=2) + ";"
+    cover_roster = [
+        {
+            "id": c.get("id"),
+            "name": c.get("name"),
+            "work": c.get("work"),
+            "appearance": c.get("appearance") or "",
+            "blurb": c.get("blurb") or "",
+            "filth_seed": c.get("filth_seed") or "",
+            "accent": c.get("accent") or "#b8926a",
+        }
+        for c in chars
+    ]
+    chars_js = "const CHARACTERS = " + json.dumps(cover_roster, ensure_ascii=False, indent=2) + ";"
 
     text, options_count = re.subn(
         r"/\* === SYNC_BEGIN:OPENING_OPTIONS === \*/.*?/\* === SYNC_END:OPENING_OPTIONS === \*/",
@@ -671,11 +619,8 @@ def sync_cover_assets() -> None:
             "id": c.get("id"),
             "name": c.get("name"),
             "work": c.get("work"),
-            "age_note": c.get("age_note"),
             "appearance": c.get("appearance") or "",
-            "blurb": c.get("blurb") or "",
-            "intro": c.get("intro") or "",
-            "filth_seed": c.get("filth_seed"),
+            "accent": c.get("accent") or "#b8926a",
         }
         for c in chars
     ]

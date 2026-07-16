@@ -51,7 +51,7 @@ def main() -> int:
 
     # --- 知识库四段结构（世界书 md）---
     required_secs = ["基本信息", "外貌特征", "背景设定", "关系设定"]
-    # 本卡额外有「角色介绍」：允许，但不替代四段
+    forbidden_profile_secs = ("角色介绍:", "演绎锚点:", "行动驱力:", "口吻:")
     for c in chars:
         name = c["name"]
         path = WB_DIR / f"{name}.md"
@@ -71,14 +71,9 @@ def main() -> int:
             if key not in text:
                 errs.append(f"{name}: 基本信息缺 {key}")
 
-        # 角色介绍允许存在（本卡需求）；性格标签应主要在介绍里，不在「基本信息」
-        if "  角色介绍:" not in text:
-            warns.append(f"{name}: 无「角色介绍」分段（本卡建议有）")
-        else:
-            # 介绍里不要只剩标签
-            intro_sec = section(text.split("角色档案:\n", 1)[-1], "角色介绍")
-            if intro_sec and len(re.findall(r"[\u4e00-\u9fff]", intro_sec)) < 80:
-                errs.append(f"{name}: 角色介绍有效汉字过少")
+        for forbidden in forbidden_profile_secs:
+            if forbidden in text:
+                errs.append(f"{name}: 含冗余通用规则栏目「{forbidden}」")
 
         # 外貌：特征向
         app_sec = ""
@@ -141,7 +136,15 @@ def main() -> int:
         first = card.get("first_mes") or card["data"].get("first_mes") or ""
         entries = card["data"]["character_book"]["entries"]
         comments = [e.get("comment") for e in entries]
-        for need in ("世界观", "净化与污秽", "写作与人设规则", "数值影响", "[initvar]变量初始化勿开", "变量列表"):
+        for need in (
+            "世界观",
+            "净化与污秽",
+            "写作与人设规则",
+            "数值影响",
+            "文风规则",
+            "[initvar]变量初始化勿开",
+            "变量列表",
+        ):
             if need not in comments:
                 errs.append(f"卡内世界书缺: {need}")
         # 写作条不得塞 MVU 格式（知识库：格式在变量输出格式）
@@ -152,6 +155,12 @@ def main() -> int:
                     errs.append("「写作与人设规则」含变量输出格式，应挪到 [mvu_update]变量输出格式/更新规则")
                 if e.get("position") != "at_depth" or e.get("depth") != 0:
                     errs.append("「写作与人设规则」应为 D0（at_depth depth=0）指导条")
+            if e.get("comment") == "文风规则":
+                expected = (ROOT / "worldbook/04_文风规则.md").read_text(encoding="utf-8").strip()
+                if (e.get("content") or "").strip() != expected:
+                    errs.append("「文风规则」与源码不一致，用户指定文案不得改写")
+                if e.get("position") != "at_depth" or e.get("depth") != 0 or e.get("insertion_order") != 4:
+                    errs.append("「文风规则」应为 D0（at_depth depth=0），insertion_order=4")
             if e.get("comment") == "变量列表":
                 ct = e.get("content") or ""
                 if "<status_current_variables>" not in ct:
@@ -183,33 +192,35 @@ def main() -> int:
                 errs.append(f"{e.get('comment')} scan_depth={e.get('scan_depth')}，多角色绿灯应为 2")
         for e in role_entries:
             ct = e.get("content") or ""
-            for required in (
-                "演绎锚点:",
-                "口吻:",
-                "原作核心关系与独立目标持续影响选择",
-                "对{{user}}的评价依据亲历且可验证的事实",
-                "关系变化对应已发生事件",
-            ):
+            for required in ("基本信息:", "外貌特征:", "背景设定:", "关系设定:"):
                 if required not in ct:
-                    errs.append(f"{e.get('comment')}: 缺人设锚点「{required}」")
+                    errs.append(f"{e.get('comment')}: 缺知识库规定栏目「{required}」")
+            for forbidden in ("角色介绍:", "演绎锚点:", "行动驱力:", "口吻:"):
+                if forbidden in ct:
+                    errs.append(f"{e.get('comment')}: 含冗余通用规则栏目「{forbidden}」")
         write_e = next((e for e in entries if e.get("comment") == "写作与人设规则"), None)
         if write_e:
             wt = write_e.get("content") or ""
             for required in (
-                "人设优先级",
-                "演绎校准",
                 "关系校准",
+                "写前校准",
+                "净化戏份",
                 "评价依据亲历且可验证的具体事实",
                 "关系变化对应明确事件",
-                "高信任降低戒备程度",
             ):
                 if required not in wt:
                     errs.append(f"写作与人设规则缺「{required}」")
+            for forbidden in ("人设优先级", "演绎校准:", "表达校准:", "数值用法:"):
+                if forbidden in wt:
+                    errs.append(f"写作与人设规则仍含冗余栏目「{forbidden}」")
         schema = ""
         for s in card["data"]["extensions"]["tavern_helper"]["scripts"]:
             if s.get("name") == "变量结构":
                 schema = s.get("content") or ""
         for key in (
+            "_开局配置",
+            "世界融入方式",
+            "圣堂名称",
             "出场角色",
             "角色",
             "好感度",
@@ -217,9 +228,6 @@ def main() -> int:
             "依存度",
             "污秽度",
             "信任",
-            "当前目标",
-            "对user判断",
-            "当前边界",
         ):
             if key not in schema:
                 errs.append(f"卡内 schema 缺 {key}")
@@ -233,14 +241,17 @@ def main() -> int:
         else:
             oks.append("卡内 MVU schema 与源码一致且结构内聚")
         for marker in (
-            "出场角色: z.preprocess(value => value == null ? [] : value",
+            "出场角色: z.preprocess(",
             "角色: z.preprocess(",
             "世界: z.preprocess(",
             "主角: z.preprocess(",
-            "初遇: z.preprocess(",
+            "_开局配置: z.preprocess(",
         ):
             if marker not in schema:
                 errs.append(f"MVU schema 缺空复合值兼容: {marker.split(':', 1)[0]}")
+        for obsolete in ("相遇方式:", "教会名:", "开局摘要:", "同场角色:", "初遇:"):
+            if obsolete in schema:
+                errs.append(f"MVU schema 仍含废弃字段: {obsolete[:-1]}")
         if ".filter(name => !!data.角色[name])" in schema:
             errs.append("MVU schema 会在角色档案增量写入前误删出场角色")
         else:
@@ -379,8 +390,6 @@ def main() -> int:
             errs.append(f"卡内模板污染: {marker}")
 
     # --- git / CDN ---
-    code, status = run(["git", "status", "--porcelain", "--untracked-files=no"])
-    code2, ahead = run(["git", "rev-list", "--count", "origin/main..HEAD"])
     code3, head = run(["git", "rev-parse", "HEAD"])
     head = head.strip()
     cdn_ref_match = re.search(
@@ -397,6 +406,16 @@ def main() -> int:
             errs.append(f"卡内固定 CDN commit 缺封面文件: {cdn_ref}")
         else:
             oks.append(f"固定 CDN commit 已有 dist/shengtang: {cdn_ref[:10]}")
+            code_tree, remote_tree = run(["git", "ls-tree", "-r", "--name-only", cdn_ref])
+            expected_tree = {
+                "dist/shengtang/ui/cover/index.html",
+                "dist/shengtang/ui/status/index.html",
+            }
+            actual_tree = set(remote_tree.splitlines()) if code_tree == 0 else set()
+            if actual_tree != expected_tree:
+                errs.append(f"固定 CDN commit 文件树不纯净: {sorted(actual_tree)}")
+            else:
+                oks.append("固定 CDN commit 仅含封面与状态栏前端")
             for kind in ("cover", "status"):
                 rel = f"dist/shengtang/ui/{kind}/index.html"
                 source = (ROOT / f"src/shengtang/ui/{kind}/index.html").read_text(encoding="utf-8")
@@ -409,9 +428,7 @@ def main() -> int:
             errs.append("origin/main 无 dist/shengtang → 当前 CDN 链接 404/不可用")
         else:
             oks.append("origin/main 已有 dist/shengtang")
-    if status.strip() or (code2 == 0 and int(ahead.strip() or "0") > 0):
-        warns.append("本地有已跟踪改动或未推送提交，发布状态需重新核对")
-    oks.append(f"本地 HEAD={head[:10]}")
+    oks.append(f"本地源码 HEAD={head[:10]}（与独立 CDN 历史分离）")
 
     # CDN URL from build output / card
     m = re.search(r"https://testingcf\.jsdelivr\.net/gh/[^`'\"\s]+shengtang/ui", first if CARD.is_file() else "")
