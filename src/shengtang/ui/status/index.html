@@ -714,7 +714,7 @@ button { -webkit-tap-highlight-color: transparent; }
   inset: 0;
   z-index: 0;
   pointer-events: none;
-  background: url("https://raw.githubusercontent.com/lazyboysjh/image/main/20260716012410626.png") center / cover no-repeat;
+  background: url("https://raw.githubusercontent.com/lazyboysjh/image/main/20260716184427370.png") center / cover no-repeat;
   opacity: .84;
   filter: saturate(.92) contrast(1.03);
   mix-blend-mode: multiply;
@@ -798,7 +798,7 @@ button { -webkit-tap-highlight-color: transparent; }
   -webkit-backdrop-filter: blur(18px) saturate(1.08);
 }
 .st-shell::before {
-  background: url("https://raw.githubusercontent.com/lazyboysjh/image/main/20260716012410626.png") 72% center / cover no-repeat;
+  background: url("https://raw.githubusercontent.com/lazyboysjh/image/main/20260716184427370.png") 72% center / cover no-repeat;
   opacity: .96;
   filter: saturate(1.06) contrast(1.08);
   mix-blend-mode: multiply;
@@ -955,14 +955,17 @@ button { -webkit-tap-highlight-color: transparent; }
 }
 .st-shell {
   color: var(--st-text);
-  border-color: rgba(224,194,139,.12);
-  background: rgba(14,14,17,.28);
-  box-shadow: inset 0 1px rgba(255,255,255,.055), 0 16px 34px rgba(0,0,0,.48);
+  border-color: rgba(246,220,177,.14);
+  background: rgba(12,12,16,.22);
+  box-shadow:
+    inset 0 1px rgba(255,249,236,.08),
+    inset 0 0 0 1px rgba(246,220,177,.05),
+    0 18px 40px rgba(0,0,0,.5);
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
 }
 .st-shell::before {
-  background: url("https://raw.githubusercontent.com/lazyboysjh/image/main/20260716014729194.png") 72% center / cover no-repeat;
+  background: url("https://raw.githubusercontent.com/lazyboysjh/image/main/20260716184427370.png") 72% center / cover no-repeat;
   opacity: .92;
   filter: saturate(1.05) contrast(1.08) brightness(1.04);
   mix-blend-mode: normal;
@@ -971,17 +974,19 @@ button { -webkit-tap-highlight-color: transparent; }
 }
 .st-shell::after {
   background:
-    linear-gradient(90deg, rgba(10,10,13,.78) 0%, rgba(10,10,13,.42) 38%, rgba(10,10,13,.12) 68%, transparent 88%),
-    linear-gradient(0deg, rgba(10,10,13,.55) 0%, transparent 36%);
+    linear-gradient(105deg, rgba(10,10,13,.72) 0%, rgba(10,10,13,.36) 36%, rgba(10,10,13,.1) 64%, transparent 86%),
+    linear-gradient(0deg, rgba(10,10,13,.48) 0%, transparent 38%);
 }
 .topbar,
 .role-strip,
 .actions {
   color: var(--st-text);
-  border-color: rgba(224,194,139,.1);
-  background: rgba(13,13,16,.52);
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
+  border-color: rgba(246,220,177,.12);
+  background:
+    linear-gradient(180deg, rgba(255,246,230,.05), transparent 48%),
+    rgba(13,13,16,.48);
+  backdrop-filter: blur(10px) saturate(1.12);
+  -webkit-backdrop-filter: blur(10px) saturate(1.12);
 }
 .scene b,
 .identity-copy h2 { color: var(--st-text); font-family: var(--st-font-serif); }
@@ -993,18 +998,20 @@ button { -webkit-tap-highlight-color: transparent; }
 .icon-btn,
 .command-btn,
 .role-chip {
-  color: #d8d2c8;
-  border-color: var(--st-btn-edge);
-  background: var(--st-btn-bg);
-  box-shadow: var(--st-btn-shadow);
+  color: #e9ddca;
+  border-color: rgba(246,220,177,.14);
+  background:
+    linear-gradient(180deg, rgba(255,245,226,.08), rgba(20,20,24,.88)),
+    rgba(28,28,34,.72);
+  box-shadow: inset 0 1px rgba(255,248,234,.08), 0 8px 18px rgba(0,0,0,.26);
 }
 .icon-btn:hover,
 .command-btn:hover,
 .role-chip:hover {
   color: #fffaf0;
-  border-color: var(--st-btn-edge-hover);
-  background: linear-gradient(180deg, rgba(67,63,59,.82), rgba(25,23,22,.94));
-  box-shadow: inset 0 1px rgba(255,255,255,.1), 0 10px 22px rgba(0,0,0,.32);
+  border-color: rgba(225,187,124,.42);
+  background: linear-gradient(180deg, rgba(90,68,42,.55), rgba(25,23,22,.94));
+  box-shadow: inset 0 1px rgba(255,248,234,.12), 0 10px 22px rgba(0,0,0,.32), 0 0 16px rgba(212,175,105,.12);
 }
 .role-chip::after { background: rgba(255,255,255,.2); }
 .role-chip.active {
@@ -1105,13 +1112,13 @@ button { -webkit-tap-highlight-color: transparent; }
   .record-pane { background: rgba(10,10,13,.52); }
 }
 html[data-status-bg="a"] .st-shell::before {
-  background-image: url("https://raw.githubusercontent.com/lazyboysjh/image/main/20260716014701973.png");
+  background-image: url("https://raw.githubusercontent.com/lazyboysjh/image/main/20260716184427370.png");
   opacity: .88;
-  filter: saturate(.86) brightness(1.06) contrast(1.18);
-  mix-blend-mode: screen;
+  filter: saturate(.92) brightness(1.04) contrast(1.1);
+  mix-blend-mode: normal;
 }
 html[data-status-bg="b"] .st-shell::before {
-  background-image: url("https://raw.githubusercontent.com/lazyboysjh/image/main/20260716014729194.png");
+  background-image: url("https://raw.githubusercontent.com/lazyboysjh/image/main/20260716184427370.png");
 }
 @container (max-width: 700px) {
   html[data-status-bg="a"] .st-shell::before {

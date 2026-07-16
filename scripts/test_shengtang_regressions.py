@@ -581,7 +581,7 @@ class ProductUiTests(unittest.TestCase):
         self.assertIn("今天谁来忏悔？", COVER)
         self.assertIn("AUTHOR · AME", COVER)
         self.assertIn("e61846de-b855-4950-b543-672c7d714263.png", COVER)
-        self.assertIn("20260716012410626.png", STATUS)
+        self.assertIn("20260716184427370.png", STATUS)
         self.assertIn('class="cover-credit"', COVER)
 
     def test_cover_subpages_continue_the_visual_background(self) -> None:
@@ -602,12 +602,12 @@ class ProductUiTests(unittest.TestCase):
         self.assertNotIn("OPENING RITUAL", COVER)
         self.assertIn("border-radius: 0", COVER)
         self.assertIn("border: 0", COVER[COVER.index('.page[data-page="2"] .ability-panel'):])
-        self.assertIn("padding: 28px 30px 10px", COVER)
+        self.assertIn("padding: 30px 34px 12px", COVER)
 
     def test_status_texture_preserves_readability_on_light_hosts(self) -> None:
-        self.assertIn("20260716014729194.png", STATUS)
+        self.assertIn("20260716184427370.png", STATUS)
         black_gold = STATUS[STATUS.index("/* Black-gold preview") :]
-        self.assertIn("rgba(14,14,17,.28)", black_gold)
+        self.assertIn("rgba(12,12,16,.22)", black_gold)
         self.assertIn("mix-blend-mode: normal", black_gold.split('html[data-status-bg="a"]', 1)[0])
         self.assertIn("opacity: .92", black_gold.split('html[data-status-bg="a"]', 1)[0])
         self.assertIn("backdrop-filter: none", black_gold.split('html[data-status-bg="a"]', 1)[0])
@@ -630,10 +630,13 @@ class ProductUiTests(unittest.TestCase):
     def test_cover_summon_stage_exposes_halo_fx_layer(self) -> None:
         for marker in ('class="summon-fx"', 'class="summon-beam"', 'class="summon-ring"', 'class="summon-dust"', "@keyframes ringPulse", "@keyframes beamPulse"):
             self.assertIn(marker, COVER)
+        # 光环必须大于前景卡，否则召唤动画会被卡片挡住
+        self.assertIn("width: min(92%, 520px)", COVER)
+        self.assertIn("width: min(72%, 300px)", COVER)
 
     def test_status_exposes_two_adaptive_background_previews(self) -> None:
-        self.assertIn("20260716014701973.png", STATUS)
-        self.assertIn("20260716014729194.png", STATUS)
+        self.assertIn("20260716184427370.png", STATUS)
+        self.assertGreaterEqual(STATUS.count("20260716184427370.png"), 4)
         self.assertIn('dataset.statusBg = bg', STATUS)
         self.assertIn('html[data-status-bg="a"] .st-shell::before', STATUS)
         self.assertIn('html[data-status-bg="b"] .st-shell::before', STATUS)
