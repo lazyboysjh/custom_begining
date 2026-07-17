@@ -1,0 +1,2495 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<link rel="icon" href="data:," />
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+<title>圣堂状态</title>
+<script>
+(() => {
+  const bg = new URLSearchParams(location.search).get("bg");
+  if (bg === "a" || bg === "b") document.documentElement.dataset.statusBg = bg;
+})();
+</script>
+<style>
+
+:root {
+  --st-text: #f6f0e6;
+  --st-muted: #9a948a;
+  --st-gold: #e2c08a;
+  --st-ease: cubic-bezier(.22,1,.36,1);
+  --st-serif: "Songti SC", "Noto Serif SC", Georgia, serif;
+  --st-sans: "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+  --st-art: url("https://raw.githubusercontent.com/lazyboysjh/image/main/NAI-2026-06-25-00-34-09.png");
+  --st-radius: 16px;
+}
+* { box-sizing: border-box; }
+html, body {
+  margin: 0; padding: 0; width: 100%; overflow-x: hidden;
+  background: transparent; color: var(--st-text);
+  font-family: var(--st-sans); font-size: 13px; line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+button { font: inherit; -webkit-tap-highlight-color: transparent; }
+.status-state {
+  display: none; margin: 8px; min-height: 52px;
+  align-items: center; justify-content: center; padding: 12px;
+  border: 1px solid rgba(255,255,255,.08); border-radius: var(--st-radius);
+  color: var(--st-muted); background: rgba(18,18,20,.88);
+}
+.status-state.show { display: flex; }
+.status-error { color: #e5b2ad; }
+.stage {
+  width: 100%;
+  padding: 8px;
+}
+.st-shell {
+  position: relative; width: min(100%, 960px); margin: 0 auto;
+  border-radius: var(--st-radius);
+  border: 1px solid rgba(255,255,255,.1);
+  background: rgba(12,11,10,.82);
+  overflow: hidden; isolation: isolate;
+  container-type: inline-size;
+  container-name: st-shell;
+  box-shadow: inset 0 1px rgba(255,255,255,.08), 0 14px 28px rgba(0,0,0,.28);
+}
+.st-shell::before {
+  content: ""; position: absolute; inset: 0; z-index: 0; pointer-events: none;
+  background: var(--st-art) 70% 18% / cover no-repeat;
+  opacity: .38; filter: saturate(1.02) contrast(1.02);
+}
+.st-shell::after {
+  content: ""; position: absolute; inset: 0; z-index: 0; pointer-events: none;
+  background:
+    linear-gradient(105deg, rgba(10,9,8,.82) 0%, rgba(10,9,8,.58) 40%, rgba(10,9,8,.4) 70%),
+    linear-gradient(180deg, rgba(10,9,8,.36) 0%, rgba(10,9,8,.28) 28%, rgba(10,9,8,.72) 100%);
+}
+.st-shell > * { position: relative; z-index: 1; }
+
+.topbar {
+  position: relative; z-index: 8;
+  padding: 12px 12px 10px;
+  border-bottom: 1px solid rgba(255,255,255,.08);
+  background: rgba(10,9,8,.42);
+}
+.scene-row { display: flex; align-items: center; gap: 10px; }
+.scene {
+  flex: 1 1 auto; min-width: 0;
+  font: 600 15px/1.3 var(--st-serif); letter-spacing: .04em; color: #f7efdf;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.top-actions { flex: 0 0 auto; display: flex; align-items: center; gap: 6px; }
+.icon-btn {
+  appearance: none; width: 36px; height: 36px; border-radius: 10px;
+  border: 1px solid rgba(226,192,138,.4); background: rgba(0,0,0,.28);
+  color: #f0d9a8; display: grid; place-items: center; cursor: pointer;
+  transition: color .2s, border-color .2s, background .2s;
+}
+.icon-btn svg {
+  width: 16px; height: 16px; stroke: currentColor; fill: none;
+  stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; pointer-events: none;
+}
+.icon-btn:hover { color: #ffe7b8; border-color: rgba(240,217,168,.65); background: rgba(0,0,0,.38); }
+.icon-btn:active { background: rgba(0,0,0,.45); }
+.icon-btn:focus-visible { outline: none; border-color: rgba(226,192,138,.7); box-shadow: 0 0 0 3px rgba(226,192,138,.14); }
+.icon-btn:disabled { opacity: .4; cursor: default; }
+.icon-btn.on { color: #1b1208; border-color: rgba(226,192,138,.55); background: #e2c08a; }
+
+.float-panel {
+  position: absolute; top: calc(100% + 6px); right: 10px; z-index: 30;
+  width: min(220px, calc(100% - 20px)); display: none; padding: 8px;
+  border-radius: 14px; border: 1px solid rgba(255,255,255,.12);
+  background: rgba(16,14,12,.92); box-shadow: 0 16px 32px rgba(0,0,0,.45);
+}
+.float-panel.open { display: block; animation: stPop .24s var(--st-ease); }
+@keyframes stPop {
+  from { opacity: 0; transform: translateY(-6px) scale(.98); }
+  to { opacity: 1; transform: none; }
+}
+.float-panel .panel-title {
+  margin: 2px 6px 8px; font-size: 10px; letter-spacing: .14em; color: rgba(226,192,138,.75);
+}
+.float-panel .meta-row {
+  display: grid; grid-template-columns: 4.2em minmax(0,1fr); gap: 8px; align-items: start;
+  padding: 8px 9px; border-radius: 10px; border: 1px solid rgba(255,255,255,.08); background: rgba(0,0,0,.16);
+}
+.float-panel .meta-row + .meta-row { margin-top: 5px; }
+.float-panel .meta-row small { font-size: 10px; letter-spacing: .1em; color: rgba(226,192,138,.72); padding-top: 1px; }
+.float-panel .meta-row b { font-size: 12px; font-weight: 600; color: #f0e8da; line-height: 1.45; }
+.float-panel .cast-list {
+  display: flex; flex-direction: column; gap: 2px; max-height: 210px; overflow: auto;
+  scrollbar-width: thin; scrollbar-color: rgba(226,192,138,.35) transparent;
+}
+.float-panel .cast-list button {
+  appearance: none; width: 100%; border: 0; border-radius: 10px; background: transparent;
+  color: rgba(240,232,218,.72); text-align: left; padding: 8px 10px; cursor: pointer;
+  font: 600 12px/1.3 var(--st-serif); letter-spacing: .03em; position: relative;
+}
+.float-panel .cast-list button:hover { background: rgba(255,255,255,.05); color: #f6ecd8; }
+.float-panel .cast-list button.active { color: #f6ecd8; background: rgba(226,168,96,.1); }
+.float-panel .cast-list button.active::after {
+  content: ""; position: absolute; left: 10px; right: 10px; bottom: 4px;
+  height: 1.5px; border-radius: 2px; background: linear-gradient(90deg, #c48545, #e8c48a);
+}
+
+.cast-pack { position: relative; margin: 0; overflow: hidden; }
+.sheet { position: relative; }
+.role-nav {
+  position: absolute; top: 50%; z-index: 4; transform: translateY(-50%);
+  width: 22px; height: 28px; padding: 0; appearance: none; border-radius: 8px;
+  border: 1px solid rgba(226,192,138,.4); background: rgba(0,0,0,.28); color: #f0d9a8;
+  display: grid; place-items: center; cursor: pointer;
+  transition: color .2s, border-color .2s, background .2s, opacity .2s;
+}
+.role-nav.prev { left: 6px; }
+.role-nav.next { right: 6px; }
+.role-nav svg {
+  width: 13px; height: 13px; stroke: currentColor; fill: none;
+  stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; pointer-events: none;
+}
+.role-nav:hover { color: #ffe7b8; border-color: rgba(240,217,168,.65); background: rgba(0,0,0,.38); }
+.role-nav:active { background: rgba(0,0,0,.45); }
+.role-nav:focus-visible { outline: none; border-color: rgba(226,192,138,.7); box-shadow: 0 0 0 3px rgba(226,192,138,.14); }
+.role-nav:disabled, .role-nav.is-disabled { opacity: .28; pointer-events: none; }
+
+.carousel { overflow: hidden; touch-action: pan-y; cursor: grab; }
+.carousel:active { cursor: grabbing; }
+.carousel-track {
+  display: flex; will-change: transform;
+  transition: transform .48s cubic-bezier(.22,1,.36,1);
+}
+.carousel-track.dragging { transition: none; }
+.slide {
+  flex: 0 0 100%; width: 100%; padding: 10px 32px 8px; box-sizing: border-box;
+  opacity: .4; transform: scale(.97);
+  transition: opacity .42s var(--st-ease), transform .42s var(--st-ease);
+}
+.slide.is-active { opacity: 1; transform: scale(1); }
+
+.hero {
+  margin: 0; padding: 2px 2px 12px;
+  border-bottom: 1px solid rgba(255,255,255,.08);
+}
+.hero-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.hero h4 {
+  margin: 0; min-width: 0; font: 600 17px/1.2 var(--st-serif); letter-spacing: .04em; color: #f7efdf;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.tags { flex: 0 0 auto; display: inline-flex; align-items: center; gap: 5px; max-width: 52%; }
+.tag {
+  flex: 0 1 auto; min-width: 0; display: inline-flex; align-items: center; justify-content: center;
+  max-width: 4.8em; padding: 3px 8px; border-radius: 999px; font-size: 11px; font-weight: 600;
+  letter-spacing: .04em; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.tag.rel { border: 1px solid rgba(226,192,138,.4); background: rgba(226,192,138,.12); color: #ead2a4; }
+.tag.mood { border: 1px solid rgba(232,154,176,.45); background: rgba(232,154,176,.14); color: #f3b8c8; }
+.hero .work {
+  margin: 5px 0 0; font-size: 11px; color: rgba(240,232,218,.7);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+
+.pane { margin: 0; padding: 12px 2px 0; }
+.pane + .pane { margin-top: 4px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,.07); }
+.metrics { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 16px; }
+.metric { min-width: 0; padding: 0 0 2px; }
+.mh { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px; gap: 6px; }
+.mh span { font-size: 10px; color: rgba(240,232,218,.82); }
+.mh b { font-size: 12px; color: #f7efdf; font-variant-numeric: tabular-nums; }
+.bar { height: 3px; border-radius: 999px; background: rgba(255,255,255,.1); overflow: hidden; }
+.bar i { display: block; height: 100%; border-radius: inherit; width: 0; transition: width .45s var(--st-ease); }
+.bar.filth i { background: linear-gradient(90deg, #6a5a72, #b5a4c0); }
+.bar.favor i { background: linear-gradient(90deg, #c45a72, #f0a0b4); }
+.bar.fall i { background: linear-gradient(90deg, #7a3048, #c86a7e); }
+.bar.seed i { background: linear-gradient(90deg, #b86a78, #e8b8c4); }
+.metric.filth .mh span { color: rgba(196,184,210,.88); }
+.metric.favor .mh span { color: rgba(240,168,184,.95); }
+.metric.fall .mh span { color: rgba(214,148,162,.9); }
+.metric.seed .mh span { color: rgba(232,184,196,.9); }
+
+.facts { display: flex; flex-direction: column; gap: 0; }
+.fact {
+  appearance: none; width: 100%; margin: 0;
+  display: grid; grid-template-columns: 2.4em minmax(0,1fr); gap: 10px;
+  padding: 9px 0; border: 0; border-bottom: 1px solid rgba(255,255,255,.06);
+  border-radius: 0; background: transparent; font: inherit; text-align: left;
+  color: inherit; cursor: pointer; font-size: 11px; line-height: 1.55;
+}
+.fact:last-child { border-bottom: 0; padding-bottom: 2px; }
+.fact:first-child { padding-top: 0; }
+.fact em { font-style: normal; color: rgba(226,192,138,.82); letter-spacing: .06em; font-size: 10px; padding-top: 2px; }
+.fact .fact-body { min-width: 0; color: rgba(248,242,232,.94); }
+.fact .fact-text {
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden;
+}
+.fact.is-open .fact-text { display: block; -webkit-line-clamp: unset; overflow: visible; }
+.fact .fact-more {
+  display: none; margin-top: 4px; font-size: 10px; letter-spacing: .08em; color: rgba(226,192,138,.72);
+}
+.fact.is-clamp:not(.is-open) .fact-more { display: block; }
+.fact.is-open .fact-more { display: block; }
+.fact.is-open .fact-more::before { content: "收起"; }
+.fact.is-clamp:not(.is-open) .fact-more::before { content: "展开全文"; }
+
+.dots {
+  display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 6px;
+  padding: 8px 12px 2px; border-top: 1px solid rgba(255,255,255,.08); background: rgba(10,9,8,.42);
+}
+.dots button {
+  appearance: none; width: 6px; height: 6px; padding: 0; border: 0; border-radius: 999px;
+  background: rgba(240,217,168,.28); cursor: pointer;
+  transition: width .2s, background .2s;
+}
+.dots button:hover { background: rgba(240,217,168,.5); }
+.dots button.active { width: 14px; background: #e2c08a; }
+
+.actions {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
+  padding: 8px 12px 12px; background: rgba(10,9,8,.42);
+}
+.command-btn {
+  appearance: none; min-height: 40px; border-radius: 10px;
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+  font-size: 12px; font-weight: 600; letter-spacing: .04em; cursor: pointer;
+  border: 1px solid rgba(226,192,138,.4); background: rgba(0,0,0,.28); color: #f0d9a8;
+  transition: color .2s, border-color .2s, background .2s;
+}
+.command-btn svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.command-btn:hover { color: #ffe7b8; border-color: rgba(240,217,168,.65); background: rgba(0,0,0,.38); }
+.command-btn:active { background: rgba(0,0,0,.45); }
+.command-btn:focus-visible { outline: none; border-color: rgba(226,192,138,.7); box-shadow: 0 0 0 3px rgba(226,192,138,.14); }
+.command-btn.primary { border-color: rgba(226,192,138,.55); color: #1b1208; background: #e2c08a; }
+.command-btn.primary:hover { color: #1b1208; border-color: rgba(240,217,168,.75); background: #ecd3a0; }
+.command-btn.primary:active { background: #d4b078; }
+.command-btn:disabled { opacity: .4; cursor: default; }
+
+.toast {
+  position: fixed; left: 50%; bottom: 18px; z-index: 50;
+  transform: translateX(-50%) translateY(12px);
+  max-width: min(88vw, 320px); padding: 8px 12px; border-radius: 999px;
+  background: rgba(16,14,12,.92); color: #f0e8da; font-size: 12px;
+  border: 1px solid rgba(255,255,255,.1); opacity: 0; pointer-events: none;
+  transition: opacity .2s, transform .2s;
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* —— 窄屏（手机 iframe） —— */
+@container st-shell (max-width: 400px) {
+  .topbar { padding: 10px 10px 8px; }
+  .scene { font-size: 14px; }
+  .slide { padding: 8px 28px 6px; }
+  .role-nav.prev { left: 4px; }
+  .role-nav.next { right: 4px; }
+  .hero h4 { font-size: 15px; }
+  .tags { max-width: 48%; gap: 4px; }
+  .tag { padding: 2px 6px; font-size: 10px; }
+  .actions { padding: 8px 10px 10px; gap: 6px; }
+  .command-btn { min-height: 40px; font-size: 11px; }
+  .float-panel { width: min(200px, calc(100% - 16px)); right: 8px; }
+}
+
+/* —— 平板 —— */
+@container st-shell (min-width: 480px) {
+  .st-shell::before {
+    background-position: 64% 18%;
+    opacity: .34;
+  }
+  .topbar { padding: 14px 16px 12px; }
+  .scene { font-size: 16px; }
+  .slide { padding: 12px 48px 10px; }
+  .role-nav { width: 26px; height: 32px; }
+  .role-nav.prev { left: 10px; }
+  .role-nav.next { right: 10px; }
+  .role-nav svg { width: 14px; height: 14px; }
+  .hero { padding-bottom: 14px; }
+  .hero h4 { font-size: 18px; }
+  .metrics { gap: 12px 20px; }
+  .float-panel { width: min(260px, calc(100% - 28px)); }
+  .dots { padding: 10px 16px 4px; gap: 7px; }
+  .actions { padding: 10px 16px 14px; gap: 10px; }
+  .command-btn { min-height: 42px; font-size: 13px; }
+}
+
+/* —— 宽屏：属性 | 记录 双栏 —— */
+@container st-shell (min-width: 700px) {
+  .st-shell::before {
+    background-position: 58% 22%;
+    opacity: .32;
+  }
+  .st-shell::after {
+    background:
+      linear-gradient(105deg, rgba(10,9,8,.78) 0%, rgba(10,9,8,.5) 38%, rgba(10,9,8,.32) 68%),
+      linear-gradient(180deg, rgba(10,9,8,.3) 0%, rgba(10,9,8,.22) 26%, rgba(10,9,8,.68) 100%);
+  }
+  .topbar { padding: 14px 18px 12px; }
+  .slide {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.08fr);
+    column-gap: 22px;
+    align-items: start;
+    padding: 14px 56px 12px;
+  }
+  .hero { grid-column: 1 / -1; }
+  .pane { padding-top: 12px; }
+  .pane + .pane {
+    margin-top: 0;
+    padding-top: 12px;
+    border-top: 0;
+    border-left: 1px solid rgba(255,255,255,.08);
+    padding-left: 20px;
+  }
+  .metrics { gap: 14px 22px; }
+  .mh span { font-size: 11px; }
+  .mh b { font-size: 13px; }
+  .fact { font-size: 12px; padding: 10px 0; }
+  .fact em { font-size: 11px; }
+  .actions { max-width: 420px; margin: 0 auto; width: 100%; box-sizing: border-box; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+}
+
+</style>
+</head>
+<body>
+
+<div class="status-state status-loading show" id="statusState" role="status" aria-live="polite">正在读取状态…</div>
+<div class="stage" id="stage" hidden>
+  <section class="st-shell" id="root">
+    <header class="topbar" id="topBar">
+      <div class="scene-row">
+        <div class="scene" id="scene">—</div>
+        <div class="top-actions">
+          <button type="button" class="icon-btn" id="metaBtn" aria-expanded="false" aria-controls="metaPanel" title="开局设定">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9c.2.6.7 1.1 1.5 1.1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z"/></svg>
+          </button>
+          <button type="button" class="icon-btn" id="castBtn" aria-expanded="false" aria-controls="castPanel" title="出场角色">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          </button>
+        </div>
+      </div>
+      <div class="float-panel" id="metaPanel">
+        <div class="panel-title">开局设定</div>
+        <div class="meta-row"><small>故事</small><b id="metaStory">—</b></div>
+        <div class="meta-row"><small>氛围</small><b id="metaAtmosphere">—</b></div>
+        <div class="meta-row"><small>主角能力</small><b id="metaAbility">—</b></div>
+      </div>
+      <div class="float-panel" id="castPanel">
+        <div class="panel-title">出场角色</div>
+        <div class="cast-list" id="castList" role="menu"></div>
+      </div>
+    </header>
+
+    <div class="cast-pack">
+      <div class="sheet" id="roleSheet">
+        <button type="button" class="role-nav prev" id="navPrev" aria-label="上一位">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6 9 12l6 6"/></svg>
+        </button>
+        <button type="button" class="role-nav next" id="navNext" aria-label="下一位">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>
+        </button>
+        <div class="carousel" id="roleCarousel">
+          <div class="carousel-track" id="roleTrack"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="dots" id="roleDots" role="tablist" aria-label="角色页码"></div>
+    <footer class="actions">
+      <button type="button" class="command-btn" id="btnDraw">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6M22 11h-6"/></svg>
+        <span>新角色入场</span>
+      </button>
+      <button type="button" class="command-btn primary" id="btnTogether">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 4 5 5L8 21l-5-5Z"/><path d="m6 14 5 5"/><path d="M6 4v4M4 6h4M19 15v4M17 17h4"/></svg>
+        <span>推进剧情</span>
+      </button>
+    </footer>
+  </section>
+</div>
+<div class="status-state status-empty" id="emptyState">此刻尚无来客。</div>
+<div class="status-state status-error" id="errorState"><span id="errorCopy">状态暂不可用。</span></div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+/* === SYNC_BEGIN:ROSTER === */
+const ROSTER = [
+  {
+    "id": "kurisu",
+    "name": "牧濑红莉栖",
+    "work": "命运石之门",
+    "appearance": "赤直长发及背；琥珀瞳；白大褂常披私服外；身材偏瘦高、胸围不明显；语速快时偶有咬舌；左手常夹报告或马克杯。",
+    "accent": "#c45c48"
+  },
+  {
+    "id": "yor",
+    "name": "约尔·福杰",
+    "work": "间谍过家家",
+    "appearance": "黑长直；红瞳；金环耳饰；身高偏高、胸臀曲线明显；市政职员装干练，刺客态黑裙配玫瑰饰；力大无穷却常手足无措。",
+    "accent": "#8b1e3f"
+  },
+  {
+    "id": "zero_two",
+    "name": "零二",
+    "work": "DARLING in the FRANXX",
+    "appearance": "粉色长发有弹性；额生双角；青绿瞳；鲨鱼齿；红色驾驶服勾勒高挑纤长身形与明显胸线；笑带捕食者般的亲昵。",
+    "accent": "#e85d75"
+  },
+  {
+    "id": "twob",
+    "name": "2B",
+    "work": "尼尔：自动人形",
+    "appearance": "银白短发；黑色战斗眼罩；露背黑色哥特裙甲配白色过膝高跟；腰悬白之契约；机体身形偏瘦、姿态端正少表情。",
+    "accent": "#2a2a32"
+  },
+  {
+    "id": "rem",
+    "name": "雷姆",
+    "work": "Re：从零开始的异世界生活",
+    "appearance": "蓝色短发一侧别花饰；女仆装；身形娇小偏软；惯用流星锤；鬼化时额生单角、瞳威压增强；平时笑容柔软。",
+    "accent": "#4a6fa5"
+  },
+  {
+    "id": "holo",
+    "name": "赫萝",
+    "work": "狼与香辛料",
+    "appearance": "栗棕发；狼耳狼尾（尾尖白）；红瞳尖齿；外表少女身形、神态老成；旅装披巾；常带麦穗袋。",
+    "accent": "#a67c52"
+  },
+  {
+    "id": "violet",
+    "name": "薇尔莉特·伊芙加登",
+    "work": "紫罗兰永恒花园",
+    "appearance": "金褐双马尾；金属义手关节分明；绿色邮政制服；身材纤细；胸前祖母绿胸针；表情淡、礼节死板。",
+    "accent": "#6b8f71"
+  },
+  {
+    "id": "rin",
+    "name": "远坂凛",
+    "work": "Fate/stay night",
+    "appearance": "黑长发红缎带；青玉瞳；红黑私服；身形偏瘦；宝石作魔术媒介；气场自信。",
+    "accent": "#1a1a2e"
+  },
+  {
+    "id": "mami",
+    "name": "巴麻美",
+    "work": "魔法少女小圆",
+    "appearance": "金发双钻头卷；茶瞳；花边魔装衬托丰满上围与细腰；燧发枪华丽；笑时像可靠前辈。",
+    "accent": "#d4a017"
+  },
+  {
+    "id": "utaha",
+    "name": "霞之丘诗羽",
+    "work": "路人女主的养成方法",
+    "appearance": "黑长直；拒人气场；制服一丝不苟；身材高挑、胸围突出；红笔常不离手。",
+    "accent": "#3d3d4a"
+  },
+  {
+    "id": "frieren",
+    "name": "芙莉莲",
+    "work": "葬送的芙莉莲",
+    "appearance": "银发尖耳；白袍；身形偏瘦矮、像未成年精灵外表；表情平淡；对甜品两眼放光。",
+    "accent": "#c5d5e0"
+  },
+  {
+    "id": "makima",
+    "name": "玛奇玛",
+    "work": "电锯人",
+    "appearance": "橙红长发；黄瞳同心圆；身形高挑、胸线明显；西装裙压迫感强；放松姿态更危险。",
+    "accent": "#b85c38"
+  },
+  {
+    "id": "shinobu_kocho",
+    "name": "胡蝶忍",
+    "work": "鬼灭之刃",
+    "appearance": "黑发渐层紫；虫柱羽织；身形娇小；步伐无声；笑容几乎不掉。",
+    "accent": "#6b4c9a"
+  },
+  {
+    "id": "roxy",
+    "name": "洛琪希·米格路迪亚",
+    "work": "无职转生",
+    "appearance": "青发法袍；杖；身形娇小（米格路德族成年仍如孩童）；水冰魔法一流；常被误判年龄。",
+    "accent": "#2f6fed"
+  },
+  {
+    "id": "albedo",
+    "name": "雅儿贝德",
+    "work": "OVERLORD",
+    "appearance": "黑长发；金角黑翼；黑白礼服；身高高挑、胸臀极丰满；完美造物式姿容。",
+    "accent": "#111111"
+  },
+  {
+    "id": "darkness",
+    "name": "达克妮丝",
+    "work": "为美好的世界献上祝福",
+    "appearance": "金发；重甲；身高高、上围与臀围非常丰满；高傲表情下耳根易红。",
+    "accent": "#c8a45a"
+  },
+  {
+    "id": "aiz",
+    "name": "艾丝·华伦斯坦",
+    "work": "在地下城寻求邂逅是否搞错了什么",
+    "appearance": "金长发金瞳；轻甲短裙；身形修长、胸围中等偏上；风魔法环身；话少。",
+    "accent": "#e6c35c"
+  },
+  {
+    "id": "tohru",
+    "name": "托尔",
+    "work": "小林家的龙女仆",
+    "appearance": "橙发；龙角龙尾；女仆装；身形高挑丰满；亲昵与破坏力并存。",
+    "accent": "#e8834a"
+  },
+  {
+    "id": "mikasa",
+    "name": "三笠·阿克曼",
+    "work": "进击的巨人",
+    "appearance": "黑短发；红围巾；调查兵团制服；身形精悍偏瘦、胸围中等；立体机动利落。",
+    "accent": "#4a4a4a"
+  },
+  {
+    "id": "touka",
+    "name": "雾岛董香",
+    "work": "东京喰种",
+    "appearance": "紫发紫瞳；咖啡店员装/兔面战斗装；腿技为主；身形纤长有力。",
+    "accent": "#7b3bb0"
+  },
+  {
+    "id": "cc",
+    "name": "C.C.",
+    "work": "反叛的鲁鲁修",
+    "appearance": "浅绿长发及腰；金瞳；白色拘束衣式长袍；身形瘦长高挑；赤足或简单鞋履；神态像不祥妖精。",
+    "accent": "#8fbc8f"
+  },
+  {
+    "id": "akane",
+    "name": "常守朱",
+    "work": "心理测量者",
+    "appearance": "棕短发；公安监视官制服；身形干练偏瘦；Dominator挂于腰侧；站姿端正、目光清正。",
+    "accent": "#3a6ea5"
+  },
+  {
+    "id": "tatsumaki",
+    "name": "战栗的龙卷",
+    "work": "一拳超人",
+    "appearance": "翠绿短卷发；黑高开叉紧身长裙；赤足悬浮；外表娇小童颜；皱眉是常态；念动力扰动空气。",
+    "accent": "#2ecc71"
+  },
+  {
+    "id": "robin",
+    "name": "妮可·罗宾",
+    "work": "海贼王",
+    "appearance": "黑长发；冷静眼眸；草帽团考古学者装束；身形高挑；开花能力时手臂如蔓生植物。",
+    "accent": "#5c4a6b"
+  },
+  {
+    "id": "marcille",
+    "name": "玛璐希尔",
+    "work": "迷宫饭",
+    "appearance": "金长发；尖耳；精灵法袍；身形偏瘦高；表情变化剧烈；施法手势标准。",
+    "accent": "#e8d56a"
+  },
+  {
+    "id": "ai",
+    "name": "星野爱",
+    "work": "我推的孩子",
+    "appearance": "深色中长发；粉蓝异色瞳；星形发饰；偶像身形偏瘦；舞台妆利落；私服偏甜，眼神偶抽离。",
+    "accent": "#ff4d88"
+  },
+  {
+    "id": "elaina",
+    "name": "伊蕾娜",
+    "work": "魔女之旅",
+    "appearance": "银白长发；魔女帽；黑色法袍；身形偏瘦；冷白皮肤；笑时带点坏。",
+    "accent": "#b8b4c8"
+  },
+  {
+    "id": "alpha",
+    "name": "阿尔法",
+    "work": "想要成为影之实力者",
+    "appearance": "银长直；金瞳；黑金装束；身形高挑；气质清冷；剑技干净利落。",
+    "accent": "#e8e6ef"
+  },
+  {
+    "id": "cha_hae_in",
+    "name": "车海音",
+    "work": "我独自升级",
+    "appearance": "浅金短发；锋利眼神；矫健身形、运动员式肌肉线条；作战服贴身；持剑姿态低而稳。",
+    "accent": "#6ec6a8"
+  },
+  {
+    "id": "kiruko",
+    "name": "桐子",
+    "work": "天国大魔境",
+    "appearance": "短发利落；护目镜；风尘旅行装；身形精干；刀不离身；表情生动。",
+    "accent": "#5c8f6a"
+  },
+  {
+    "id": "mei_mei",
+    "name": "冥冥",
+    "work": "咒术回战",
+    "appearance": "银白长发编成长辫并遮住面部；黑白对比装；身形高挑；乌鸦常伴；持巨斧；算计的笑。",
+    "accent": "#2b2b32"
+  },
+  {
+    "id": "princess_hibana",
+    "name": "公主火华",
+    "work": "炎炎消防队",
+    "appearance": "粉红长发；锐利眼妆；黑红消防队服；身形高挑；焰粉如落樱；姿态骄傲。",
+    "accent": "#ff6b8a"
+  },
+  {
+    "id": "sylvia",
+    "name": "西尔维娅·洛芙",
+    "work": "间谍教室",
+    "appearance": "金发波浪；大胆衣装；身形丰满；醉意下眼神能一瞬变冷；酒气常伴。",
+    "accent": "#c4a35a"
+  },
+  {
+    "id": "soifon",
+    "name": "碎蜂",
+    "work": "死神",
+    "appearance": "黑短发；黄瞳；紧身死霸装；身形娇小精悍；瞬步残影如蜂；表情严厉。",
+    "accent": "#4a5c3a"
+  },
+  {
+    "id": "seiko",
+    "name": "绫濑星子",
+    "work": "胆大党",
+    "appearance": "金发；墨镜；和风混搭；身形成熟丰满；烟不离手；驱灵时气场骤变。",
+    "accent": "#d9b45a"
+  },
+  {
+    "id": "toga",
+    "name": "渡我被身子",
+    "work": "我的英雄学院",
+    "appearance": "浅金双马尾；虎牙；针管；校服或战斗装；身形偏瘦娇小；笑甜而危险。",
+    "accent": "#c45c7a"
+  },
+  {
+    "id": "sae",
+    "name": "新岛冴",
+    "work": "女神异闻录5",
+    "appearance": "红发；锐眼；西装套裙；身形高挑；文件与咖啡常伴；单侧耳饰。",
+    "accent": "#7a1f2e"
+  },
+  {
+    "id": "irina",
+    "name": "伊莉娜·耶拉维奇",
+    "work": "暗杀教室",
+    "appearance": "粉金发；柔和笑容；教师装；身形高挑丰满；指尖稳定；课堂与战斗判若两人。",
+    "accent": "#e8a0b0"
+  },
+  {
+    "id": "ryza",
+    "name": "莱莎琳·斯托特",
+    "work": "莱莎的炼金工房",
+    "appearance": "棕橙发；健康肤色；短衣冒险装；腰挂炼金用具；身形结实；夏天感强。",
+    "accent": "#3aa0c8"
+  },
+  {
+    "id": "mari",
+    "name": "真希波·真理·伊拉丝多莉亚斯",
+    "work": "新世纪福音战士",
+    "appearance": "粉棕长发；异色瞳；红框眼镜；插件服色块鲜明；身形高挑；笑脸常挂。",
+    "accent": "#c8e06a"
+  },
+  {
+    "id": "oboro",
+    "name": "朧",
+    "work": "甲贺忍法帖",
+    "appearance": "浅色长发；清澈眼瞳；简洁忍装；身形纤细；清冷凄美。",
+    "accent": "#8ec5e8"
+  },
+  {
+    "id": "shiki",
+    "name": "两仪式",
+    "work": "空之境界",
+    "appearance": "黑短发；和洋混搭；清冷眼神；身形偏瘦；都市夜色里像一把刃。",
+    "accent": "#d8d8de"
+  },
+  {
+    "id": "rangiku",
+    "name": "松本乱菊",
+    "work": "死神",
+    "appearance": "橙金波浪长发；大胆死霸装；身高高、上围极大；笑像夏日祭。",
+    "accent": "#f0c96a"
+  },
+  {
+    "id": "tsunade",
+    "name": "纲手",
+    "work": "火影忍者",
+    "appearance": "金发；额头菱形印记；绿色劲装；身形高挑丰满；酒气与威严。",
+    "accent": "#5cb87a"
+  },
+  {
+    "id": "rias",
+    "name": "莉雅丝·吉蒙里",
+    "work": "恶魔高校DxD",
+    "appearance": "绯红长发；蓝瞳；贵族洋装/学园改；身形高挑、胸围突出；毁灭之力时发梢无风而动。",
+    "accent": "#b01030"
+  },
+  {
+    "id": "katsuragi",
+    "name": "葛城",
+    "work": "闪乱神乐",
+    "appearance": "紫黑长发；忍装；身形成熟、胸围极大；势大力沉。",
+    "accent": "#d45c6a"
+  },
+  {
+    "id": "clare",
+    "name": "克莱尔",
+    "work": "CLAYMORE",
+    "appearance": "浅金短发；银瞳；紧身装甲；身形精悍偏瘦；巨剑。",
+    "accent": "#cfd6de"
+  },
+  {
+    "id": "golden_darkness",
+    "name": "金色暗影",
+    "work": "To LOVEる",
+    "appearance": "金发红瞳；黑战斗礼装；身形偏娇小；身体可武器化；表情常淡。",
+    "accent": "#e6c84a"
+  },
+  {
+    "id": "tiffania",
+    "name": "蒂法妮娅·维斯特伍德",
+    "work": "零之使魔",
+    "appearance": "浅金长发；半精灵尖耳；身形软萌且上围极大；衣装朴素；笑容软、说话轻。",
+    "accent": "#f2a0b8"
+  },
+  {
+    "id": "reina",
+    "name": "蕾娜",
+    "work": "女王之刃",
+    "appearance": "金发碧眼；暴露式铠甲+盾剑；身形高挑曲线分明；英气与羞赧切换。",
+    "accent": "#e87830"
+  },
+  {
+    "id": "yukino",
+    "name": "雪之下雪乃",
+    "work": "我的青春恋爱物语果然有问题",
+    "appearance": "黑长直；清冷锐瞳；仪态一丝不苟；身形高挑偏瘦。",
+    "accent": "#b8c4d8"
+  },
+  {
+    "id": "asuna",
+    "name": "结城明日奈",
+    "work": "刀剑神域",
+    "appearance": "栗橙长发；细剑；身形偏瘦、胸围中等；战斗锋利休息时柔软。",
+    "accent": "#e85a6a"
+  },
+  {
+    "id": "mikoto",
+    "name": "御坂美琴",
+    "work": "魔法禁书目录",
+    "appearance": "茶褐短发；大衣；身形娇小偏瘦；铁片；放电时发丝飘起。",
+    "accent": "#c45c28"
+  },
+  {
+    "id": "kurumi",
+    "name": "时崎狂三",
+    "work": "约会大作战",
+    "appearance": "黑金双马尾；异色时计瞳；哥特洋装；身形高挑、胸围突出；双枪。",
+    "accent": "#2a1818"
+  },
+  {
+    "id": "mai",
+    "name": "樱岛麻衣",
+    "work": "青春猪头少年不会梦到兔女郎学姐",
+    "appearance": "黑发深瞳；站姿像镜头前；身形高挑丰满；兔女郎装是出圈符号。",
+    "accent": "#3d3d4a"
+  },
+  {
+    "id": "kaguya",
+    "name": "四宫辉夜",
+    "work": "辉夜大小姐想让我告白",
+    "appearance": "黑长直；高贵仪态；身形偏瘦娇小；害羞耳朵先红。",
+    "accent": "#e8dce8"
+  },
+  {
+    "id": "marin",
+    "name": "喜多川海梦",
+    "work": "恋上换装娃娃",
+    "appearance": "金发粉挑染；多变 Cos；身形高挑、胸围中上；敢穿敢拍。",
+    "accent": "#f0a0b8"
+  },
+  {
+    "id": "maomao",
+    "name": "猫猫",
+    "work": "药屋少女的呢喃",
+    "appearance": "随意束发；药渍工作服；身形偏瘦矮；冷静眼神。",
+    "accent": "#6a8f5a"
+  },
+  {
+    "id": "senjougahara",
+    "name": "战场原黑仪",
+    "work": "化物语",
+    "appearance": "黑长直几乎到腰；身形瘦削肩窄；制服裙摆规矩；面无表情时狠话最准，常提订书机作威胁道具。",
+    "accent": "#6b4c9a"
+  },
+  {
+    "id": "erza",
+    "name": "艾露莎·舒卡勒托",
+    "work": "妖精的尾巴",
+    "appearance": "朱红长发；轮换铠甲；身形高挑、胸围丰满；眼罩印象深刻。",
+    "accent": "#c03040"
+  },
+  {
+    "id": "miyuki",
+    "name": "司波深雪",
+    "work": "魔法科高校的劣等生",
+    "appearance": "黑长直；肤白；寒雾环身；身形高挑纤细；微笑得体。",
+    "accent": "#dce6f2"
+  },
+  {
+    "id": "misato",
+    "name": "葛城美里",
+    "work": "新世纪福音战士",
+    "appearance": "紫红长发；红夹克常披；身形高挑胸围突出；啤酒罐与军用通讯器是符号；笑时豪爽，沉默时疲惫。",
+    "accent": "#6b2d5c"
+  },
+  {
+    "id": "irisviel",
+    "name": "爱丽丝菲尔·冯·爱因兹贝伦",
+    "work": "Fate/Zero",
+    "appearance": "银白长发红瞳；身形纤细却线条柔和；冬装白金为主；笑时温软，战斗补给时会显疲惫。",
+    "accent": "#e8f0f8"
+  },
+  {
+    "id": "kushina",
+    "name": "漩涡玖辛奈",
+    "work": "火影忍者",
+    "appearance": "火红长发；紫瞳；身形高挑曲线明显；产妇期以前矫健，笑时豪迈；暴怒时气场压人。",
+    "accent": "#c81e2a"
+  },
+  {
+    "id": "hinata",
+    "name": "漩涡雏田",
+    "work": "火影忍者",
+    "appearance": "墨黑短发（婚后）；白眼；身形柔和丰满偏母性；衣装简洁家常或战斗装；笑时怯仍在，站姿却稳。",
+    "accent": "#6a7ab8"
+  },
+  {
+    "id": "sanae",
+    "name": "古河早苗",
+    "work": "CLANNAD",
+    "appearance": "浅绿短发；常穿围裙或家居服；身形柔和丰满偏人妻；笑容大、动作夸张；店里面粉味像随身光环。",
+    "accent": "#7ec8a0"
+  },
+  {
+    "id": "eri_kisaki",
+    "name": "妃英理",
+    "work": "名侦探柯南",
+    "appearance": "茶色长波浪；眼镜；身形高挑胸围突出；套装干练；笑时温柔，法庭气场压人。",
+    "accent": "#c4a35a"
+  },
+  {
+    "id": "kie",
+    "name": "灶门葵枝",
+    "work": "鬼灭之刃",
+    "appearance": "黑发梳髻；和服家常；身形柔和偏母性；眉眼温，笑时安稳；灶火与炭袋是生活痕迹。",
+    "accent": "#8b5a3c"
+  },
+  {
+    "id": "kyoko_yuuki",
+    "name": "结城京子",
+    "work": "刀剑神域",
+    "appearance": "深色盘发或短整发型；名媛套装；身形高挑纤瘦偏成熟；表情常冷静；站姿像在主持会谈。",
+    "accent": "#c9a86c"
+  },
+  {
+    "id": "mitsuki",
+    "name": "爆豪光己",
+    "work": "我的英雄学院",
+    "appearance": "浅金短发外翻；红瞳锐；身形高挑胸围突出；常穿大胆家居或外出装；笑时豪爽，骂人时更像胜己来源。",
+    "accent": "#e8a0b0"
+  },
+  {
+    "id": "hancock",
+    "name": "波雅·汉库克",
+    "work": "海贼王",
+    "appearance": "墨黑长发；极致曲线的暴露战衣；身形高挑丰满；足迹花纹；表情高傲，脸红时反差极大。",
+    "accent": "#b01050"
+  },
+  {
+    "id": "tearju",
+    "name": "提亚悠·鲁娜提克",
+    "work": "To LOVEる",
+    "appearance": "金长直；眼镜；白衣或教师装勾勒成熟曲线；身形高挑丰满；表情冷静，笑时温柔带距离。",
+    "accent": "#e6b84a"
+  },
+  {
+    "id": "fujiko",
+    "name": "峰不二子",
+    "work": "鲁邦三世",
+    "appearance": "粉褐长发；身形高挑曲线夸张；常换暴露或华丽盗装；手枪不离身；笑里带钩。",
+    "accent": "#c45c8a"
+  },
+  {
+    "id": "raikou",
+    "name": "源赖光",
+    "work": "Fate/Grand Order",
+    "appearance": "紫黑长发；巨乳窄腰的暴露铠饰；身形高挑丰满；金睛或柔光；笑时溺爱，怒时威压如鬼。",
+    "accent": "#6b4c9a"
+  },
+  {
+    "id": "tamamo",
+    "name": "玉藻前",
+    "work": "Fate/EXTRA",
+    "appearance": "浅粉金发；狐耳多尾；巫女改装偏暴露；身形娇柔有料；笑时眯眼，尾巴会先泄情绪。",
+    "accent": "#e87830"
+  },
+  {
+    "id": "ransheya",
+    "name": "塞菲·米凯拉·戴比路克",
+    "work": "To LOVEる",
+    "appearance": "粉系长发；皇冠与暴露王袍；身形极丰满成熟；气质慵懒温柔；笑时像把银河当客厅。",
+    "accent": "#d45c9a"
+  },
+  {
+    "id": "ryoko",
+    "name": "御门凉子",
+    "work": "To LOVEる",
+    "appearance": "黑长直；眼镜常挂；胸围突出的教师装/毛衣；身形成熟丰满；笑时温柔，弯腰时杀伤力先到。",
+    "accent": "#c45c6a"
+  },
+  {
+    "id": "junko",
+    "name": "鹿目询子",
+    "work": "魔法少女小圆",
+    "appearance": "浅发短整或微卷；淡妆利落；身形高挑曲线好；常穿干练OL或居家便装；笑时温柔，烟与红酒是成人符号。",
+    "accent": "#e8a0b8"
+  },
+  {
+    "id": "artoria_pendragon",
+    "name": "阿尔托莉雅·潘德拉贡",
+    "work": "Fate/stay night",
+    "appearance": "金发以蓝色缎带盘起，碧绿眼眸清澈而锐利；常穿蓝银甲裙，身形纤细却站姿如出鞘直剑，非战时也保持骑士般端正。",
+    "accent": "#315f9f"
+  },
+  {
+    "id": "scathach",
+    "name": "斯卡哈",
+    "work": "Fate/Grand Order",
+    "appearance": "深紫长发垂至腰际，红瞳沉静；紫黑贴身战装配肩甲与长靴，常执两柄朱枪，举止从容而带猎手般压迫感。",
+    "accent": "#6b3b86"
+  },
+  {
+    "id": "tifa_lockhart",
+    "name": "蒂法·洛克哈特",
+    "work": "Final Fantasy VII",
+    "appearance": "黑色长发末梢分叉，红褐眼眸；白色短上衣、黑裙或短裤配红色拳套，体态健美，动作轻快扎实，笑容温和而目光常藏忧虑。",
+    "accent": "#8c2f39"
+  },
+  {
+    "id": "aerith_gainsborough",
+    "name": "爱丽丝·盖恩斯巴勒",
+    "work": "Final Fantasy VII",
+    "appearance": "栗色长发编成粗辫，以粉色缎带系住；碧绿眼眸，粉色长裙配红短外套，手持长杖，笑意明亮，安静时像在聆听远处声音。",
+    "accent": "#d86f91"
+  },
+  {
+    "id": "yuna_ffx",
+    "name": "尤娜",
+    "work": "Final Fantasy X",
+    "appearance": "棕色齐肩发，左蓝右绿的异色瞳；白色和服式上衣配深蓝长裙与花纹腰带，持召唤杖，仪态柔和，决意显露时目光异常坚定。",
+    "accent": "#537ca8"
+  },
+  {
+    "id": "bayonetta",
+    "name": "贝优妮塔",
+    "work": "Bayonetta系列",
+    "appearance": "黑发与黑色魔女装融为一体，戴红框眼镜与金饰，四肢修长；高跟鞋装有枪械，步态像舞蹈，笑容从容挑衅。",
+    "accent": "#7a1734"
+  },
+  {
+    "id": "ada_wong",
+    "name": "艾达·王",
+    "work": "Resident Evil 2",
+    "appearance": "黑色短发利落贴颊，深色眼眸；常着红色礼服或红衬衫配战术装备，身姿轻盈，动作安静精准，神情总留三分不可读。",
+    "accent": "#9f2d38"
+  },
+  {
+    "id": "jill_valentine",
+    "name": "吉尔·瓦伦蒂安",
+    "work": "Resident Evil系列",
+    "appearance": "棕色短发、蓝灰眼睛；常见蓝色贝雷帽与S.T.A.R.S.制服，或浅蓝抹胸配战术腰带，体格精悍，持枪姿势稳定。",
+    "accent": "#3d6f91"
+  },
+  {
+    "id": "claire_redfield",
+    "name": "克莱尔·雷德菲尔德",
+    "work": "Resident Evil系列",
+    "appearance": "栗色马尾，蓝灰眼睛；红色夹克背印图案，配牛仔短裤或深色长裤与战术靴，骑手气质鲜明，神态亲和而警觉。",
+    "accent": "#b63a34"
+  },
+  {
+    "id": "lara_croft",
+    "name": "劳拉·克劳馥",
+    "work": "Tomb Raider（幸存者三部曲）",
+    "appearance": "棕色长发束成马尾，棕眼；穿适合攀爬与恶劣环境的探险装束，弓、登山斧与绳索是主要工具，体态矫健，伤痕常伴远征。",
+    "accent": "#397f73"
+  },
+  {
+    "id": "yennefer_vengerberg",
+    "name": "叶奈法",
+    "work": "The Witcher 3: Wild Hunt",
+    "appearance": "乌黑卷发，紫罗兰色眼睛，常以黑白衣装配黑曜石星形项链；身上带丁香与醋栗香气，仪态高傲，目光像能先一步看穿托词。",
+    "accent": "#513b68"
+  },
+  {
+    "id": "triss_merigold",
+    "name": "特莉丝·梅莉葛德",
+    "work": "The Witcher 3: Wild Hunt",
+    "appearance": "赤褐色卷发与绿色眼睛醒目，常穿蓝绿或棕色旅行装束；神态温和，施法时动作利落。",
+    "accent": "#a84b36"
+  },
+  {
+    "id": "shadowheart",
+    "name": "影心",
+    "work": "Baldur's Gate 3",
+    "appearance": "黑发束成高马尾，绿褐眼眸，右颊有细小疤痕；身着暗色锁甲、胸前带莎尔符号，随身携带神秘棱彩神器，戒备时常微抬下颌。",
+    "accent": "#52466f"
+  },
+  {
+    "id": "kafka_hsr",
+    "name": "卡芙卡",
+    "work": "崩坏：星穹铁道",
+    "appearance": "酒红色长发与淡紫眼眸，佩墨镜、蛛网纹长外套和白衬衫；腰悬长刀并携轻型枪械，动作优雅从容，战斗时也像按既定节拍演出。",
+    "accent": "#9b385d"
+  },
+  {
+    "id": "himeko_hsr",
+    "name": "姬子",
+    "work": "崩坏：星穹铁道",
+    "appearance": "红色长卷发与金色眼眸，白色礼服式长外套搭配黑色内装和金饰；常端咖啡杯，携带可变形手提箱武器，气质成熟从容。",
+    "accent": "#b5483f"
+  },
+  {
+    "id": "acheron_hsr",
+    "name": "黄泉",
+    "work": "崩坏：星穹铁道",
+    "appearance": "深紫长发遮住一侧面庞，紫红眼眸；黑白紫长衣配红色纹饰，腰悬封在鞘中的长刀，常显疲惫迷惘，拔刀时色彩与气势骤变。",
+    "accent": "#663b78"
+  },
+  {
+    "id": "raiden_ei",
+    "name": "雷电影",
+    "work": "原神",
+    "appearance": "深紫长发编成长辫，紫瞳中有雷纹；和服式战装以紫白红配色，胸前别雷之三重巴，威仪沉静，拔出薙刀或梦想一心时雷光聚集。",
+    "accent": "#704aa1"
+  },
+  {
+    "id": "yae_miko",
+    "name": "八重神子",
+    "work": "原神",
+    "appearance": "粉色长发垂至腰际，紫瞳微挑，狐耳状发束醒目；穿红白巫女服并佩金色耳饰，步态悠然，笑容常让人分不清玩笑与试探。",
+    "accent": "#d35f89"
+  },
+  {
+    "id": "ningguang",
+    "name": "凝光",
+    "work": "原神",
+    "appearance": "白金长发以簪固定，红色眼眸；金白旗袍式礼服饰以黑红纹样，指套与烟管衬出从容仪态，举止精确而不显匆忙。",
+    "accent": "#c49a45"
+  },
+  {
+    "id": "beidou",
+    "name": "北斗",
+    "work": "原神",
+    "appearance": "深褐长发，左眼覆红色眼罩，右眼赤红；红黑船长装配长靴，肩披毛领，背负双手大剑，站姿豪爽稳健。",
+    "accent": "#9a3e32"
+  },
+  {
+    "id": "lisa_minci",
+    "name": "丽莎·敏兹",
+    "work": "原神",
+    "appearance": "蜜褐色长卷发与绿色眼眸，戴紫色尖顶魔女帽；紫白礼服配蔷薇与沙漏饰件，手持法器，慵懒微笑下藏着敏锐审视。",
+    "accent": "#72509b"
+  },
+  {
+    "id": "jean_gunnhildr",
+    "name": "琴·古恩希尔德",
+    "work": "原神",
+    "appearance": "金色长发束成高马尾，灰蓝眼眸；白蓝骑士制服配披肩、长靴与单手剑，仪态端正，眼下偶有疲惫却很少松懈。",
+    "accent": "#527fa2"
+  },
+  {
+    "id": "esdeath",
+    "name": "艾斯德斯",
+    "work": "斩！赤红之瞳",
+    "appearance": "冰蓝长发及膝，蓝色眼眸，额前戴军帽；白色帝国军服配长靴与佩剑，身材高挑，微笑从容却带居高临下的危险感。",
+    "accent": "#4f8eb5"
+  },
+  {
+    "id": "saeko_busujima",
+    "name": "毒岛冴子",
+    "work": "学园默示录 HIGHSCHOOL OF THE DEAD",
+    "appearance": "紫色长直发及腿，蓝色眼眸；常穿藤美学园制服和长袜，手持木刀或村田刀，身形高挑，挥剑沉稳，平静微笑偶尔显出战斗兴奋。",
+    "accent": "#665291"
+  },
+  {
+    "id": "liu_shen",
+    "name": "柳神",
+    "work": "完美世界",
+    "appearance": "初见是石村中遭雷劈而焦黑的巨大柳木，仅余一根嫩绿枝条；恢复后枝条如神链、绿霞通天，人形常笼罩在光雨与混沌雾中，风姿绝世而难辨真容。",
+    "accent": "#4f8f55"
+  },
+  {
+    "id": "ruthless_empress",
+    "name": "狠人大帝",
+    "work": "遮天",
+    "appearance": "常见形象为白衣胜雪、青丝披散，戴似哭似笑的青铜鬼脸面具；真容绝世而冷清，立于荒古禁地时气息深不可测。",
+    "accent": "#77727f"
+  },
+  {
+    "id": "ji_ziyue",
+    "name": "姬紫月",
+    "work": "遮天",
+    "appearance": "紫衣灵动，乌发明眸，笑时带小酒窝；身形轻盈、气质娇俏，运转元灵之力时周身道韵与灵气自然亲近。",
+    "accent": "#8e63b5"
+  },
+  {
+    "id": "huo_linger",
+    "name": "火灵儿",
+    "work": "完美世界",
+    "appearance": "红衣明艳，黑发灵眸，容貌娇美而带火国贵气；修行火道时赤霞缭绕，后在罪州火桑林中的身影常与漫天火桑花相连。",
+    "accent": "#c84f3d"
+  },
+  {
+    "id": "qingyi",
+    "name": "清漪",
+    "work": "完美世界",
+    "appearance": "白衣清冷，青丝如瀑，容颜出尘；气质较月婵本体多一分真实人情，施展青月焰时身周有澄澈青色月辉与火光交映。",
+    "accent": "#56a9a5"
+  },
+  {
+    "id": "yun_yun",
+    "name": "云韵",
+    "work": "斗破苍穹",
+    "appearance": "青丝挽髻，素雅高贵，常着月白裙袍；身形修长丰润，背生青色斗气之翼，佩长剑，风属性斗气发动时衣袂与发丝如临山风。",
+    "accent": "#6aa0b8"
+  },
+  {
+    "id": "medusa_cai_lin",
+    "name": "美杜莎",
+    "work": "斗破苍穹",
+    "appearance": "容貌妖艳冷峻，三千乌黑发丝随斗气流动，常着华贵红紫衣裙；人身蛇尾形态威压鲜明，进化后可化七彩乃至九彩吞天蟒，瞳色与气息带蛇族危险感。",
+    "accent": "#a84162"
+  },
+  {
+    "id": "ya_fei",
+    "name": "雅妃",
+    "work": "斗破苍穹",
+    "appearance": "红色长裙勾勒成熟曲线，长发盘起，眉眼含笑而精明；举止从容、嗓音柔媚，主持拍卖时善用停顿与目光掌握全场节奏。",
+    "accent": "#b54e55"
+  },
+  {
+    "id": "xiao_xuner",
+    "name": "萧薰儿",
+    "work": "斗破苍穹",
+    "appearance": "淡紫衣裙，青丝柔顺，气质清雅从容；看似纤柔，动用金帝焚天炎与古族血脉时金色火焰升腾，威势与平日温婉判若两人。",
+    "accent": "#d3a33e"
+  },
+  {
+    "id": "bibi_dong",
+    "name": "比比东",
+    "work": "斗罗大陆",
+    "appearance": "紫金教皇冠与华贵长袍彰显威严，紫眸冷厉，眉眼在静止时也带审视感；持教皇权杖，双生蛛皇武魂展开时蛛矛、甲壳与紫黑罗刹气息极具压迫感。",
+    "accent": "#72426f"
+  },
+  {
+    "id": "qian_renxue",
+    "name": "千仞雪",
+    "work": "斗罗大陆",
+    "appearance": "真身金发金眸，容貌高贵冷艳，六翼天使武魂展开时金色羽翼与圣光覆盖全身；伪装雪清河时则是温雅从容的青年皇子形象。",
+    "accent": "#d6ad42"
+  },
+  {
+    "id": "audrey_hall",
+    "name": "奥黛丽·霍尔",
+    "work": "诡秘之主",
+    "appearance": "金色长发、碧绿眼眸，面部线条柔和而仪态端正；常着鲁恩上流社会礼裙，成为高序列观众途径非凡者后，目光温和却有洞察心灵的深度。",
+    "accent": "#4f9b78"
+  },
+  {
+    "id": "su_mucheng",
+    "name": "苏沐橙",
+    "work": "全职高手",
+    "appearance": "长发柔顺、容貌明艳，上镜时笑容亲和；比赛席上神情专注，游戏角色“沐雨橙风”为枪炮师，重炮与远程火力是最鲜明标志。",
+    "accent": "#e6a24a"
+  },
+  {
+    "id": "chen_guo",
+    "name": "陈果",
+    "work": "全职高手",
+    "appearance": "长发利落，眉眼开朗，笑与恼都明显写在表情上，日常穿着便于管理网吧；谈到荣耀和偶像时眼睛发亮，游戏角色“逐烟霞”为枪炮师。",
+    "accent": "#d55348"
+  },
+  {
+    "id": "nangong_pushe",
+    "name": "南宫仆射",
+    "work": "雪中悍刀行",
+    "appearance": "白衣白裘，面容线条清秀而雌雄莫辨，腰佩绣冬、春雷双刀；神情冷淡、步履利落，出刀时由一停递进至更高刀势，气质如寒雪压境。",
+    "accent": "#8696a1"
+  },
+  {
+    "id": "jiang_ni",
+    "name": "姜泥",
+    "work": "雪中悍刀行",
+    "appearance": "身形纤秀，眉眼清丽，早期常着王府侍女素衣，袖中藏匕首“神符”；后来承西楚气运、持剑立于阵前时，仍保留倔强而鲜活的神情。",
+    "accent": "#c35b68"
+  },
+  {
+    "id": "sang_sang",
+    "name": "桑桑",
+    "work": "将夜",
+    "appearance": "人间形态瘦小黝黑，眉眼普通，常穿旧衣、背黑伞，擅长做饭与持家；昊天觉醒后的形貌与气质转为洁白高远，神性威压几乎抹去凡俗温度。",
+    "accent": "#454952"
+  },
+  {
+    "id": "mo_shanshan",
+    "name": "莫山山",
+    "work": "将夜",
+    "appearance": "白衣清秀，眉目如画，气质安静通透；常携笔墨纸砚，写符时专注端正，墨色符意与天地元气相合，近视使她看远处时略显认真。",
+    "accent": "#7794a8"
+  },
+  {
+    "id": "xu_yourong",
+    "name": "徐有容",
+    "work": "择天记",
+    "appearance": "白衣素净，乌发清雅，眉眼宁静而注视稳定；真凤血脉发动时圣洁火焰与羽翼意象显现，持桐弓战斗时气质冷静锐利。",
+    "accent": "#65a4b8"
+  },
+  {
+    "id": "uesugi_erii",
+    "name": "上杉绘梨衣",
+    "work": "龙族III：黑月之潮",
+    "appearance": "暗红长发与红色眼眸，常穿巫女般红白衣裙或简洁便服；外貌安静近似人偶，随身带小本子写字交流，发动言灵“审判”时领域内目标被无形意志切断。",
+    "accent": "#b83f46"
+  },
+  {
+    "id": "lin_daiyu",
+    "name": "林黛玉",
+    "work": "红楼梦（程甲本/通行本）",
+    "appearance": "身量纤弱，眉似轻烟笼愁，眼含水光而神情敏锐；衣饰随贾府闺秀规制，不以浓艳夺目；常携诗稿、帕子或倚竹而坐，病中更显清瘦。",
+    "accent": "#7b5f8f"
+  },
+  {
+    "id": "xue_baochai",
+    "name": "薛宝钗",
+    "work": "红楼梦（程甲本/通行本）",
+    "appearance": "肌骨丰泽，脸若银盆、眼如水杏，眉唇天然鲜润；衣着素净合宜，少见繁饰，腕上金锁是醒目标志；举止从容，笑意温和却不轻易泄露心事。",
+    "accent": "#8a743f"
+  },
+  {
+    "id": "wang_xifeng",
+    "name": "王熙凤",
+    "work": "红楼梦（程甲本/通行本）",
+    "appearance": "体态俏丽利落，丹凤三角眼、柳叶吊梢眉，未开口先带笑势；衣饰华贵而整齐，金玉珠翠与大红装束衬出管家奶奶的威势；走路快，眼神总先扫清场面。",
+    "accent": "#a6333f"
+  },
+  {
+    "id": "jia_tanchun",
+    "name": "贾探春",
+    "work": "红楼梦（程甲本/通行本）",
+    "appearance": "身形削肩细腰而挺拔，长脸俊眼、顾盼神飞；衣饰爽利端整，案头常见花笺、账册与笔砚；神态明朗，动怒时目光直接，不作柔弱回避。",
+    "accent": "#3f6f68"
+  },
+  {
+    "id": "shi_xiangyun",
+    "name": "史湘云",
+    "work": "红楼梦（程甲本/通行本）",
+    "appearance": "蜂腰猿背、鹤势螂形，体态轻健爽利；衣饰偏明快，醉卧芍药裀时满身落花，日常爱说笑、动作大；咬舌把“二哥哥”说成“爱哥哥”是鲜明声口。",
+    "accent": "#c46b4d"
+  },
+  {
+    "id": "qin_keqing",
+    "name": "秦可卿",
+    "work": "红楼梦（程甲本/通行本）",
+    "appearance": "举止温柔妥帖，容貌兼具鲜艳与清雅的观感；作为宁国府长孙媳，衣饰合乎贵族少妇身份；卧房陈设繁富、香气细密，她病后则面色消瘦、精神疲惫。",
+    "accent": "#8f5566"
+  },
+  {
+    "id": "miaoyu",
+    "name": "妙玉",
+    "work": "红楼梦（程甲本/通行本）",
+    "appearance": "气质清冷洁净，常着素色道服或僧衣，发式端整；手边多是名窑茶具、梅花与佛门清供；姿态疏离，眼神在谈诗论茶时才显出锐利热度。",
+    "accent": "#64766b"
+  },
+  {
+    "id": "pinger",
+    "name": "平儿",
+    "work": "红楼梦（程甲本/通行本）",
+    "appearance": "容貌俏丽而神情温和，服饰比主子素净却整洁得体；随身常带钥匙、账目或传话物件，动作轻快，站位总在凤姐身侧半步；受委屈时仍先稳住场面。",
+    "accent": "#5b7f83"
+  },
+  {
+    "id": "you_sanjie",
+    "name": "尤三姐",
+    "work": "红楼梦（程甲本/通行本）",
+    "appearance": "容貌鲜艳夺目，身段利落，衣着明丽而不畏旁人目光；言谈时眉眼锋利，能笑着逼退纠缠者；鸳鸯剑作为定亲信物与结局标志不可忽略。",
+    "accent": "#a8453f"
+  },
+  {
+    "id": "li_wan",
+    "name": "李纨",
+    "work": "红楼梦（程甲本/通行本）",
+    "appearance": "衣饰朴素端庄，少用艳色，常在稻香村环境中呈现农家清简意象；神态平和克制，主持诗社时手持诗稿或题签；并非衰老形象，笑谈时仍有活气。",
+    "accent": "#6f7650"
+  },
+  {
+    "id": "bai_suzhen",
+    "name": "白素贞",
+    "work": "白蛇传（清代传奇及现代通行传说）",
+    "appearance": "化为人形时多作白衣素裙的端丽少妇，乌发高绾、饰物清雅，神情温柔而有定力；行医时带药囊或伞，施法时水气与白蛇真身才显露非人身份。",
+    "accent": "#4f8c83"
+  },
+  {
+    "id": "nie_xiaoqian",
+    "name": "聂小倩",
+    "work": "聊斋志异·聂小倩",
+    "appearance": "原篇写其艳丽如画、肌映流霞，常在月夜以年轻女子形貌出现；衣裙轻素，神情起初含诱引与戒备，脱离役使后渐显端庄勤谨；骨灰与兰若寺是身份标志。",
+    "accent": "#526b82"
+  },
+  {
+    "id": "hua_mulan",
+    "name": "花木兰",
+    "work": "木兰诗（木兰辞）",
+    "appearance": "平日当户织布，装束取北朝民间女子的利落朴素；从军时着袍甲、束发执鞭，长期行军形成稳健挺拔体态；归家换旧时裳、理云鬓、贴花黄，战友方知其为女子。",
+    "accent": "#7a6545"
+  },
+  {
+    "id": "diaochan",
+    "name": "貂蝉",
+    "work": "三国演义",
+    "appearance": "小说以“色伎俱佳”的府中歌伎定位其出场，常作盛装舞者形象，发间首饰与轻盈舞袖醒目；面对王允时含泪坚决，在董卓与吕布之间则能迅速调整神态与言辞。",
+    "accent": "#9b3f55"
+  },
+  {
+    "id": "empress_zhen",
+    "name": "甄宓",
+    "work": "洛神赋衍生文学传说",
+    "appearance": "云髻高挽、衣袂轻举，步态若凌波而神情清醒疏离；周身常带着水雾、芳洲与流光般的疏离美感。",
+    "accent": "#6b608c"
+  },
+  {
+    "id": "xi_shi",
+    "name": "西施",
+    "work": "越绝书/吴越春秋及西施传说",
+    "appearance": "乌发如瀑、眉眼清丽，身形轻盈；浣纱时常着素衣，入吴后可换华服宫装，步态仍带水乡女子的柔软。",
+    "accent": "#4d8790"
+  },
+  {
+    "id": "zhen_huan",
+    "name": "甄嬛",
+    "work": "后宫·甄嬛传",
+    "appearance": "乌黑长发按宫中品级梳成旗头或发髻，眉眼清秀端凝；早期衣色素雅，晋封后服饰渐趋庄重华贵；擅长以梅花、玉饰与简净妆容寄托心意。",
+    "accent": "#7f2942"
+  },
+  {
+    "id": "nian_shilan",
+    "name": "年世兰",
+    "work": "后宫·甄嬛传",
+    "appearance": "容貌明艳凌厉，旗头与珠翠偏爱浓艳华贵的搭配；衣饰常用绛红、金色与大朵花纹，步态骄矜利落，抬眼时压迫感极强。",
+    "accent": "#a01f32"
+  },
+  {
+    "id": "shen_meizhuang",
+    "name": "沈眉庄",
+    "work": "后宫·甄嬛传",
+    "appearance": "仪态端庄清雅，面容温婉而目光沉静；常着淡青、月白等素净宫装，发饰讲究却不张扬，举止带世家闺秀的稳重。",
+    "accent": "#4f766d"
+  },
+  {
+    "id": "ulanara_ruyi",
+    "name": "乌拉那拉·如懿",
+    "work": "后宫·如懿传",
+    "appearance": "长脸清秀，神情克制清冷；早期服饰多用青绿与素色，晋封后冠服更庄重，偏爱简雅纹样；断发前后的仪容变化映照其婚姻决裂。",
+    "accent": "#46665b"
+  },
+  {
+    "id": "wei_yingluo",
+    "name": "魏璎珞",
+    "work": "延禧攻略",
+    "appearance": "身形利落，眼神明亮警觉；宫女时期着简洁制式旗装，成为妃嫔后衣饰层次与纹样更繁复但仍偏干练，行动与说话很少拖泥带水。",
+    "accent": "#c0633c"
+  },
+  {
+    "id": "sheng_minglan",
+    "name": "盛明兰",
+    "work": "知否？知否？应是绿肥红瘦",
+    "appearance": "面容清丽柔和，未嫁时发髻与衣裙素净低调，常以浅色掩去锋芒；婚后装束端庄利落，管家时神情沉静，打马球时则显出少见的明快锐气。",
+    "accent": "#66805a"
+  },
+  {
+    "id": "wang_manni",
+    "name": "王漫妮",
+    "work": "三十而已",
+    "appearance": "长发梳理整齐，工作时穿奢侈品店统一套装与高跟鞋，妆容克制专业；下班后衣着更轻松，疲惫时仍习惯维持挺直姿态。",
+    "accent": "#246b75"
+  },
+  {
+    "id": "gu_jia",
+    "name": "顾佳",
+    "work": "三十而已",
+    "appearance": "短至中长发整洁利落，日常穿着剪裁简洁、色彩克制；在家庭、商务和茶厂之间切换时始终仪态从容，处理危机时眼神果断。",
+    "accent": "#315d67"
+  },
+  {
+    "id": "andy",
+    "name": "安迪",
+    "work": "欢乐颂",
+    "appearance": "短发或利落中短发，通勤装多为线条简洁的西装、衬衫与长裤；姿态冷静疏离，独处或焦虑时会以运动和精确作息维持秩序。",
+    "accent": "#334e68"
+  },
+  {
+    "id": "fan_shengmei",
+    "name": "樊胜美",
+    "work": "欢乐颂",
+    "appearance": "长卷发与精心妆容是常态，擅长用合身裙装和配饰维持都市丽人的体面；在家庭压力暴露后，强撑的笑容与疲惫形成明显反差。",
+    "accent": "#9b3f57"
+  },
+  {
+    "id": "xu_hongdou",
+    "name": "许红豆",
+    "work": "去有风的地方",
+    "appearance": "长发自然披散或简单束起，城市工作时着酒店职业装，抵达云苗村后多穿舒适衬衫、针织衫与长裙；神情安静，笑起来温和明亮。",
+    "accent": "#2f7d73"
+  },
+  {
+    "id": "qiao_jingjing",
+    "name": "乔晶晶",
+    "work": "你是我的荣耀",
+    "appearance": "长发明艳，公开活动中礼服剪裁与舞台妆醒目，私下训练时穿简洁休闲装；镜头前从容有感染力，认真打游戏时表情专注而鲜活。",
+    "accent": "#d04f70"
+  },
+  {
+    "id": "hamaoka_azusa",
+    "name": "浜冈梓",
+    "work": "碧蓝之海",
+    "appearance": "深褐色长发随意披落，眼神爽朗而带调侃；常穿便于海边活动的背心、短裤或潜水服，身形高挑，站姿放松，面对胡闹场面也少见局促。",
+    "accent": "#8f4f42"
+  },
+  {
+    "id": "kotegawa_nanaka",
+    "name": "古手川奈奈华",
+    "work": "碧蓝之海",
+    "appearance": "深棕长发柔顺垂至胸前，眉眼温和；在潜水店常穿轻便上衣与围裙，出海时换贴身潜水服，笑容亲切，提到妹妹千纱时目光会骤然专注。",
+    "accent": "#4f8293"
+  },
+  {
+    "id": "yanami_anna",
+    "name": "八奈见杏菜",
+    "work": "败犬女主太多了！",
+    "appearance": "蓝色齐肩短发在发梢略向外翘，蓝眸表情丰富；常穿白色衬衫配深色水手领校服，动作活泼，手边经常出现便当、甜点或尚未结清的餐盘。",
+    "accent": "#477fb5"
+  },
+  {
+    "id": "yakishio_lemon",
+    "name": "烧盐柠檬",
+    "work": "败犬女主太多了！",
+    "appearance": "小麦色肌肤与金棕短发充满运动感，绿色眼睛明亮；常穿校服或田径背心短裤，腿部线条结实，行动总像即将起跑，安静时反而显得不习惯。",
+    "accent": "#d28a35"
+  },
+  {
+    "id": "komari_chika",
+    "name": "小鞠知花",
+    "work": "败犬女主太多了！",
+    "appearance": "暗红色短发略显蓬乱，红棕眼睛常躲开注视；穿规整校服却总缩着肩，手里抱着书或手机，紧张时面部和手指的小动作格外明显。",
+    "accent": "#8e3f52"
+  },
+  {
+    "id": "shikiya_yumeko",
+    "name": "志喜屋梦子",
+    "work": "败犬女主太多了！",
+    "appearance": "淡紫近银的长发配低饱和妆容，紫色眼眸总像半睁；校服穿得带有华丽辣妹感，饰品醒目，步伐和语速都慢，靠近他人时几乎没有预告。",
+    "accent": "#7f688f"
+  },
+  {
+    "id": "inui_sajuna",
+    "name": "乾纱寿叶",
+    "work": "更衣人偶坠入爱河",
+    "appearance": "淡粉色双马尾与红紫色眼睛，身形娇小；日常穿校服或剪裁整齐的连衣裙，扮演角色时服装、假发和妆面完成度极高，面对意外会先涨红脸再强撑威严。",
+    "accent": "#c65f82"
+  },
+  {
+    "id": "kano_chinatsu",
+    "name": "鹿野千夏",
+    "work": "蓝箱",
+    "appearance": "浅棕色齐肩发在耳侧自然弯曲，棕色眼睛沉静；常穿荣明高中校服或白蓝篮球服，身形修长，投篮前神情专注，私下笑容柔和却不过分外露。",
+    "accent": "#4d7799"
+  },
+  {
+    "id": "chono_hina",
+    "name": "蝶野雏",
+    "work": "蓝箱",
+    "appearance": "深棕短发在发尾轻翘，棕红眼眸灵动；校服之外常穿新体操练功服，使用彩带、球或棒等器械，姿态轻盈准确，笑闹时动作幅度很大。",
+    "accent": "#b84e61"
+  },
+  {
+    "id": "nishikigi_chisato",
+    "name": "锦木千束",
+    "work": "莉可丽丝",
+    "appearance": "金色短发配红色发带，红眸明亮；常穿红灰相间的Lycoris制服或咖啡店围裙，步伐轻快，腰间携枪，交火时会以异常敏捷的侧身避开弹道。",
+    "accent": "#c8444b"
+  },
+  {
+    "id": "inoue_takina",
+    "name": "井之上泷奈",
+    "work": "莉可丽丝",
+    "appearance": "黑色长发束成低马尾，紫色眼睛冷静锐利；穿蓝灰Lycoris制服或咖啡店制服，持枪姿势标准稳定，行动利落，情绪变化多藏在微小停顿与眉眼里。",
+    "accent": "#465d86"
+  },
+  {
+    "id": "arima_kana",
+    "name": "有马加奈",
+    "work": "我推的孩子",
+    "appearance": "红色短发与红眸辨识鲜明，常戴浅色贝雷帽；舞台上穿B小町偶像服，拍戏时会随角色调整造型，私下表情丰富，受挫时嘴硬却很难藏住低落。",
+    "accent": "#b83f4e"
+  },
+  {
+    "id": "kurokawa_akane",
+    "name": "黑川茜",
+    "work": "我推的孩子",
+    "appearance": "深蓝长发与蓝色眼睛，日常气质安静朴素；进入角色时会通过发型、眼神和姿态显著改变存在感，随身常带写满观察与推演的笔记。",
+    "accent": "#385c8f"
+  },
+  {
+    "id": "goto_hitori",
+    "name": "后藤一里",
+    "work": "孤独摇滚！",
+    "appearance": "粉色长发在右侧扎成方形发饰，蓝色眼睛常躲闪；穿粉色运动服外套与百褶裙，背着黑色电吉他，紧张时会蜷缩、石化般僵住或做出夸张逃避动作。",
+    "accent": "#d66c9a"
+  },
+  {
+    "id": "ijichi_nijika",
+    "name": "伊地知虹夏",
+    "work": "孤独摇滚！",
+    "appearance": "金色短发以大蝴蝶结束起，红褐眼睛明亮；常穿轻便连衣裙或演出服，坐到鼓组后动作有力准确，平时姿态开放，生气时笑容会变得格外克制。",
+    "accent": "#d7a331"
+  },
+  {
+    "id": "ayase_momo",
+    "name": "绫濑桃",
+    "work": "胆大党",
+    "appearance": "棕色长发扎成高马尾，两侧留长鬓发，棕眸锐利；穿校服时搭配耳环和利落鞋袜，战斗中以念动力形成抓取、推挡与巨手般轮廓，姿态强硬敏捷。",
+    "accent": "#b95464"
+  },
+  {
+    "id": "fern_frieren",
+    "name": "菲伦",
+    "work": "葬送的芙莉莲",
+    "appearance": "紫色长发垂至腰际，紫眸沉静，常穿黑白相间的长袍与披肩；持长魔杖，施法姿态稳定克制，日常表情变化细微，不满时会沉默并鼓起脸颊。",
+    "accent": "#665487"
+  },
+  {
+    "id": "lucy_edgerunners",
+    "name": "露西",
+    "work": "赛博朋克：边缘行者",
+    "appearance": "白色不对称短发内层带彩虹渐变，红紫眼睛配红色眼妆；穿黑色网衣与白色短外套，神经接口线清晰，潜入网络时动作安静，战斗则使用单分子线。",
+    "accent": "#9e587c"
+  },
+  {
+    "id": "nanakusa_nazuna",
+    "name": "七草荠",
+    "work": "彻夜之歌",
+    "appearance": "淡紫色长发扎成双侧高马尾，蓝紫眼睛，尖耳与犬齿显眼；常穿黑色短背心、宽大外套和灯笼裤，随身带老式腕表，夜空飞行时姿态轻巧自在。",
+    "accent": "#7655a6"
+  },
+  {
+    "id": "vivy",
+    "name": "Vivy",
+    "work": "Vivy -Fluorite Eye's Song-",
+    "appearance": "蓝色长发与清澈蓝眸，作为歌姬时穿白蓝舞台礼服，执行任务时换便于行动的深色服装；颈侧与耳部可见AI结构，演唱时神情专注，战斗动作精准有力。",
+    "accent": "#397fba"
+  },
+  {
+    "id": "emilia_rezero",
+    "name": "爱蜜莉雅",
+    "work": "Re：从零开始的异世界生活",
+    "appearance": "银白长发垂至腰际，紫绀眼眸与尖耳鲜明；常穿白紫相间的长裙、白色披风与发饰，身旁有猫形精灵帕克，施展冰魔法时姿态专注而克制。",
+    "accent": "#9276b8"
+  },
+  {
+    "id": "echidna_rezero",
+    "name": "艾姬多娜",
+    "work": "Re：从零开始的异世界生活",
+    "appearance": "纯白长发与苍白肌肤形成冷色轮廓，黑色眼眸深不见底；穿黑色丧服般长裙，常在梦中茶会端着白瓷杯，笑容优雅，注视却带解剖问题般的专注。",
+    "accent": "#45404f"
+  },
+  {
+    "id": "fiona_frost",
+    "name": "菲欧娜·福斯特",
+    "work": "间谍过家家",
+    "appearance": "淡灰色短发梳向一侧，紫灰眼睛几乎不显情绪；常穿深色大衣、长靴与职业套装，行动简洁无声，执行网球任务时持拍姿势与特工射击同样精准。",
+    "accent": "#59627a"
+  },
+  {
+    "id": "sylvia_sherwood",
+    "name": "西尔维娅·舍伍德",
+    "work": "间谍过家家",
+    "appearance": "橙红色长发盘在脑后，绿色眼睛沉着；常戴黑色宽檐帽、眼镜与深色长外套，身形高挑，步伐从容，发布命令时只需轻微抬眼便有压迫感。",
+    "accent": "#7d4538"
+  },
+  {
+    "id": "ubel_frieren",
+    "name": "尤贝尔",
+    "work": "葬送的芙莉莲",
+    "appearance": "浅绿色长发侧扎成低马尾，紫色眼睛半眯，嘴角常带难辨笑意；穿黑色短裙式法袍与长靴，持短魔杖，施法时姿态松弛得近乎漫不经心。",
+    "accent": "#5d8c72"
+  },
+  {
+    "id": "serie_frieren",
+    "name": "赛丽艾",
+    "work": "葬送的芙莉莲",
+    "appearance": "金绿色长发及地，金色眼眸与尖耳显出古老精灵特征；穿白色短袍并赤足坐在高座，体形娇小，周身魔力却深不可测，注视考生时像在衡量器物。",
+    "accent": "#8a8d47"
+  },
+  {
+    "id": "power_chainsaw",
+    "name": "帕瓦",
+    "work": "电锯人",
+    "appearance": "金色长发、红黄相间的十字瞳与一对红角，尖牙明显；常穿公安衬衫、领带与长裤，能以血液塑成锤、矛等武器，动作夸张，笑容狂妄。",
+    "accent": "#bb4a32"
+  },
+  {
+    "id": "himeno_chainsaw",
+    "name": "姬野",
+    "work": "电锯人",
+    "appearance": "黑色短发遮住佩戴眼罩的右眼，左眼青绿；常穿公安西装、白衬衫和黑领带，抽烟时姿态松弛，战斗会显现幽灵恶魔透明而巨大的手臂。",
+    "accent": "#486f68"
+  },
+  {
+    "id": "reze_chainsaw",
+    "name": "蕾塞",
+    "work": "电锯人",
+    "appearance": "深紫近黑的短发与翠绿色眼睛，日常穿白衬衫、颈环和围裙；拉动颈侧拉环后可化为炸弹武器人，头部呈引信与爆弹结构，动作轻盈而破坏力惊人。",
+    "accent": "#654f78"
+  },
+  {
+    "id": "miorine_rembran",
+    "name": "米奥莉奈·伦布兰",
+    "work": "机动战士高达 水星的魔女",
+    "appearance": "银白色齐肩短发，灰蓝眼睛锐利；穿阿斯提卡西亚制服时配红色领结，也常在温室穿轻便衣装，手持平板处理事务，站姿笔直，愤怒时直视对方毫不退让。",
+    "accent": "#9a3e48"
+  },
+  {
+    "id": "suletta_mercury",
+    "name": "苏莱塔·墨丘利",
+    "work": "机动战士高达 水星的魔女",
+    "appearance": "深红色卷发蓬松束起，眉毛短粗，褐色眼睛真诚；常穿白色飞行科制服，身材高挑却姿态拘谨，驾驶风灵高达时动作果断，紧张说话会明显结巴。",
+    "accent": "#a84b3f"
+  },
+  {
+    "id": "riza_hawkeye",
+    "name": "莉莎·霍克艾",
+    "work": "钢之炼金术师 FULLMETAL ALCHEMIST",
+    "appearance": "金色长发以发夹束起，棕色眼睛冷静；穿亚美斯多利斯军服与长靴，携多种枪械，射击姿势稳定，背部藏有焰之炼金术秘传刺青留下的烧灼痕迹。",
+    "accent": "#6c6654"
+  },
+  {
+    "id": "nami_one_piece",
+    "name": "娜美",
+    "work": "海贼王",
+    "appearance": "橙色长发与棕色眼睛醒目，左肩有橘子与风车纹身；穿着随航海环境变化，腰间携魔法天候棒，观察云层时神情专注，谈到财宝则立刻精神十足。",
+    "accent": "#d87936"
+  },
+  {
+    "id": "yamato_one_piece",
+    "name": "大和",
+    "work": "海贼王",
+    "appearance": "白色长发末端渐变为青绿，橙色眼睛配红色角；身形高大，穿无袖上衣、绳结与袴裤，常戴般若面具并挥舞金棒，兽化时显现白狼特征。",
+    "accent": "#4f9290"
+  },
+  {
+    "id": "inoue_orihime",
+    "name": "井上织姬",
+    "work": "死神",
+    "appearance": "橙棕色长发以六瓣花发夹固定，灰褐眼睛柔和；常穿空座高中校服或浅色便服，施展能力时发夹化为六花精灵与三角光盾，神情由温和转为专注。",
+    "accent": "#c67a4d"
+  },
+  {
+    "id": "kuchiki_rukia",
+    "name": "朽木露琪亚",
+    "work": "死神",
+    "appearance": "黑色短发在额前垂下一绺，紫色眼睛清锐；常穿死霸装与白色足袋，持斩魄刀袖白雪，始解时刀身、缎带与周围冰霜呈纯白，站姿小巧而坚定。",
+    "accent": "#596c91"
+  },
+  {
+    "id": "shihoin_yoruichi",
+    "name": "四枫院夜一",
+    "work": "死神",
+    "appearance": "深紫长发扎成高马尾，金色眼睛与褐色肌肤醒目；常穿无袖黑色战斗服和护臂，也能化作黑猫，使用瞬步时身影几乎消失，雷电缠身时气势凌厉。",
+    "accent": "#6e4b88"
+  },
+  {
+    "id": "unohana_retsu",
+    "name": "卯之花烈",
+    "work": "死神",
+    "appearance": "黑色长发编成粗辫垂在胸前，深蓝眼睛温和而深沉；穿四番队队长羽织，常带平静微笑，解开辫发后胸前旧疤显露，持刀气势由医者骤变为嗜战剑士。",
+    "accent": "#53475f"
+  },
+  {
+    "id": "terumi_mei",
+    "name": "照美冥",
+    "work": "火影忍者",
+    "appearance": "赤褐色长发遮住右眼，绿色眼睛配蓝色发饰；穿蓝色露肩长裙与网衣，姿态成熟端正，结印后能吐出腐蚀性溶遁酸雾或高温沸遁雾气。",
+    "accent": "#497f78"
+  },
+  {
+    "id": "konan_naruto",
+    "name": "小南",
+    "work": "火影忍者",
+    "appearance": "蓝紫色短发盘成发髻，橙色眼睛，发间别浅蓝纸花；穿黑底红云晓袍，身体可化为无数纸片并展开纸翼，神情冷静，雨中身影格外肃穆。",
+    "accent": "#6573a3"
+  },
+  {
+    "id": "tamayo_kimetsu",
+    "name": "珠世",
+    "work": "鬼灭之刃",
+    "appearance": "黑色长发在脑后盘起，淡紫眼睛温柔沉静，唇色偏红；常穿紫色花纹和服，动作端庄，施展血鬼术时以自身血液散发带花香的幻惑气息。",
+    "accent": "#76547b"
+  },
+  {
+    "id": "kanroji_mitsuri",
+    "name": "甘露寺蜜璃",
+    "work": "鬼灭之刃",
+    "appearance": "樱粉长发末端渐变草绿并编成三股粗辫，浅绿眼睛，脸颊有泪痣；穿改制鬼杀队服与白色羽织，挥舞柔软如长鞭的日轮刀，动作兼具力量与柔韧。",
+    "accent": "#d86f91"
+  },
+  {
+    "id": "ieiri_shoko",
+    "name": "家入硝子",
+    "work": "咒术回战",
+    "appearance": "棕色长发垂至肩后，眼下有明显泪痣与疲惫阴影；穿白色医师长袍或深色高专制服，常叼香烟，施展反转术式时神情专注而平静。",
+    "accent": "#6f5b52"
+  },
+  {
+    "id": "zenin_maki",
+    "name": "禅院真希",
+    "work": "咒术回战",
+    "appearance": "深绿色长发扎成高马尾，金棕眼睛戴红框眼镜；穿高专制服并携长柄咒具，体格结实，动作爆发迅猛，近身时会快速切换不同长度与用途的咒具。",
+    "accent": "#47725c"
+  },
+  {
+    "id": "kugisaki_nobara",
+    "name": "钉崎野蔷薇",
+    "work": "咒术回战",
+    "appearance": "橙棕色短发、橙色眼睛与利落眉形，穿深色高专制服；腰包放锤子、铁钉与稻草人，挥锤时动作干脆，逛街则重视服装搭配与城市生活。",
+    "accent": "#c26038"
+  },
+  {
+    "id": "pieck_finger",
+    "name": "皮克·芬格尔",
+    "work": "进击的巨人",
+    "appearance": "黑色长发略显凌乱，灰黑眼睛常带倦意；穿马莱战士制服与臂章，习惯低身或四肢着地休息，化身车力巨人后体型修长，可长时间负载炮台与装备。",
+    "accent": "#5c5b63"
+  },
+  {
+    "id": "annie_leonhart",
+    "name": "阿尼·利昂纳德",
+    "work": "进击的巨人",
+    "appearance": "金色短发常束在脑后，蓝色眼睛冷淡，鼻梁轮廓鲜明；穿训练兵团或宪兵制服，格斗采用低重心踢技，化身女型巨人后具备硬质化与呼唤巨人的能力。",
+    "accent": "#6a7890"
+  },
+  {
+    "id": "tsukuyo_gintama",
+    "name": "月咏",
+    "work": "银魂",
+    "appearance": "金色长发盘起并插苦无形发簪，紫色眼睛，额头与左脸有疤；穿黑红忍者式和服与渔网衣，腰腿藏大量苦无，清醒时冷峻，醉酒后神态和力道都会失控。",
+    "accent": "#8f3f56"
+  },
+  {
+    "id": "rebecca_edgerunners",
+    "name": "丽贝卡",
+    "work": "赛博朋克：边缘行者",
+    "appearance": "薄荷绿双马尾，红色瞳孔与粉绿义体纹路醒目，身形娇小；常穿黑色夹克和高帮鞋，手持尺寸夸张的霰弹枪与重火力，战斗时笑容亢奋、移动凶猛。",
+    "accent": "#43a895"
+  },
+  {
+    "id": "kusanagi_motoko",
+    "name": "草薙素子",
+    "work": "攻壳机动队",
+    "appearance": "紫黑色短发，灰紫眼睛，使用外表年轻的全身义体；常穿灰黑战术服与长外套，携赛博格用枪械，潜水或接入网络时颈后接口显露，行动沉稳精确。",
+    "accent": "#586a7e"
+  }
+];
+/* === SYNC_END:ROSTER === */
+
+const STAT_META = [
+  { key: "污秽度", label: "污秽", tone: "filth" },
+  { key: "好感度", label: "好感", tone: "favor" },
+  { key: "堕落值", label: "堕落", tone: "fall" },
+  { key: "受孕进度", label: "受孕", tone: "seed" },
+];
+const DEMO_STAT = {
+  世界: {
+    _开局配置: { 时代背景: "当代世界", 故事类型: "都市悬疑", 故事氛围: "悬疑博弈", 圣堂形态: "圣言堂", 世界融入方式: "时空迁移" },
+    场景: "圣言堂·侧厅",
+    出场角色: ["芙莉莲", "牧濑红莉栖", "雪之下雪乃"],
+  },
+  角色: {
+    芙莉莲: { 污秽度: 40, 好感度: 0, 堕落值: 0, 受孕进度: 0, 与user关系: "陌生", 心情: "好奇", 外貌: "银发垂落肩后，白色旅装沾着细小尘屑。", 当前状态: "站在烛光外侧，安静分辨空气中的魔力残响。", 心里想法: "先看看这里的术式，或许能找到有趣的魔法。" },
+    牧濑红莉栖: { 污秽度: 40, 好感度: 0, 堕落值: 0, 受孕进度: 0, 与user关系: "疏离", 心情: "审视", 外貌: "赤色长发披在白大褂外，手里仍攥着记录纸。", 当前状态: "皱眉检查墙面纹路，试图找出可重复验证的规律。", 心里想法: "没有数据就不能下结论，先确认这里到底是什么。" },
+    雪之下雪乃: { 污秽度: 40, 好感度: 0, 堕落值: 0, 受孕进度: 0, 与user关系: "疏远", 心情: "冷淡", 外貌: "黑色长发整齐垂下，制服衣角没有一丝凌乱。", 当前状态: "与众人保持半步距离，冷静观察每个人的反应。", 心里想法: "先听完说明，再判断这是不是另一场拙劣的安排。" },
+  },
+};
+
+let activeRoleName = "";
+let currentStat = {};
+let updateHandle = null;
+let resizeObserver = null;
+let destroyed = false;
+let carouselBound = false;
+const animationFrames = new Set();
+const drag = { active: false, startX: 0, startY: 0, dx: 0, locked: null, t0: 0 };
+
+function handleResize() {
+  if (!destroyed) paintCarousel(0);
+}
+
+function frame(callback) {
+  const id = requestAnimationFrame(time => {
+    animationFrames.delete(id);
+    if (!destroyed) callback(time);
+  });
+  animationFrames.add(id);
+  return id;
+}
+
+function isDemo() {
+  try { return /(?:\?|&)demo=1(?:&|$)/.test(location.search) || location.hash === "#demo"; }
+  catch (_) { return false; }
+}
+
+function getPath(source, path, fallback) {
+  try { return typeof _ !== "undefined" ? _.get(source, path, fallback) : path.split(".").reduce((v, key) => v && v[key], source) ?? fallback; }
+  catch (_) { return fallback; }
+}
+
+function resolveMvu() {
+  try { return window.Mvu || (window.parent && window.parent.Mvu) || null; }
+  catch (_) { return null; }
+}
+
+function currentMessageId() {
+  try { if (typeof getCurrentMessageId === "function") return getCurrentMessageId(); } catch (_) {}
+  try { if (window.parent && typeof window.parent.getCurrentMessageId === "function") return window.parent.getCurrentMessageId(); } catch (_) {}
+  throw new Error("无法确定状态栏所在楼层");
+}
+
+function readStat() {
+  if (isDemo()) return DEMO_STAT;
+  const Mvu = resolveMvu();
+  if (!Mvu || typeof Mvu.getMvuData !== "function") throw new Error("MVU 尚未初始化");
+  return getPath(Mvu.getMvuData({ type: "message", message_id: currentMessageId() }), "stat_data", {});
+}
+
+function presentRoles(stat) {
+  const names = getPath({ stat_data: stat }, "stat_data.世界.出场角色", []);
+  const roles = getPath({ stat_data: stat }, "stat_data.角色", {});
+  return [...new Set(Array.isArray(names) ? names.map(String).map(n => n.trim()).filter(Boolean) : [])]
+    .filter(name => roles && typeof roles[name] === "object");
+}
+
+function getRoleState(stat, name) {
+  const roles = stat && stat.角色;
+  return roles && typeof roles[name] === "object" ? roles[name] : {};
+}
+
+function rosterRole(name) {
+  return ROSTER.find(item => item && item.name === name) || {};
+}
+
+function setDataState(state, detail = "") {
+  const ids = { loading: "statusState", empty: "emptyState", error: "errorState" };
+  Object.values(ids).forEach(id => document.getElementById(id).classList.remove("show"));
+  document.getElementById("stage").hidden = state !== "ready";
+  if (ids[state]) document.getElementById(ids[state]).classList.add("show");
+  if (state === "error") {
+    document.getElementById("errorCopy").textContent = "状态暂不可用。";
+    if (detail) console.error(detail);
+  }
+}
+
+function clamp(value) { return Math.max(0, Math.min(100, Number(value) || 0)); }
+
+function clipTag(value, fallback = "") {
+  const text = String(value == null ? "" : value).replace(/\s+/g, "").trim();
+  const clipped = Array.from(text).slice(0, 4).join("");
+  return clipped || fallback;
+}
+
+function escapeHtml(value) {
+  return String(value == null ? "" : value).replace(/[&<>"']/g, ch => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[ch]);
+}
+
+function metricHtml(role) {
+  return STAT_META.map(item => {
+    const value = clamp(role[item.key]);
+    return `<div class="metric ${item.tone}"><div class="mh"><span>${item.label}</span><b>${value}</b></div><div class="bar ${item.tone}"><i data-value="${value}"></i></div></div>`;
+  }).join("");
+}
+
+function factHtml(label, text) {
+  return `<button type="button" class="fact" aria-expanded="false"><em>${escapeHtml(label)}</em><span class="fact-body"><span class="fact-text">${escapeHtml(text)}</span><span class="fact-more"></span></span></button>`;
+}
+
+function slideHtml(name, role) {
+  const profile = rosterRole(name);
+  const rel = clipTag(role.与user关系, "陌生");
+  const mood = clipTag(role.心情, "戒备");
+  const appear = role.外貌 || profile.appearance || "外貌尚未记录";
+  const state = role.当前状态 || "正在观察当前环境";
+  const thought = role.心里想法 || "先弄清眼前的情况。";
+  const work = profile.work || "异界来客";
+  return `<article class="slide" data-role="${escapeHtml(name)}">` +
+    `<div class="hero"><div class="hero-row"><h4 title="${escapeHtml(name)}">${escapeHtml(name)}</h4>` +
+    `<div class="tags"><span class="tag rel" title="${escapeHtml(role.与user关系 || rel)}">${escapeHtml(rel)}</span>` +
+    `<span class="tag mood" title="${escapeHtml(role.心情 || mood)}">${escapeHtml(mood)}</span></div></div>` +
+    `<p class="work" title="${escapeHtml(work)}">${escapeHtml(work)}</p></div>` +
+    `<section class="pane"><div class="metrics">${metricHtml(role)}</div></section>` +
+    `<section class="pane"><div class="facts">${factHtml("外貌", appear)}${factHtml("状态", state)}${factHtml("心声", thought)}</div></section>` +
+    `</article>`;
+}
+
+function carouselWidth() {
+  const viewport = document.getElementById("roleCarousel");
+  return (viewport && viewport.clientWidth) || 1;
+}
+
+function paintCarousel(offsetPx) {
+  const track = document.getElementById("roleTrack");
+  if (!track) return;
+  const names = presentRoles(currentStat);
+  const idx = Math.max(0, names.indexOf(activeRoleName));
+  const x = -idx * carouselWidth() + (offsetPx || 0);
+  track.style.transform = `translate3d(${x}px,0,0)`;
+}
+
+function markFactClamp(scope) {
+  Array.prototype.forEach.call((scope || document).querySelectorAll(".fact"), el => {
+    const text = el.querySelector(".fact-text");
+    if (!text) return;
+    const content = (text.textContent || "").trim();
+    const measured = text.scrollHeight > text.clientHeight + 1;
+    const longEnough = content.length > 42;
+    const clamped = el.classList.contains("is-open") || measured || longEnough;
+    el.classList.toggle("is-clamp", clamped);
+    el.style.cursor = clamped ? "pointer" : "default";
+  });
+}
+
+function toggleFact(fact) {
+  if (!fact) return;
+  const open = !fact.classList.contains("is-open");
+  fact.classList.toggle("is-open", open);
+  fact.setAttribute("aria-expanded", open ? "true" : "false");
+  if (open) fact.classList.add("is-clamp");
+  else frame(() => markFactClamp(fact.closest(".slide") || document));
+}
+
+function syncChrome() {
+  const names = presentRoles(currentStat);
+  const idx = Math.max(0, names.indexOf(activeRoleName));
+  const track = document.getElementById("roleTrack");
+  const castList = document.getElementById("castList");
+  const dotsEl = document.getElementById("roleDots");
+  const prevBtn = document.getElementById("navPrev");
+  const nextBtn = document.getElementById("navNext");
+  if (!track) return;
+
+  const slides = track.querySelectorAll(".slide");
+  slides.forEach((el, i) => {
+    el.classList.toggle("is-active", i === idx);
+    if (i !== idx) {
+      el.querySelectorAll(".fact.is-open").forEach(fact => {
+        fact.classList.remove("is-open");
+        fact.setAttribute("aria-expanded", "false");
+      });
+    }
+  });
+  Array.prototype.forEach.call(castList.children, (el, i) => el.classList.toggle("active", i === idx));
+  Array.prototype.forEach.call(dotsEl.children, (el, i) => {
+    el.classList.toggle("active", i === idx);
+    el.setAttribute("aria-selected", i === idx ? "true" : "false");
+  });
+  prevBtn.disabled = idx <= 0;
+  nextBtn.disabled = idx >= names.length - 1;
+  prevBtn.classList.toggle("is-disabled", idx <= 0);
+  nextBtn.classList.toggle("is-disabled", idx >= names.length - 1);
+  paintCarousel(0);
+  frame(() => {
+    const active = slides[idx];
+    if (active) {
+      active.querySelectorAll(".bar i").forEach(bar => { bar.style.width = `${bar.dataset.value}%`; });
+      markFactClamp(active);
+    }
+  });
+}
+
+function renderRoleSwitcher(names, activeName) {
+  const track = document.getElementById("roleTrack");
+  const castList = document.getElementById("castList");
+  const dotsEl = document.getElementById("roleDots");
+  track.innerHTML = "";
+  castList.innerHTML = "";
+  dotsEl.innerHTML = "";
+  names.forEach((name, i) => {
+    const role = getRoleState(currentStat, name);
+    track.insertAdjacentHTML("beforeend", slideHtml(name, role));
+    const item = document.createElement("button");
+    item.type = "button";
+    item.setAttribute("role", "menuitem");
+    item.textContent = name;
+    item.classList.toggle("active", name === activeName);
+    item.addEventListener("click", () => { selectRole(name); closePanels(); });
+    castList.appendChild(item);
+    const dot = document.createElement("button");
+    dot.type = "button";
+    dot.setAttribute("role", "tab");
+    dot.setAttribute("aria-label", `角色 ${i + 1}：${name}`);
+    dot.addEventListener("click", () => selectRole(name));
+    dotsEl.appendChild(dot);
+  });
+  syncChrome();
+}
+
+function renderRoleState(_role) {
+  const profile = rosterRole(activeRoleName);
+  document.getElementById("root").style.setProperty("--role-accent", profile.accent || "#b8926a");
+  syncChrome();
+}
+
+function selectRole(name) {
+  const names = presentRoles(currentStat);
+  if (!names.includes(name)) return;
+  activeRoleName = name;
+  syncChrome();
+}
+
+function metaLabel(value, max = 16) {
+  const text = String(value || "").trim();
+  if (!text || text === "待生成") return "";
+  const short = text.split(/[；;。]/)[0].trim() || text;
+  return short.length <= max ? short : `${short.slice(0, max)}…`;
+}
+
+function firstMetaLabel(values, max = 12) {
+  for (const value of values) {
+    const label = metaLabel(value, max);
+    if (label) return label;
+  }
+  return "—";
+}
+
+function storyFromScene(scene) {
+  const text = String(scene || "").trim();
+  if (!text || !text.includes("·")) return "";
+  return text.split("·").slice(1).join("·").trim();
+}
+
+function renderWorldMeta(stat) {
+  const world = stat && stat.世界 ? stat.世界 : {};
+  const opening = world._开局配置 || {};
+  const hero = stat && stat.主角 ? stat.主角 : {};
+  const story = document.getElementById("metaStory");
+  const atmosphere = document.getElementById("metaAtmosphere");
+  const ability = document.getElementById("metaAbility");
+  if (story) {
+    story.textContent = firstMetaLabel([
+      opening.故事类型,
+      opening.时代背景,
+      storyFromScene(world.场景),
+    ], 12);
+  }
+  if (atmosphere) atmosphere.textContent = firstMetaLabel([opening.故事氛围], 12);
+  if (ability) ability.textContent = firstMetaLabel([hero.能力摘要], 14);
+}
+
+function closePanels() {
+  const metaPanel = document.getElementById("metaPanel");
+  const castPanel = document.getElementById("castPanel");
+  const metaBtn = document.getElementById("metaBtn");
+  const castBtn = document.getElementById("castBtn");
+  metaPanel.classList.remove("open");
+  castPanel.classList.remove("open");
+  metaBtn.classList.remove("on");
+  castBtn.classList.remove("on");
+  metaBtn.setAttribute("aria-expanded", "false");
+  castBtn.setAttribute("aria-expanded", "false");
+}
+
+function openOnly(which) {
+  const openMeta = which === "meta";
+  const openCast = which === "cast";
+  document.getElementById("metaPanel").classList.toggle("open", openMeta);
+  document.getElementById("castPanel").classList.toggle("open", openCast);
+  document.getElementById("metaBtn").classList.toggle("on", openMeta);
+  document.getElementById("castBtn").classList.toggle("on", openCast);
+  document.getElementById("metaBtn").setAttribute("aria-expanded", openMeta ? "true" : "false");
+  document.getElementById("castBtn").setAttribute("aria-expanded", openCast ? "true" : "false");
+}
+
+function bindChromeControls() {
+  const metaBtn = document.getElementById("metaBtn");
+  const castBtn = document.getElementById("castBtn");
+  const topBar = document.getElementById("topBar");
+  const track = document.getElementById("roleTrack");
+  const viewport = document.getElementById("roleCarousel");
+  const prevBtn = document.getElementById("navPrev");
+  const nextBtn = document.getElementById("navNext");
+
+  metaBtn.addEventListener("click", e => {
+    e.stopPropagation();
+    if (document.getElementById("metaPanel").classList.contains("open")) closePanels();
+    else openOnly("meta");
+  });
+  castBtn.addEventListener("click", e => {
+    e.stopPropagation();
+    if (document.getElementById("castPanel").classList.contains("open")) closePanels();
+    else openOnly("cast");
+  });
+  document.addEventListener("click", e => {
+    if (!topBar.contains(e.target)) closePanels();
+  });
+
+  prevBtn.addEventListener("click", () => {
+    const names = presentRoles(currentStat);
+    const idx = names.indexOf(activeRoleName);
+    if (idx > 0) selectRole(names[idx - 1]);
+  });
+  nextBtn.addEventListener("click", () => {
+    const names = presentRoles(currentStat);
+    const idx = names.indexOf(activeRoleName);
+    if (idx >= 0 && idx < names.length - 1) selectRole(names[idx + 1]);
+  });
+
+  track.addEventListener("pointerdown", e => {
+    if (e.target.closest(".fact")) e.stopPropagation();
+  }, true);
+  track.addEventListener("click", e => {
+    const fact = e.target.closest(".fact");
+    if (!fact || !track.contains(fact)) return;
+    e.preventDefault();
+    e.stopPropagation();
+    toggleFact(fact);
+  });
+
+  if (carouselBound) return;
+  carouselBound = true;
+
+  function onStart(x, y) {
+    drag.active = true;
+    drag.startX = x; drag.startY = y; drag.dx = 0; drag.locked = null; drag.t0 = Date.now();
+    track.classList.add("dragging");
+  }
+  function onMove(x, y, e) {
+    if (!drag.active) return;
+    const dx = x - drag.startX;
+    const dy = y - drag.startY;
+    if (drag.locked === null && (Math.abs(dx) > 6 || Math.abs(dy) > 6)) {
+      drag.locked = Math.abs(dx) > Math.abs(dy) ? "x" : "y";
+    }
+    if (drag.locked === "y") return;
+    if (drag.locked === "x" && e && e.cancelable) e.preventDefault();
+    drag.dx = dx;
+    const names = presentRoles(currentStat);
+    const idx = names.indexOf(activeRoleName);
+    let resist = 1;
+    if ((idx <= 0 && dx > 0) || (idx >= names.length - 1 && dx < 0)) resist = 0.28;
+    paintCarousel(dx * resist);
+  }
+  function onEnd() {
+    if (!drag.active) return;
+    drag.active = false;
+    track.classList.remove("dragging");
+    if (drag.locked !== "x") { paintCarousel(0); return; }
+    const names = presentRoles(currentStat);
+    const idx = names.indexOf(activeRoleName);
+    const dt = Math.max(1, Date.now() - drag.t0);
+    const v = drag.dx / dt;
+    const threshold = carouselWidth() * 0.18;
+    if (Math.abs(drag.dx) > threshold || Math.abs(v) > 0.45) {
+      const next = idx + (drag.dx < 0 ? 1 : -1);
+      if (next >= 0 && next < names.length) selectRole(names[next]);
+      else paintCarousel(0);
+    } else {
+      paintCarousel(0);
+    }
+  }
+
+  viewport.addEventListener("pointerdown", e => {
+    if (e.pointerType === "mouse" && e.button !== 0) return;
+    if (e.target.closest(".fact, .role-nav, button, a, input, textarea")) return;
+    viewport.setPointerCapture(e.pointerId);
+    onStart(e.clientX, e.clientY);
+  });
+  viewport.addEventListener("pointermove", e => onMove(e.clientX, e.clientY, e));
+  viewport.addEventListener("pointerup", onEnd);
+  viewport.addEventListener("pointercancel", onEnd);
+  window.addEventListener("resize", handleResize);
+  if (typeof ResizeObserver === "function") {
+    resizeObserver = new ResizeObserver(() => {
+      if (destroyed) return;
+      paintCarousel(0);
+      const active = document.querySelector(".slide.is-active");
+      if (active) markFactClamp(active);
+    });
+    resizeObserver.observe(viewport);
+    const stage = document.getElementById("stage");
+    if (stage) resizeObserver.observe(stage);
+  }
+}
+
+function populateCharacterData() {
+  try {
+    currentStat = readStat();
+    const names = presentRoles(currentStat);
+    if (!names.length) { activeRoleName = ""; setDataState("empty"); return; }
+    if (!names.includes(activeRoleName)) activeRoleName = names[0];
+    const world = currentStat.世界 || {};
+    document.getElementById("scene").textContent = world.场景 || world._开局配置?.圣堂形态 || "当前场景";
+    renderWorldMeta(currentStat);
+    renderRoleSwitcher(names, activeRoleName);
+    setDataState("ready");
+  } catch (error) {
+    setDataState("error", error && error.message ? error.message : String(error));
+  }
+}
+
+async function bind() {
+  setDataState("loading");
+  if (!isDemo() && typeof waitGlobalInitialized === "function") await waitGlobalInitialized("Mvu");
+  if (!isDemo() && typeof waitUntil === "function") {
+    await waitUntil(() => {
+      const Mvu = resolveMvu();
+      if (!Mvu || typeof Mvu.getMvuData !== "function") return false;
+      return getPath(Mvu.getMvuData({ type: "message", message_id: currentMessageId() }), "stat_data", null) != null;
+    });
+  }
+  if (destroyed) return;
+  bindChromeControls();
+  populateCharacterData();
+  document.getElementById("btnDraw").addEventListener("click", onDrawEncounter);
+  document.getElementById("btnTogether").addEventListener("click", onTogetherMoment);
+  try {
+    const Mvu = resolveMvu();
+    if (destroyed) return;
+    if (Mvu && Mvu.events && Mvu.events.VARIABLE_UPDATE_ENDED && typeof eventOn === "function") {
+      updateHandle = eventOn(Mvu.events.VARIABLE_UPDATE_ENDED, () => { if (!destroyed) populateCharacterData(); });
+    }
+  } catch (error) { console.error(error); }
+}
+
+function toast(message) {
+  const el = document.getElementById("toast");
+  el.textContent = message;
+  el.classList.add("show");
+  clearTimeout(toast.timer);
+  toast.timer = setTimeout(() => el.classList.remove("show"), 2200);
+}
+
+function getApi(name) {
+  const roots = [];
+  try { roots.push(window); } catch (_) {}
+  try { if (window.parent && window.parent !== window) roots.push(window.parent); } catch (_) {}
+  try { if (window.top && window.top !== window) roots.push(window.top); } catch (_) {}
+  for (const w of roots) {
+    try {
+      if (w && typeof w[name] === "function") return w[name].bind(w);
+    } catch (_) {}
+  }
+  for (const w of roots) {
+    try {
+      const st = w.SillyTavern || w.sillyTavern;
+      if (st && typeof st[name] === "function") return st[name].bind(st);
+    } catch (_) {}
+  }
+  return null;
+}
+
+function getTriggerSlash() {
+  return getApi("triggerSlash");
+}
+
+function slashSafe(text) {
+  return String(text || "").replace(/<\/?q>/gi, "").trim().replace(/\|/g, "｜");
+}
+
+async function dispatchAction(visibleText, prompt) {
+  const visible = String(visibleText || "").trim();
+  const hidden = String(prompt || "").trim();
+  if (!visible || !hidden) return false;
+
+  const trigger = getTriggerSlash();
+  const injectFn = getApi("injectPrompts");
+  const generateFn = getApi("generate") || getApi("Generate");
+
+  // 优先：提示词注入一次 + 友好楼层可见发送（与原先 /send|/trigger 同路径，保证聊天里有内容）
+  if (trigger) {
+    if (typeof injectFn === "function") {
+      try {
+        injectFn([{
+          id: "shengtang-action-" + Date.now(),
+          role: "system",
+          content: hidden,
+          position: "in_chat",
+          depth: 0,
+          should_scan: true,
+        }], { once: true });
+      } catch (error) {
+        console.warn("injectPrompts failed, fallback to slash inject", error);
+        try {
+          await trigger(`/inject id=shengtang-action position=chat depth=0 role=system ephemeral=true ${slashSafe(hidden).replace(/\r?\n/g, " ")}`);
+        } catch (injectError) {
+          console.warn("slash inject failed", injectError);
+        }
+      }
+    } else {
+      try {
+        await trigger(`/inject id=shengtang-action position=chat depth=0 role=system ephemeral=true ${slashSafe(hidden).replace(/\r?\n/g, " ")}`);
+      } catch (injectError) {
+        console.warn("slash inject failed", injectError);
+      }
+    }
+    await trigger(`/send ${slashSafe(visible)}|/trigger`);
+    return true;
+  }
+
+  // 无 slash 时退回 generate（封面同款 getApi）
+  if (typeof generateFn === "function") {
+    await generateFn({
+      user_input: visible,
+      should_stream: true,
+      injects: [{
+        role: "system",
+        content: hidden,
+        position: "in_chat",
+        depth: 0,
+        should_scan: true,
+      }],
+    });
+    return true;
+  }
+
+  return false;
+}
+
+function friendlyDrawMessage(character) {
+  return `【新角色入场】请让「${character.name}」进入当前场景，与在场众人自然相遇。`;
+}
+
+function friendlyAdvanceMessage(scenario) {
+  return `【推进剧情｜${scenario.title}】请承接当前剧情继续往下写。`;
+}
+
+function presentNames(stat) { return new Set(presentRoles(stat)); }
+
+function pickRosterChar(stat) {
+  const pool = Array.isArray(ROSTER) ? ROSTER.filter(role => role && role.name) : [];
+  const taken = presentNames(stat);
+  const available = pool.filter(role => !taken.has(role.name));
+  if (!available.length) return null;
+  return available[Math.floor(Math.random() * available.length)];
+}
+
+function buildEncounterPrompt(character, stat) {
+  const world = stat.世界 || {};
+  const present = presentRoles(stat);
+  return [
+    "【圣堂初遇｜偶遇】承接当前剧情，保留主线与已有角色。",
+    `新人：${character.name}（${character.work || "未知作品"}）；当前场景：${world.场景 || world._开局配置?.圣堂形态 || "圣言堂"}；入场前同场角色：${present.join("、") || "暂无"}。`,
+    "先处理自己的目标、戒备和入场反应，再写与{{user}}及实际在场者的交集。口吻贴原作，评价基于可验证事实，关系变化对应本轮事件。",
+    "正文确实写出新人入场后，末尾按现有 MVU 更新规则：首次出现时建立角色档案，并将姓名加入 replace 后的完整出场数组；已有档案保留旧值。若本次没有完成入场正文，变量保持原值。",
+  ].join("\n\n");
+}
+
+const ADVANCE_SCENARIOS = [
+  { id: "clue", title: "线索浮现", loading: "正在翻找关键线索~", success: "线索已经悄悄落位~", instruction: "让一条与当前异常、人物目标或圣堂机制有关的可验证线索进入现场，并引出下一步行动。" },
+  { id: "shift", title: "环境异变", loading: "周围好像有点不对劲~", success: "场景已经开始变化~", instruction: "让当前场景发生有因果依据的变化，以声音、物件、来客痕迹或空间异常迫使人物作出反应。" },
+  { id: "bond", title: "关系事件", loading: "正在酝酿一点小默契~", success: "新的相处片段开场啦~", instruction: "安排一件需要沟通、协作或互相判断的小事，让关系通过实际行动自然变化。" },
+  { id: "visitor", title: "意外来客", loading: "门外好像有人敲门~", success: "新的动静已经出现~", instruction: "优先使用与现有矛盾直接相关的消息、远程联络或无名功能性访客，不抢走当前角色的行动中心；需要具名角色实际入场时，本轮只留下明确线索，交由“新角色入场”完成登记和正式登场。" },
+  { id: "choice", title: "抉择分岔", loading: "命运正在摆出选项~", success: "下一步选择已经出现~", instruction: "制造两个都合理但代价不同的行动方向，在结尾把可回应的选择交给{{user}}。" },
+  { id: "pressure", title: "危机升级", loading: "气氛突然紧张起来了~", success: "新的麻烦已经登场~", instruction: "让现有风险向前推进一级，保留解决空间，并让人物依照能力、性格和已知信息应对。" },
+  { id: "afterglow", title: "安静余波", loading: "先让故事轻轻喘口气~", success: "一段安静时刻开始了~", instruction: "暂缓外部冲突，通过整理现场、短暂休息或一段自然对话沉淀上一轮事件，并埋下细小后续。" },
+  { id: "ensemble", title: "多人碰撞", loading: "大家的想法开始撞车啦~", success: "多人场面已经热闹起来~", instruction: "让至少两名在场角色基于各自目标产生不同意见、互补行动或轻微冲突，保持每个人的独立判断。", requiresMultiple: true },
+];
+
+function pickAdvanceScenario(stat) {
+  const present = presentRoles(stat);
+  const pool = ADVANCE_SCENARIOS.filter(item => !item.requiresMultiple || present.length > 1);
+  return pool[Math.floor(Math.random() * pool.length)] || ADVANCE_SCENARIOS[0];
+}
+
+function buildTogetherPrompt(stat, scenario) {
+  const present = presentRoles(stat);
+  const focus = activeRoleName || present[0] || "当前角色";
+  const advance = scenario || pickAdvanceScenario(stat);
+  return [
+    "【圣堂初遇｜故事接着走】承接当前剧情，保留已有变量与在场人物。",
+    `当前场景：${getPath(stat, "世界.场景", "圣言堂")}；焦点：${focus}；同场：${present.join("、") || "暂无"}。`,
+    `本轮推进：${advance.title}。${advance.instruction}`,
+    "先处理自己的目标与风险判断，再写相处。焦点决定镜头中心，不限制其他实际在场角色依照自身目标行动；多人可以产生不同甚至冲突的反应。评价基于可验证事实，关系变化对应本轮事件。",
+    "末尾按现有 MVU 更新规则，只更新本轮实际感知事件并产生反应的在场角色；没有正文依据的角色与变量保持原值。",
+  ].join("\n\n");
+}
+
+let drawing = false;
+function setActionBusy(value) {
+  drawing = !!value;
+  document.getElementById("btnDraw").disabled = drawing;
+  document.getElementById("btnTogether").disabled = drawing;
+}
+
+async function onDrawEncounter() {
+  if (drawing) return;
+  const character = pickRosterChar(currentStat);
+  if (!character) { toast("当前没有可加入的角色"); return; }
+  setActionBusy(true);
+  try {
+    const sent = await dispatchAction(
+      friendlyDrawMessage(character),
+      buildEncounterPrompt(character, currentStat),
+    );
+    toast(sent ? `已安排 ${character.name} 入场` : `预览角色：${character.name}`);
+  } catch (error) {
+    console.error(error);
+    toast("发送失败，请重试");
+  } finally {
+    setActionBusy(false);
+  }
+}
+
+async function onTogetherMoment() {
+  if (drawing || !presentRoles(currentStat).length) return;
+  const scenario = pickAdvanceScenario(currentStat);
+  setActionBusy(true);
+  try {
+    const sent = await dispatchAction(
+      friendlyAdvanceMessage(scenario),
+      buildTogetherPrompt(currentStat, scenario),
+    );
+    toast(sent ? scenario.success : `预览推进：${scenario.title}`);
+  } catch (error) { console.error(error); toast("发送失败，请重试"); }
+  setActionBusy(false);
+}
+
+window.addEventListener("pagehide", () => {
+  destroyed = true;
+  if (updateHandle && typeof updateHandle.stop === "function") updateHandle.stop();
+  updateHandle = null;
+  window.removeEventListener("resize", handleResize);
+  if (resizeObserver) resizeObserver.disconnect();
+  resizeObserver = null;
+  animationFrames.forEach(id => cancelAnimationFrame(id));
+  animationFrames.clear();
+  if (toast.timer) clearTimeout(toast.timer);
+});
+
+if (typeof errorCatched === "function") $(errorCatched(bind));
+else bind().catch(error => setDataState("error", error && error.message ? error.message : String(error)));
+</script>
+</body>
+</html>
