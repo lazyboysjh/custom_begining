@@ -4428,8 +4428,14 @@ function openingScene(config) {
   return config.sanctumForm.scene || config.sanctumForm.title;
 }
 
-function buildOpeningPatches(config, persona, enc) {
-  const rolePath = `/角色/${patchPathSegment(enc.姓名)}`;
+function cloneOpeningData(data) {
+  if (typeof structuredClone === "function") return structuredClone(data);
+  return JSON.parse(JSON.stringify(data));
+}
+
+function applyOpeningInitialization(oldData, config, persona, enc) {
+  const initialized = cloneOpeningData(oldData);
+  if (!hasOpeningStatData(initialized)) throw new Error("开局变量结构不完整，请重新读取后再试。");
   const roleState = {
     污秽度: 40,
     好感度: 0,
@@ -4441,23 +4447,18 @@ function buildOpeningPatches(config, persona, enc) {
     与user关系: "陌生",
     心情: "戒备",
   };
-  return [
-    { op: "replace", path: "/世界/_开局配置/时代背景", value: config.era.title },
-    { op: "replace", path: "/世界/_开局配置/故事类型", value: config.storyType.title },
-    { op: "replace", path: "/世界/_开局配置/故事氛围", value: config.atmosphere.title },
-    { op: "replace", path: "/世界/_开局配置/圣堂形态", value: config.sanctumForm.title },
-    { op: "replace", path: "/世界/_开局配置/世界融入方式", value: config.integrationMode.title },
-    { op: "replace", path: "/世界/场景", value: openingScene(config) },
-    { op: "insert", path: rolePath, value: roleState },
-    { op: "replace", path: "/世界/出场角色", value: [enc.姓名] },
-    { op: "replace", path: "/主角/姓名", value: persona.姓名 },
-    { op: "replace", path: "/主角/身份", value: persona.身份 },
-    { op: "replace", path: "/主角/年龄外观", value: persona.年龄外观 },
-    { op: "replace", path: "/主角/性格倾向", value: persona.性格倾向 },
-    { op: "replace", path: "/主角/表面作风", value: persona.表面作风 },
-    { op: "replace", path: "/主角/私下心思", value: persona.私下心思 },
-    { op: "replace", path: "/主角/能力摘要", value: persona.能力摘要 },
-  ];
+  initialized.stat_data.世界._开局配置 = {
+    时代背景: config.era.title,
+    故事类型: config.storyType.title,
+    故事氛围: config.atmosphere.title,
+    圣堂形态: config.sanctumForm.title,
+    世界融入方式: config.integrationMode.title,
+  };
+  initialized.stat_data.世界.场景 = openingScene(config);
+  initialized.stat_data.角色[enc.姓名] = roleState;
+  initialized.stat_data.世界.出场角色 = [enc.姓名];
+  Object.assign(initialized.stat_data.主角, persona);
+  return initialized;
 }
 
 function buildOpeningPrompt(config, persona, enc) {
@@ -4747,7 +4748,6 @@ async function startGame() {
   }
   const persona = openingPersona(config);
   const enc = encounterFromCharacter(config.character);
-  const patches = buildOpeningPatches(config, persona, enc);
   const prompt = buildOpeningPrompt(config, persona, enc);
   const attemptId = ++state.attemptId;
 
@@ -4760,17 +4760,6 @@ async function startGame() {
   setGenerationState("正在召唤，请稍候~", "圣堂正在回应异界回响。", false);
   showPage(4);
   const revealPromise = startReveal(config);
-
-  const patchBlock = [
-    "<UpdateVariable>",
-    "<Analysis>",
-    "- Lock the randomized opening configuration and initialize its first present role.",
-    "</Analysis>",
-    "<JSONPatch>",
-    JSON.stringify(patches, null, 2),
-    "</JSONPatch>",
-    "</UpdateVariable>",
-  ].join("\n");
 
   const generateFn = getApi("generate") || getApi("Generate");
   const setMsgs = getApi("setChatMessages") || getApi("setChatMessage");
@@ -4817,7 +4806,7 @@ async function startGame() {
     }
 
     const oldData = await waitOpeningMvuData(Mvu, 6000);
-    const initializedData = (await Mvu.parseMessage(patchBlock, oldData)) || oldData;
+    const initializedData = applyOpeningInitialization(oldData, config, persona, enc);
     setGenerationState("召唤已经回应~", "来客的身影正在圣堂中显现。", false);
     const raw = await runGeneration(
       generateFn({ user_input: prompt, should_stream: true, generation_id: generationId }),
