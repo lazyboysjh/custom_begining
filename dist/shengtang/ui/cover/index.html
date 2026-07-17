@@ -1890,15 +1890,15 @@ const OPENING_OPTIONS = {
     {
       "id": "power_struggle",
       "title": "权力角逐",
-      "core_goal": "在多方势力之间取得足以改变决定的筹码、盟友与权限",
-      "failure_stakes": "被排除出局、关键盟友倒戈或决定权落入对手",
+      "core_goal": "在多方势力之间取得能够影响关键决定的筹码、盟友或权限",
+      "failure_stakes": "失去议价位置、盟友倒向对手或关键决定失去干预机会",
       "prompt": "以公开身份、利益交换和派系行动推进，让各方拥有清晰诉求与可变化的联盟。"
     },
     {
       "id": "faction_war",
       "title": "阵营战争",
-      "core_goal": "完成一项足以改变局势的阶段性任务，并决定如何影响交战各方",
-      "failure_stakes": "战线崩溃、关键据点失守或冲突进一步扩大",
+      "core_goal": "完成一项能够改变局部战局的任务，并处理行动对各阵营造成的影响",
+      "failure_stakes": "战线失衡、关键据点失守或冲突范围扩大",
       "prompt": "用情报、资源、地形与阵营目标塑造选择，让局部行动产生可追踪的整体后果。"
     },
     {
@@ -1918,8 +1918,8 @@ const OPENING_OPTIONS = {
     {
       "id": "public_trial",
       "title": "公开审判",
-      "core_goal": "围绕证据、证词与既定规则，争取改变最终裁决",
-      "failure_stakes": "错误裁决生效、关键证据失去效力或规则被对手利用",
+      "core_goal": "梳理证据、证词与适用规则，推动最终裁决回应已经查明的事实",
+      "failure_stakes": "错误裁决生效、关键证据失效或程序被一方操纵",
       "prompt": "把冲突置于可陈述、可质疑的公开程序中，让事实、立场与规则解释共同影响结果。"
     },
     {
@@ -1932,9 +1932,9 @@ const OPENING_OPTIONS = {
     {
       "id": "reputation_crisis",
       "title": "声名危机",
-      "core_goal": "追查流言或丑闻的源头，在挽回名誉与揭开隐情之间作出选择",
-      "failure_stakes": "社会关系崩解、公开身份受损或幕后目的达成",
-      "prompt": "通过传播者、受众反应与可核实事实推进，使公开形象和私人判断形成持续冲突。"
+      "core_goal": "查清流言或丑闻的传播链与幕后目的，并决定公开哪些事实",
+      "failure_stakes": "社会关系破裂、公开身份受损或操纵者掌握舆论主动",
+      "prompt": "通过传播路径、受众反应与可核实事实推进，让公开形象与真实情况持续冲突。"
     },
     {
       "id": "restoration_management",
@@ -1946,9 +1946,9 @@ const OPENING_OPTIONS = {
     {
       "id": "competitive_clash",
       "title": "竞技争锋",
-      "core_goal": "理解赛制、提升实力，并战胜各有策略的竞争者",
-      "failure_stakes": "提前淘汰、关键成员受损或比赛公正被破坏",
-      "prompt": "给出明确赛制、训练反馈和对手策略，使胜负来自准备、判断与临场选择。"
+      "core_goal": "理解赛制、完成训练或准备，并在竞争中争取阶段性优势",
+      "failure_stakes": "提前淘汰、团队节奏失衡或比赛规则被不当利用",
+      "prompt": "给出明确赛制、训练反馈和对手策略，使结果来自准备、判断与临场选择。"
     },
     {
       "id": "relic_race",
@@ -1974,7 +1974,7 @@ const OPENING_OPTIONS = {
     {
       "id": "unknown_exploration",
       "title": "未知探索",
-      "core_goal": "进入陌生区域，确认风险、发现秘密并带回有价值的成果",
+      "core_goal": "建立对陌生区域的可靠认知，确认风险并带回关键发现",
       "failure_stakes": "路线失联、探索队受困或重要发现被错误解读",
       "prompt": "逐步建立地图、环境规律与发现链条，让知识积累直接改变可选行动。"
     },
@@ -1988,14 +1988,14 @@ const OPENING_OPTIONS = {
     {
       "id": "emergency_treatment",
       "title": "紧急救治",
-      "core_goal": "查明异常症状，在有限时间与条件下完成有效救治",
-      "failure_stakes": "症状恶化、误判造成新损伤或异常扩散",
-      "prompt": "通过观察、检查、假设与反馈逐步缩小原因，并让每种处理方式具有可验证结果和现实代价。"
+      "core_goal": "识别异常症状与可能原因，实施能够观察结果的处理",
+      "failure_stakes": "症状恶化、误判造成新损伤或异常继续扩散",
+      "prompt": "通过观察、检查、假设与反馈逐步缩小原因，让每种处理方式具有可验证结果与现实代价。"
     },
     {
       "id": "desperate_escape",
       "title": "绝境逃脱",
-      "core_goal": "探索受限空间，破解封锁并找到可以抵达的生路",
+      "core_goal": "确认封锁机制，利用已知线索建立可执行的逃生路线",
       "failure_stakes": "出口关闭、空间继续收缩或成员被困在不同区域",
       "prompt": "建立有限空间、位置关系和逐步变化的威胁，让路线选择与已获线索共同决定进展。"
     },
@@ -2016,14 +2016,14 @@ const OPENING_OPTIONS = {
     {
       "id": "old_grievance",
       "title": "旧怨追索",
-      "core_goal": "查清一桩旧事，在追责、复仇与和解之间作出选择",
+      "core_goal": "查清旧事中的责任与遗留影响，并决定如何回应相关当事人",
       "failure_stakes": "事实再次被掩埋、仇怨波及无关者或错误对象承担后果",
       "prompt": "通过不同当事人的证词、利益与记忆还原旧事，让最终选择回应已确认的事实与现实代价。"
     },
     {
       "id": "temporal_paradox",
       "title": "时空悖论",
-      "core_goal": "寻找因果错位的锚点，决定哪一段现实应被保留",
+      "core_goal": "找到因果错位的锚点，确认冲突链条并选择能够承担后果的处理方式",
       "failure_stakes": "记忆互斥、关键事件消失或循环永久闭合",
       "prompt": "设定一致的时间规则和可观察变化，让人物通过记忆、记录与行动后果逐步确认因果关系。"
     }
@@ -4300,6 +4300,7 @@ function buildOpeningPrompt(config, persona, enc) {
     "【圣堂初遇·随机开局】第三人称；主角称 {{user}}。写一场可以继续互动的完整开场，不写人物说明书。",
     `【时代与世界】${config.era.title}：${config.era.prompt}`,
     `【故事类型】${config.storyType.title}。核心目标：${config.storyType.core_goal}。失败风险：${config.storyType.failure_stakes}。${config.storyType.prompt}`,
+    "【结构说明】核心目标是本局持续推进的主线，开场只建立冲突与第一个可执行步骤；失败风险随人物行动与事件发展逐步逼近。",
     `【故事氛围】${config.atmosphere.title}：${config.atmosphere.prompt}`,
     `【圣堂形态】${config.sanctumForm.title}：${config.sanctumForm.prompt}`,
     `【世界融入】${config.integrationMode.title}：${config.integrationMode.prompt}`,
