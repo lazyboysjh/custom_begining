@@ -4509,7 +4509,7 @@ function startReveal(config) {
   state.revealTimer = setInterval(() => {
     const candidates = [];
     for (let index = 0; index < 4; index += 1) candidates.push(pickOne(CHARACTERS).name);
-    if (reel) reel.textContent = candidates.join("　·　");
+    if (reel) reel.textContent = candidates.join(" · ");
   }, 150);
   return new Promise(resolve => {
     state.revealResolve = resolve;
