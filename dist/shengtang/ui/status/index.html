@@ -2668,21 +2668,37 @@ function paintCarousel(offsetPx) {
   track.style.transform = `translate3d(${x}px,0,0)`;
 }
 
+function exceedsFactLines(text, maxLines = 3) {
+  if (!text || text.clientWidth <= 0) return false;
+  const computed = getComputedStyle(text);
+  let lineHeight = Number.parseFloat(computed.lineHeight);
+  if (!Number.isFinite(lineHeight)) lineHeight = Number.parseFloat(computed.fontSize) * 1.55;
+  const previousStyle = text.getAttribute("style");
+  text.style.setProperty("display", "block", "important");
+  text.style.setProperty("-webkit-line-clamp", "unset", "important");
+  text.style.setProperty("overflow", "visible", "important");
+  const naturalHeight = text.scrollHeight;
+  if (previousStyle === null) text.removeAttribute("style");
+  else text.setAttribute("style", previousStyle);
+  return naturalHeight > lineHeight * maxLines + 1;
+}
+
 function markFactClamp(scope) {
   Array.prototype.forEach.call((scope || document).querySelectorAll(".fact"), el => {
     const text = el.querySelector(".fact-text");
     if (!text) return;
-    const content = (text.textContent || "").trim();
-    const measured = text.scrollHeight > text.clientHeight + 1;
-    const longEnough = content.length > 42;
-    const clamped = el.classList.contains("is-open") || measured || longEnough;
+    const clamped = exceedsFactLines(text, 3);
+    if (!clamped) {
+      el.classList.remove("is-open");
+      el.setAttribute("aria-expanded", "false");
+    }
     el.classList.toggle("is-clamp", clamped);
     el.style.cursor = clamped ? "pointer" : "default";
   });
 }
 
 function toggleFact(fact) {
-  if (!fact) return;
+  if (!fact || !fact.classList.contains("is-clamp")) return;
   const open = !fact.classList.contains("is-open");
   fact.classList.toggle("is-open", open);
   fact.setAttribute("aria-expanded", open ? "true" : "false");
