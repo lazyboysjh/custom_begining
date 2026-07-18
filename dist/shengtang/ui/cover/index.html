@@ -5445,6 +5445,10 @@ function openingScene(config) {
   return config.sanctumForm.scene || config.sanctumForm.title;
 }
 
+function patchPathSegment(value) {
+  return String(value || "").replace(/~/g, "~0").replace(/\//g, "~1");
+}
+
 function cloneOpeningData(data) {
   if (typeof structuredClone === "function") return structuredClone(data);
   return JSON.parse(JSON.stringify(data));
@@ -5481,6 +5485,7 @@ function applyOpeningInitialization(oldData, config, persona, enc) {
 function buildOpeningPrompt(config, persona, enc) {
   const voice = clipVoice(enc.短识, 108);
   const heroName = persona.姓名 || "{{user}}";
+  const rolePath = `/角色/${patchPathSegment(enc.姓名)}`;
   return [
     "【开场白要求】根据以下配置，先输出一段 400–500 字的开场白正文。开场白负责呈现当前场景，使初遇女主实际进入事件，并写到她与{{user}}形成第一次可回应的互动为止；不继续解决事件，不总结后续剧情。叙事视角、称谓、文风与具体结构遵循当前预设。",
     "【独立开局】这是一次全新的随机开场，不承接当前聊天记录、上一段剧情或用户刚刚提供的续写指令。",
@@ -5497,7 +5502,22 @@ function buildOpeningPrompt(config, persona, enc) {
     `外貌锚点：${enc.外貌}`,
     `原始异常灵感：${enc.污秽类型}`,
     "【必要一致性】通过事件自然体现圣堂与角色原世界发生联系的原因，以及角色接触圣堂、卷入本次污秽事件的原因；时代适配遵循已启用的世界书，不用在正文中说明配置项或创作过程。",
-    "【变量更新】正文结束后，严格按照已启用的变量更新规则追加 <UpdateVariable>；补丁只写本段正文确有依据的变化。",
+    [
+      "【变量更新】正文结束后必须追加 <UpdateVariable>，不能省略；补丁只写本段正文确有依据的变化。",
+      "使用以下 JSONPatch 格式，路径只允许写本次女主与动态世界字段，不要写 _ 开头字段：",
+      "<UpdateVariable>",
+      "<Analysis>Opening facts only; update visible state, mood and inner thought from this opening.</Analysis>",
+      "<JSONPatch>",
+      "[",
+      `  { "op": "replace", "path": "${rolePath}/当前状态", "value": "根据正文更新当前可观察状态" },`,
+      `  { "op": "replace", "path": "${rolePath}/心里想法", "value": "第一人称15-40字，基于角色实际知道的信息" },`,
+      `  { "op": "replace", "path": "${rolePath}/与user关系", "value": "1-4个汉字" },`,
+      `  { "op": "replace", "path": "${rolePath}/心情", "value": "1-4个汉字" }`,
+      "]",
+      "</JSONPatch>",
+      "</UpdateVariable>",
+      "如正文确有依据，也可追加同一路径下的外貌、污秽度、好感度、堕落值、受孕进度补丁；无依据则不要写数值变化。",
+    ].join("\n"),
   ].join("\n");
 }
 
@@ -5621,6 +5641,75 @@ function openingMessage(text) {
   if (!body) return "";
   if (/<StatusPlaceHolderImpl\s*\/>/i.test(body)) return body;
   return body + "\n\n<StatusPlaceHolderImpl/>";
+}
+
+function jsonPointerSegments(path) {
+  return String(path || "")
+    .replace(/^\//, "")
+    .split("/")
+    .filter(Boolean)
+    .map(part => part.replace(/~1/g, "/").replace(/~0/g, "~"));
+}
+
+function setByPointer(target, path, value) {
+  const segments = jsonPointerSegments(path);
+  if (!segments.length || segments.some(part => part.startsWith("_"))) return false;
+  let cursor = target && target.stat_data;
+  if (!cursor) return false;
+  for (let index = 0; index < segments.length - 1; index += 1) {
+    cursor = cursor && cursor[segments[index]];
+    if (cursor == null || typeof cursor !== "object") return false;
+  }
+  const key = segments[segments.length - 1];
+  if (!key || key.startsWith("_")) return false;
+  cursor[key] = value;
+  return true;
+}
+
+function deltaByPointer(target, path, value) {
+  const segments = jsonPointerSegments(path);
+  if (!segments.length || segments.some(part => part.startsWith("_"))) return false;
+  let cursor = target && target.stat_data;
+  if (!cursor) return false;
+  for (let index = 0; index < segments.length - 1; index += 1) {
+    cursor = cursor && cursor[segments[index]];
+    if (cursor == null || typeof cursor !== "object") return false;
+  }
+  const key = segments[segments.length - 1];
+  const current = Number(cursor[key] || 0);
+  const delta = Number(value || 0);
+  if (!Number.isFinite(current) || !Number.isFinite(delta)) return false;
+  cursor[key] = current + delta;
+  return true;
+}
+
+function openingPatchChanged(before, after, roleName) {
+  const beforeRole = before && before.stat_data && before.stat_data.角色 && before.stat_data.角色[roleName];
+  const afterRole = after && after.stat_data && after.stat_data.角色 && after.stat_data.角色[roleName];
+  if (!beforeRole || !afterRole) return false;
+  return ["当前状态", "心里想法", "与user关系", "心情", "外貌", "污秽度", "好感度", "堕落值", "受孕进度"]
+    .some(key => JSON.stringify(beforeRole[key]) !== JSON.stringify(afterRole[key]));
+}
+
+function applyOpeningJsonPatchFallback(message, oldData, roleName) {
+  const match = String(message || "").match(/<JSONPatch>\s*([\s\S]*?)\s*<\/JSONPatch>/i);
+  if (!match) return null;
+  let patches;
+  try {
+    patches = JSON.parse(match[1]);
+  } catch (error) {
+    console.warn("开场变量 JSONPatch 解析失败", error);
+    return null;
+  }
+  if (!Array.isArray(patches)) return null;
+  const next = cloneOpeningData(oldData);
+  let changed = false;
+  for (const patch of patches) {
+    if (!patch || typeof patch !== "object") continue;
+    if (patch.op === "replace" || patch.op === "insert") changed = setByPointer(next, patch.path, patch.value) || changed;
+    if (patch.op === "delta") changed = deltaByPointer(next, patch.path, patch.value) || changed;
+  }
+  return changed && openingPatchChanged(oldData, next, roleName) ? next : null;
 }
 
 let activeOpening = null;
@@ -5867,7 +5956,12 @@ async function startGame() {
     await revealPromise;
     setGenerationState("初遇正在成形~", "圣堂正在整理最后的回响。", false, "开场白已经完成，正在同步人物状态。");
     assertOpeningCanCommit(run, getMsgs);
-    const finalData = (await Mvu.parseMessage(text, initializedData)) || initializedData;
+    const parsedData = await Mvu.parseMessage(text, initializedData);
+    const fallbackData = applyOpeningJsonPatchFallback(text, initializedData, enc.姓名);
+    const finalData = openingPatchChanged(initializedData, parsedData, enc.姓名)
+      ? parsedData
+      : fallbackData;
+    if (!finalData) throw new Error("开场变量未根据正文更新，请重试。");
     assertOpeningCanCommit(run, getMsgs);
     if (run.streamHandle && typeof run.streamHandle.stop === "function") run.streamHandle.stop();
     if (run.progressTimer) clearTimeout(run.progressTimer);
