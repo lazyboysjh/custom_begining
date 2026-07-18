@@ -1426,6 +1426,8 @@ select:focus {
   -webkit-line-clamp: 2;
   overflow-wrap: anywhere;
   word-break: break-word;
+  transform: translateZ(0);
+  backface-visibility: hidden;
 }
 .summon-progress .meter {
   height: 4px;
@@ -5303,8 +5305,29 @@ function streamPhaseForLength(length) {
   return phase;
 }
 
+function asGenerationText(raw) {
+  if (typeof raw === "string") {
+    const value = raw.trim();
+    if (value.startsWith("{") && value.endsWith("}")) {
+      try {
+        const parsed = JSON.parse(value);
+        const nested = asGenerationText(parsed);
+        if (nested) return nested;
+      } catch (_) {}
+    }
+    return raw;
+  }
+  if (raw && typeof raw === "object") {
+    for (const key of ["content", "result", "message", "text"]) {
+      if (typeof raw[key] === "string" && raw[key]) return raw[key];
+    }
+    if (raw.data) return asGenerationText(raw.data);
+  }
+  return "";
+}
+
 function sanitizeGenerationPreview(text) {
-  return String(text || "")
+  return asGenerationText(text)
     .replace(/<UpdateVariable[\s\S]*$/i, "")
     .replace(/<UpdateVariable[\s\S]*?<\/UpdateVariable>/gi, "")
     .replace(/<StatusPlaceHolderImpl\s*\/>/gi, "")
@@ -5338,12 +5361,10 @@ function setGenerationState(title, status, done = false, liveText) {
 function openingPreviewWindow(text, maxLength = 108) {
   const preview = sanitizeGenerationPreview(text);
   if (!preview) return "";
-  if (preview.length <= maxLength) return preview;
-  const tail = preview.slice(-maxLength);
-  const sentenceStart = Math.max(tail.lastIndexOf("。"), tail.lastIndexOf("！"), tail.lastIndexOf("？"));
-  const softStart = Math.max(tail.lastIndexOf("，"), tail.lastIndexOf("；"), tail.lastIndexOf("、"));
-  const cutAt = sentenceStart >= 20 ? sentenceStart + 1 : (softStart >= 24 ? softStart + 1 : 0);
-  return `…${tail.slice(cutAt).trim()}`;
+  const complete = preview.match(/[^。！？]*[。！？]/g) || [];
+  const stable = complete.length ? complete.slice(-2).join("").trim() : preview;
+  if (stable.length <= maxLength) return stable;
+  return stable.slice(0, maxLength - 1).trimEnd() + "…";
 }
 
 /** 首楼只用短辨识，完整档案交给世界书触发 */
@@ -5362,6 +5383,24 @@ function openingGoal(enc) {
   const seed = String(enc.污秽类型 || "").trim();
   if (seed) return "弄清污秽成因并压下症状，同时判断此处是否安全";
   return "确认污秽来源并保全自身";
+}
+
+function openingInitialRoleState(config, persona, enc) {
+  const scene = openingScene(config);
+  const meeting = String(config.meetingMode && config.meetingMode.title || "初次会面").trim();
+  const hero = persona.姓名 || "眼前的圣堂代表";
+  const goal = openingGoal(enc);
+  return {
+    污秽度: 40,
+    好感度: 0,
+    堕落值: 0,
+    受孕进度: 0,
+    外貌: enc.外貌,
+    当前状态: `身处${scene}，正围绕${meeting}观察局势`,
+    心里想法: `先${goal}，再判断${hero}是否可信。`.slice(0, 40),
+    与user关系: "初识",
+    心情: "审慎",
+  };
 }
 
 function randomIndex(length) {
@@ -5457,17 +5496,7 @@ function cloneOpeningData(data) {
 function applyOpeningInitialization(oldData, config, persona, enc) {
   const initialized = cloneOpeningData(oldData);
   if (!hasOpeningStatData(initialized)) throw new Error("开局变量结构不完整，请重新读取后再试。");
-  const roleState = {
-    污秽度: 40,
-    好感度: 0,
-    堕落值: 0,
-    受孕进度: 0,
-    外貌: enc.外貌,
-    当前状态: "刚刚抵达陌生环境，保持戒备并观察周围",
-    心里想法: "先弄清这里是什么地方，再决定下一步。",
-    与user关系: "陌生",
-    心情: "戒备",
-  };
+  const roleState = openingInitialRoleState(config, persona, enc);
   initialized.stat_data.世界._开局配置 = {
     时代背景: config.era.title,
     故事类型: config.storyType.title,
@@ -5487,8 +5516,9 @@ function buildOpeningPrompt(config, persona, enc) {
   const heroName = persona.姓名 || "{{user}}";
   const rolePath = `/角色/${patchPathSegment(enc.姓名)}`;
   return [
-    "【开场白要求】根据以下配置，先输出一段 400–500 字的开场白正文。开场白负责呈现当前场景，使初遇女主实际进入事件，并写到她与{{user}}形成第一次可回应的互动为止；不继续解决事件，不总结后续剧情。叙事视角、称谓、文风与具体结构遵循当前预设。",
+    "【开场白要求】根据以下配置，先输出一段 400–500 字的独立第一条消息正文。开场白负责呈现当前场景，使初遇女主实际进入事件，并写到她与{{user}}形成第一次可回应的互动为止；不继续解决事件，不总结后续剧情。",
     "【独立开局】这是一次全新的随机开场，不承接当前聊天记录、上一段剧情或用户刚刚提供的续写指令。",
+    "【输出边界】不要复述任务、不要输出思维过程或续写提纲，直接输出开场白正文；正文后只追加要求的 <UpdateVariable>。",
     `【时代与世界】${config.era.title}：${config.era.prompt}`,
     `【故事类型】${config.storyType.title}：${config.storyType.prompt}`,
     `【故事氛围】${config.atmosphere.title}：${config.atmosphere.prompt}`,
@@ -5631,9 +5661,37 @@ async function waitOpeningMvuData(Mvu, timeout = 5000) {
 }
 
 function asGenText(raw) {
-  if (typeof raw === "string") return raw;
-  if (raw && typeof raw === "object") return String(raw.result || raw.message || raw.text || "");
-  return "";
+  return asGenerationText(raw);
+}
+
+function buildOpeningGenerationConfig(prompt, generationId, useRaw) {
+  const base = {
+    user_input: prompt,
+    should_stream: true,
+    generation_id: generationId,
+    max_chat_history: 0,
+  };
+  if (useRaw) {
+    return {
+      ...base,
+      ordered_prompts: [
+        { role: "system", content: "生成一张角色卡的独立第一条消息。用户输入是本次开场的完整规格，不是待续写的聊天内容。直接写正文，不输出推理过程。" },
+        "world_info_before",
+        "persona_description",
+        "char_description",
+        "char_personality",
+        "scenario",
+        "world_info_after",
+        "user_input",
+      ],
+    };
+  }
+  return {
+    ...base,
+    overrides: {
+      chat_history: { prompts: [], with_depth_entries: false, author_note: "" },
+    },
+  };
 }
 
 function openingMessage(text) {
@@ -5689,6 +5747,33 @@ function openingPatchChanged(before, after, roleName) {
   if (!beforeRole || !afterRole) return false;
   return ["当前状态", "心里想法", "与user关系", "心情", "外貌", "污秽度", "好感度", "堕落值", "受孕进度"]
     .some(key => JSON.stringify(beforeRole[key]) !== JSON.stringify(afterRole[key]));
+}
+
+const OPENING_ROLE_FIELDS = Object.freeze([
+  "当前状态", "心里想法", "与user关系", "心情", "外貌",
+  "污秽度", "好感度", "堕落值", "受孕进度",
+]);
+
+function validOpeningField(key, value) {
+  if (["污秽度", "好感度", "堕落值", "受孕进度"].includes(key)) return Number.isFinite(Number(value));
+  return typeof value === "string" && value.trim().length > 0;
+}
+
+function mergeOpeningData(initializedData, candidates, roleName) {
+  const merged = cloneOpeningData(initializedData);
+  for (const candidate of candidates) {
+    if (!hasOpeningStatData(candidate)) continue;
+    const candidateRole = candidate.stat_data.角色 && candidate.stat_data.角色[roleName];
+    const mergedRole = merged.stat_data.角色 && merged.stat_data.角色[roleName];
+    if (!candidateRole || !mergedRole) continue;
+    for (const key of OPENING_ROLE_FIELDS) {
+      if (validOpeningField(key, candidateRole[key])) mergedRole[key] = candidateRole[key];
+    }
+    if (typeof candidate.stat_data.世界.场景 === "string" && candidate.stat_data.世界.场景.trim()) {
+      merged.stat_data.世界.场景 = candidate.stat_data.世界.场景;
+    }
+  }
+  return merged;
 }
 
 function applyOpeningJsonPatchFallback(message, oldData, roleName) {
@@ -5771,7 +5856,7 @@ function scheduleStreamProgress(run, fullText) {
     const now = performance.now();
     const previewDelta = Math.abs(previewText.length - String(run.streamPreview || "").length);
     const shouldUpdateText = previewText !== run.streamPreview
-      && (previewDelta >= 6 || now - (run.lastPreviewAt || 0) >= 900);
+      && (previewDelta >= 12 || now - (run.lastPreviewAt || 0) >= 1200);
     const shouldUpdatePhase = run.streamPhaseTitle !== phase.title;
     if (!shouldUpdatePhase && !shouldUpdateText) return;
     if (shouldUpdatePhase) {
@@ -5783,7 +5868,7 @@ function scheduleStreamProgress(run, fullText) {
       run.lastPreviewAt = now;
       setGenerationLive(previewText);
     }
-  }, 420);
+  }, 700);
 }
 
 function startWaitingProgress(run) {
@@ -5890,7 +5975,9 @@ async function startGame() {
   showPage(4);
   const revealPromise = startReveal(config);
 
-  const generateFn = getApi("generate") || getApi("Generate");
+  const rawGenerateFn = getApi("generateRaw") || getApi("GenerateRaw");
+  const generateFn = rawGenerateFn || getApi("generate") || getApi("Generate");
+  const useRawGeneration = !!rawGenerateFn;
   const setMsgs = getApi("setChatMessages");
   const getMsgs = getApi("getChatMessages");
   const eventOn = getApi("eventOn");
@@ -5944,7 +6031,7 @@ async function startGame() {
     setGenerationState("召唤已经回应~", "来客的身影正在圣堂中显现。", false, "配置已就绪，等待模型开始回应。");
     startWaitingProgress(run);
     const raw = await runGeneration(
-      generateFn({ user_input: prompt, should_stream: true, generation_id: generationId, max_chat_history: 0 }),
+      generateFn(buildOpeningGenerationConfig(prompt, generationId, useRawGeneration)),
       run,
       GEN_TIMEOUT_MS,
     );
@@ -5956,12 +6043,17 @@ async function startGame() {
     await revealPromise;
     setGenerationState("初遇正在成形~", "圣堂正在整理最后的回响。", false, "开场白已经完成，正在同步人物状态。");
     assertOpeningCanCommit(run, getMsgs);
-    const parsedData = await Mvu.parseMessage(text, initializedData);
+    let parsedData = null;
+    try {
+      parsedData = await Mvu.parseMessage(text, initializedData);
+    } catch (parseError) {
+      console.warn("MVU 未能完整解析开场变量，将保留可用字段和本次开局语境", parseError);
+    }
     const fallbackData = applyOpeningJsonPatchFallback(text, initializedData, enc.姓名);
-    const finalData = openingPatchChanged(initializedData, parsedData, enc.姓名)
-      ? parsedData
-      : fallbackData;
-    if (!finalData) throw new Error("开场变量未根据正文更新，请重试。");
+    const finalData = mergeOpeningData(initializedData, [parsedData, fallbackData], enc.姓名);
+    if (!openingPatchChanged(initializedData, finalData, enc.姓名)) {
+      console.warn("模型未返回可用的开场变量补丁，已使用本次开局配置生成的语境化初值");
+    }
     assertOpeningCanCommit(run, getMsgs);
     if (run.streamHandle && typeof run.streamHandle.stop === "function") run.streamHandle.stop();
     if (run.progressTimer) clearTimeout(run.progressTimer);
