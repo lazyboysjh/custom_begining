@@ -214,6 +214,7 @@ button { font: inherit; -webkit-tap-highlight-color: transparent; }
   border-radius: 0; background: transparent; font: inherit; text-align: left;
   color: inherit; cursor: pointer; font-size: 11px; line-height: 1.55;
 }
+.fact:disabled { opacity: 1; color: inherit; cursor: default; }
 .fact:last-child { border-bottom: 0; padding-bottom: 2px; }
 .fact:first-child { padding-top: 0; }
 .fact em { font-style: normal; color: rgba(226,192,138,.82); letter-spacing: .06em; font-size: 10px; padding-top: 2px; }
@@ -2690,10 +2691,12 @@ function markFactClamp(scope) {
     const clamped = exceedsFactLines(text, 3);
     if (!clamped) {
       el.classList.remove("is-open");
-      el.setAttribute("aria-expanded", "false");
+      el.removeAttribute("aria-expanded");
+    } else {
+      el.setAttribute("aria-expanded", el.classList.contains("is-open") ? "true" : "false");
     }
+    el.disabled = !clamped;
     el.classList.toggle("is-clamp", clamped);
-    el.style.cursor = clamped ? "pointer" : "default";
   });
 }
 
