@@ -5301,8 +5301,10 @@ function streamPhaseForLength(length) {
 
 function sanitizeGenerationPreview(text) {
   return String(text || "")
+    .replace(/<UpdateVariable[\s\S]*$/i, "")
     .replace(/<UpdateVariable[\s\S]*?<\/UpdateVariable>/gi, "")
     .replace(/<StatusPlaceHolderImpl\s*\/>/gi, "")
+    .replace(/<\/?(Analysis|JSONPatch)>/gi, "")
     .replace(/\s+/g, " ")
     .trim();
 }
@@ -5465,7 +5467,7 @@ function buildOpeningPrompt(config, persona, enc) {
   const voice = clipVoice(enc.短识, 108);
   const heroName = persona.姓名 || "{{user}}";
   return [
-    "【开场白要求】根据以下配置，只输出一段 400–500 字的开场白正文。开场白负责呈现当前场景，使初遇女主实际进入事件，并写到她与{{user}}形成第一次可回应的互动为止；不继续解决事件，不总结后续剧情。叙事视角、称谓、文风与具体结构遵循当前预设。",
+    "【开场白要求】根据以下配置，先输出一段 400–500 字的开场白正文。开场白负责呈现当前场景，使初遇女主实际进入事件，并写到她与{{user}}形成第一次可回应的互动为止；不继续解决事件，不总结后续剧情。叙事视角、称谓、文风与具体结构遵循当前预设。",
     `【时代与世界】${config.era.title}：${config.era.prompt}`,
     `【故事类型】${config.storyType.title}：${config.storyType.prompt}`,
     `【故事氛围】${config.atmosphere.title}：${config.atmosphere.prompt}`,
@@ -5479,6 +5481,7 @@ function buildOpeningPrompt(config, persona, enc) {
     `外貌锚点：${enc.外貌}`,
     `原始异常灵感：${enc.污秽类型}`,
     "【必要一致性】通过事件自然体现圣堂与角色原世界发生联系的原因，以及角色接触圣堂、卷入本次污秽事件的原因；时代适配遵循已启用的世界书，不用在正文中说明配置项或创作过程。",
+    "【变量更新】正文结束后，严格按照已启用的变量更新规则追加 <UpdateVariable>；补丁只写本段正文确有依据的变化。",
   ].join("\n");
 }
 
@@ -5773,7 +5776,7 @@ async function startGame() {
   const revealPromise = startReveal(config);
 
   const generateFn = getApi("generate") || getApi("Generate");
-  const setMsgs = getApi("setChatMessages") || getApi("setChatMessage");
+  const setMsgs = getApi("setChatMessages");
   const getMsgs = getApi("getChatMessages");
   const eventOn = getApi("eventOn");
   const stopGeneration = getApi("stopGenerationById");
