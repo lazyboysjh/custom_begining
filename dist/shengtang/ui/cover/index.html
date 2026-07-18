@@ -1411,6 +1411,18 @@ select:focus {
   text-align: right;
   line-height: 1.45;
 }
+.generation-live {
+  min-height: 24px;
+  margin-top: 8px;
+  overflow: hidden;
+  padding: 3px 10px;
+  border-left: 1px solid rgba(226,192,138,.62);
+  background: linear-gradient(90deg, rgba(226,192,138,.07), rgba(255,255,255,.018) 58%, transparent);
+  color: rgba(232,224,211,.78);
+  font: 12px/18px "Noto Serif SC","Songti SC",serif;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
 .summon-progress .meter {
   height: 4px;
   margin-top: 10px;
@@ -1618,6 +1630,7 @@ select:focus {
     gap: 4px;
   }
   .summon-progress p { max-width: none; text-align: left; }
+  .generation-live { font-size: 11px; }
 }
 @media (max-height: 720px) {
   .page[data-page="1"] .ornament { margin: 6px 0 8px; }
@@ -1663,6 +1676,7 @@ select:focus {
   }
   .summon-progress h2 { font-size: 13px; }
   .summon-progress p { max-width: none; text-align: left; font-size: 11px; }
+  .generation-live { min-height: 21px; margin-top: 5px; font-size: 10.5px; line-height: 15px; }
   .summon-progress .meter { margin-top: 6px; }
   .page[data-page="4"] .foot { padding-top: 4px; }
   .page[data-page="4"] .foot .btn { min-height: 34px; padding: 7px 12px; white-space: nowrap; }
@@ -1940,6 +1954,7 @@ select:focus {
             <h2 id="generationTitle">正在召唤，请稍候~</h2>
             <p id="generationStatus">圣堂正在回应异界回响。</p>
           </div>
+          <div class="generation-live" id="generationLive">正在读取本次初遇配置。</div>
           <div class="meter" id="generationMeter" aria-hidden="true"><i></i></div>
         </div>
       </div>
@@ -5284,7 +5299,21 @@ function streamPhaseForLength(length) {
   return phase;
 }
 
-function setGenerationState(title, status, done = false) {
+function sanitizeGenerationPreview(text) {
+  return String(text || "")
+    .replace(/<UpdateVariable[\s\S]*?<\/UpdateVariable>/gi, "")
+    .replace(/<StatusPlaceHolderImpl\s*\/>/gi, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function setGenerationLive(text) {
+  const live = $("#generationLive");
+  if (!live) return;
+  live.textContent = text || "";
+}
+
+function setGenerationState(title, status, done = false, liveText) {
   const titleEl = $("#generationTitle");
   const statusEl = $("#generationStatus");
   const meter = $("#generationMeter");
@@ -5297,6 +5326,7 @@ function setGenerationState(title, status, done = false) {
   }
   const cancelLabel = cancel && $(".btn-label", cancel);
   if (cancelLabel) cancelLabel.textContent = "再想一下";
+  if (typeof liveText === "string") setGenerationLive(liveText);
 }
 
 /** 首楼只用短辨识，完整档案交给世界书触发 */
@@ -5621,15 +5651,20 @@ function stopOpening(reason) {
 
 function scheduleStreamProgress(run, fullText) {
   run.hasStreamProgress = true;
-  run.pendingLength = String(fullText || "").length;
+  const preview = sanitizeGenerationPreview(fullText);
+  run.pendingLength = preview.length;
+  if (preview) run.pendingPreview = preview;
   if (run.progressTimer) return;
   run.progressTimer = setTimeout(() => {
     run.progressTimer = null;
     if (run.cancelled || activeOpening !== run) return;
     const phase = streamPhaseForLength(run.pendingLength);
-    if (run.streamPhaseTitle === phase.title) return;
+    const previewText = run.pendingPreview || phase.status;
+    const latest = previewText.length > 72 ? `…${previewText.slice(-72)}` : previewText;
+    if (run.streamPhaseTitle === phase.title && run.streamPreview === latest) return;
     run.streamPhaseTitle = phase.title;
-    setGenerationState(phase.title, phase.status, false);
+    run.streamPreview = latest;
+    setGenerationState(phase.title, phase.status, false, latest);
   }, 160);
 }
 
@@ -5645,7 +5680,7 @@ function startWaitingProgress(run) {
     }
     if (phase.title !== currentTitle) {
       currentTitle = phase.title;
-      setGenerationState(phase.title, phase.status, false);
+      setGenerationState(phase.title, phase.status, false, phase.status);
     }
     run.waitingTimer = setTimeout(update, 500);
   };
@@ -5733,7 +5768,7 @@ async function startGame() {
     const label = $(".btn-label", startButton);
     if (label) label.textContent = "正在召唤…";
   }
-  setGenerationState("正在召唤，请稍候~", "圣堂正在回应异界回响。", false);
+  setGenerationState("正在召唤，请稍候~", "圣堂正在回应异界回响。", false, "正在读取本次初遇配置。");
   showPage(4);
   const revealPromise = startReveal(config);
 
@@ -5770,8 +5805,10 @@ async function startGame() {
       progressTimer: null,
       waitingTimer: null,
       pendingLength: 0,
+      pendingPreview: "",
       hasStreamProgress: false,
       streamPhaseTitle: "",
+      streamPreview: "",
       stopGeneration,
     };
     activeOpening = run;
@@ -5785,7 +5822,7 @@ async function startGame() {
 
     const oldData = await waitOpeningMvuData(Mvu, 6000);
     const initializedData = applyOpeningInitialization(oldData, config, persona, enc);
-    setGenerationState("召唤已经回应~", "来客的身影正在圣堂中显现。", false);
+    setGenerationState("召唤已经回应~", "来客的身影正在圣堂中显现。", false, "配置已就绪，等待模型开始回应。");
     startWaitingProgress(run);
     const raw = await runGeneration(
       generateFn({ user_input: prompt, should_stream: true, generation_id: generationId }),
@@ -5798,7 +5835,7 @@ async function startGame() {
     run.waitingTimer = null;
     run.generationDone = true;
     await revealPromise;
-    setGenerationState("初遇正在成形~", "圣堂正在整理最后的回响。", false);
+    setGenerationState("初遇正在成形~", "圣堂正在整理最后的回响。", false, "开场白已经完成，正在同步人物状态。");
     assertOpeningCanCommit(run, getMsgs);
     const finalData = (await Mvu.parseMessage(text, initializedData)) || initializedData;
     assertOpeningCanCommit(run, getMsgs);
@@ -5810,12 +5847,12 @@ async function startGame() {
     );
     activeOpening = null;
     state.starting = false;
-    setGenerationState("来客已现身~", "初遇已展开，轮到你回应。", true);
+    setGenerationState("来客已现身~", "初遇已展开，轮到你回应。", true, "开场白与人物状态均已就绪。");
   } catch (error) {
     stopOpening(error && error.message ? error.message : String(error));
     console.error(error);
     if (warn) warn.textContent = "召唤暂未回应，请返回后再次尝试。";
-    setGenerationState("召唤暂未回应", "可以调整能力后再次尝试。", true);
+    setGenerationState("召唤暂未回应", "可以调整能力后再次尝试。", true, error && error.message ? error.message : "没有写入正文或人物状态。");
     resetButtons();
   }
 }
@@ -5846,7 +5883,7 @@ function init() {
     state.starting = false;
     const startButton = $("#btnStart");
     if (startButton) { startButton.disabled = false; setStartReady(); }
-    setGenerationState("召唤尚未完成", "可以调整能力后再次尝试。");
+    setGenerationState("召唤尚未完成", "可以调整能力后再次尝试。", false, "没有写入正文或人物状态。");
     showPage(2);
   };
   $$("[data-back]").forEach(b => b.onclick = () => showPage(Number(b.dataset.back)));
