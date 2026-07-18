@@ -2382,7 +2382,7 @@ function friendlyDrawMessage(character) {
 }
 
 function friendlyAdvanceMessage(scenario) {
-  return `【推进剧情｜${scenario.title}】请承接当前剧情继续往下写。`;
+  return `【推进剧情｜${scenario.title}】请按当前情境续写下一段故事。`;
 }
 
 function presentNames(stat) { return new Set(presentRoles(stat)); }
@@ -2399,22 +2399,22 @@ function buildEncounterPrompt(character, stat) {
   const world = stat.世界 || {};
   const present = presentRoles(stat);
   return [
-    "【圣堂初遇｜偶遇】承接当前剧情，保留主线与已有角色。",
+    "【新角色入场】让指定角色在本次回复中实际进入当前场景。",
     `新人：${character.name}（${character.work || "未知作品"}）；当前场景：${world.场景 || world._开局配置?.圣堂形态 || "圣言堂"}；入场前同场角色：${present.join("、") || "暂无"}。`,
-    "先处理自己的目标、戒备和入场反应，再写与{{user}}及实际在场者的交集。口吻贴原作，评价基于可验证事实，关系变化对应本轮事件。",
-    "正文确实写出新人入场后，末尾按现有 MVU 更新规则：首次出现时建立角色档案，并将姓名加入 replace 后的完整出场数组；已有档案保留旧值。若本次没有完成入场正文，变量保持原值。",
+    "入场表现依据角色资料、当前处境和已知信息；与{{user}}及实际在场者的反应分别建立在本次互动上。",
+    "仅在正文确实写出新人入场后，按现有 MVU 规则首次建立角色档案，并将姓名加入 replace 后的完整出场数组；已有档案保留旧值。若正文没有完成入场，变量保持原值。",
   ].join("\n\n");
 }
 
 const ADVANCE_SCENARIOS = [
-  { id: "clue", title: "线索浮现", loading: "正在翻找关键线索~", success: "线索已经悄悄落位~", instruction: "让一条与当前异常、人物目标或圣堂机制有关的可验证线索进入现场，并引出下一步行动。" },
-  { id: "shift", title: "环境异变", loading: "周围好像有点不对劲~", success: "场景已经开始变化~", instruction: "让当前场景发生有因果依据的变化，以声音、物件、来客痕迹或空间异常迫使人物作出反应。" },
-  { id: "bond", title: "关系事件", loading: "正在酝酿一点小默契~", success: "新的相处片段开场啦~", instruction: "安排一件需要沟通、协作或互相判断的小事，让关系通过实际行动自然变化。" },
-  { id: "visitor", title: "意外来客", loading: "门外好像有人敲门~", success: "新的动静已经出现~", instruction: "优先使用与现有矛盾直接相关的消息、远程联络或无名功能性访客，不抢走当前角色的行动中心；需要具名角色实际入场时，本轮只留下明确线索，交由“新角色入场”完成登记和正式登场。" },
-  { id: "choice", title: "抉择分岔", loading: "命运正在摆出选项~", success: "下一步选择已经出现~", instruction: "制造两个都合理但代价不同的行动方向，在结尾把可回应的选择交给{{user}}。" },
-  { id: "pressure", title: "危机升级", loading: "气氛突然紧张起来了~", success: "新的麻烦已经登场~", instruction: "让现有风险向前推进一级，保留解决空间，并让人物依照能力、性格和已知信息应对。" },
-  { id: "afterglow", title: "安静余波", loading: "先让故事轻轻喘口气~", success: "一段安静时刻开始了~", instruction: "暂缓外部冲突，通过整理现场、短暂休息或一段自然对话沉淀上一轮事件，并埋下细小后续。" },
-  { id: "ensemble", title: "多人碰撞", loading: "大家的想法开始撞车啦~", success: "多人场面已经热闹起来~", instruction: "让至少两名在场角色基于各自目标产生不同意见、互补行动或轻微冲突，保持每个人的独立判断。", requiresMultiple: true },
+  { id: "clue", title: "线索浮现", loading: "正在翻找关键线索~", success: "线索已经悄悄落位~", instruction: "当前异常、人物动机或圣堂机制出现一条可验证的新线索。" },
+  { id: "shift", title: "环境异变", loading: "周围好像有点不对劲~", success: "场景已经开始变化~", instruction: "当前场景出现有因果依据的声音、物件变化、来客痕迹或空间异常。" },
+  { id: "bond", title: "关系事件", loading: "正在酝酿一点小默契~", success: "新的相处片段开场啦~", instruction: "在场人物遇到一件需要沟通、协作或互相判断的具体事件。" },
+  { id: "visitor", title: "意外消息", loading: "门外好像有新动静~", success: "新的动静已经出现~", instruction: "与现有事件直接相关的消息、远程联络或无名访客带来新的现场信息；不新增具名出场角色。" },
+  { id: "choice", title: "抉择分岔", loading: "命运正在摆出选项~", success: "下一步选择已经出现~", instruction: "当前事件出现两个均可执行但代价不同的行动方向。" },
+  { id: "pressure", title: "危机升级", loading: "气氛突然紧张起来了~", success: "新的麻烦已经登场~", instruction: "现有风险发生一级有依据的变化，同时保留能够应对的条件。" },
+  { id: "afterglow", title: "安静余波", loading: "先让故事轻轻喘口气~", success: "一段安静时刻开始了~", instruction: "外部冲突暂缓，在场人物获得整理现场、短暂休息或自然交谈的间隙。" },
+  { id: "ensemble", title: "多人碰撞", loading: "大家的想法开始撞车啦~", success: "多人场面已经热闹起来~", instruction: "至少两名在场角色因各自立场产生不同意见、互补行动或轻微冲突。", requiresMultiple: true },
 ];
 
 function pickAdvanceScenario(stat) {
@@ -2428,11 +2428,11 @@ function buildTogetherPrompt(stat, scenario) {
   const focus = activeRoleName || present[0] || "当前角色";
   const advance = scenario || pickAdvanceScenario(stat);
   return [
-    "【圣堂初遇｜故事接着走】承接当前剧情，保留已有变量与在场人物。",
-    `当前场景：${getPath(stat, "世界.场景", "圣言堂")}；焦点：${focus}；同场：${present.join("、") || "暂无"}。`,
+    "【剧情推进】承接当前正文，根据本轮方向写出下一段剧情。",
+    `当前场景：${getPath(stat, "世界.场景", "圣言堂")}；焦点角色：${focus}；实际在场：${present.join("、") || "暂无"}。`,
     `本轮推进：${advance.title}。${advance.instruction}`,
-    "先处理自己的目标与风险判断，再写相处。焦点决定镜头中心，不限制其他实际在场角色依照自身目标行动；多人可以产生不同甚至冲突的反应。评价基于可验证事实，关系变化对应本轮事件。",
-    "末尾按现有 MVU 更新规则，只更新本轮实际感知事件并产生反应的在场角色；没有正文依据的角色与变量保持原值。",
+    "角色依据各自性格、目标、已知信息和实际在场情况独立反应；关系变化以本轮实际互动为依据。",
+    "按现有 MVU 规则记录本轮正文中已经发生且被角色实际感知的变化；没有正文依据的角色与变量保持原值。",
   ].join("\n\n");
 }
 
