@@ -1412,16 +1412,20 @@ select:focus {
   line-height: 1.45;
 }
 .generation-live {
-  min-height: 24px;
+  height: 42px;
   margin-top: 8px;
   overflow: hidden;
-  padding: 3px 10px;
+  padding: 4px 10px;
   border-left: 1px solid rgba(226,192,138,.62);
   background: linear-gradient(90deg, rgba(226,192,138,.07), rgba(255,255,255,.018) 58%, transparent);
   color: rgba(232,224,211,.78);
-  font: 12px/18px "Noto Serif SC","Songti SC",serif;
-  white-space: nowrap;
-  text-overflow: ellipsis;
+  contain: layout paint;
+  font: 12px/17px "Noto Serif SC","Songti SC",serif;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 .summon-progress .meter {
   height: 4px;
@@ -1676,7 +1680,7 @@ select:focus {
   }
   .summon-progress h2 { font-size: 13px; }
   .summon-progress p { max-width: none; text-align: left; font-size: 11px; }
-  .generation-live { min-height: 21px; margin-top: 5px; font-size: 10.5px; line-height: 15px; }
+  .generation-live { height: 34px; margin-top: 5px; font-size: 10.5px; line-height: 13px; padding-block: 3px; }
   .summon-progress .meter { margin-top: 6px; }
   .page[data-page="4"] .foot { padding-top: 4px; }
   .page[data-page="4"] .foot .btn { min-height: 34px; padding: 7px 12px; white-space: nowrap; }
@@ -5331,6 +5335,17 @@ function setGenerationState(title, status, done = false, liveText) {
   if (typeof liveText === "string") setGenerationLive(liveText);
 }
 
+function openingPreviewWindow(text, maxLength = 108) {
+  const preview = sanitizeGenerationPreview(text);
+  if (!preview) return "";
+  if (preview.length <= maxLength) return preview;
+  const tail = preview.slice(-maxLength);
+  const sentenceStart = Math.max(tail.lastIndexOf("。"), tail.lastIndexOf("！"), tail.lastIndexOf("？"));
+  const softStart = Math.max(tail.lastIndexOf("，"), tail.lastIndexOf("；"), tail.lastIndexOf("、"));
+  const cutAt = sentenceStart >= 20 ? sentenceStart + 1 : (softStart >= 24 ? softStart + 1 : 0);
+  return `…${tail.slice(cutAt).trim()}`;
+}
+
 /** 首楼只用短辨识，完整档案交给世界书触发 */
 function clipVoice(text, max = 96) {
   let s = String(text || "").trim().replace(/\s+/g, "");
@@ -5468,6 +5483,7 @@ function buildOpeningPrompt(config, persona, enc) {
   const heroName = persona.姓名 || "{{user}}";
   return [
     "【开场白要求】根据以下配置，先输出一段 400–500 字的开场白正文。开场白负责呈现当前场景，使初遇女主实际进入事件，并写到她与{{user}}形成第一次可回应的互动为止；不继续解决事件，不总结后续剧情。叙事视角、称谓、文风与具体结构遵循当前预设。",
+    "【独立开局】这是一次全新的随机开场，不承接当前聊天记录、上一段剧情或用户刚刚提供的续写指令。",
     `【时代与世界】${config.era.title}：${config.era.prompt}`,
     `【故事类型】${config.storyType.title}：${config.storyType.prompt}`,
     `【故事氛围】${config.atmosphere.title}：${config.atmosphere.prompt}`,
@@ -5654,21 +5670,31 @@ function stopOpening(reason) {
 
 function scheduleStreamProgress(run, fullText) {
   run.hasStreamProgress = true;
-  const preview = sanitizeGenerationPreview(fullText);
-  run.pendingLength = preview.length;
-  if (preview) run.pendingPreview = preview;
+  const clean = sanitizeGenerationPreview(fullText);
+  run.pendingLength = clean.length;
+  if (clean) run.pendingPreview = openingPreviewWindow(clean);
   if (run.progressTimer) return;
   run.progressTimer = setTimeout(() => {
     run.progressTimer = null;
     if (run.cancelled || activeOpening !== run) return;
     const phase = streamPhaseForLength(run.pendingLength);
     const previewText = run.pendingPreview || phase.status;
-    const latest = previewText.length > 72 ? `…${previewText.slice(-72)}` : previewText;
-    if (run.streamPhaseTitle === phase.title && run.streamPreview === latest) return;
-    run.streamPhaseTitle = phase.title;
-    run.streamPreview = latest;
-    setGenerationState(phase.title, phase.status, false, latest);
-  }, 160);
+    const now = performance.now();
+    const previewDelta = Math.abs(previewText.length - String(run.streamPreview || "").length);
+    const shouldUpdateText = previewText !== run.streamPreview
+      && (previewDelta >= 6 || now - (run.lastPreviewAt || 0) >= 900);
+    const shouldUpdatePhase = run.streamPhaseTitle !== phase.title;
+    if (!shouldUpdatePhase && !shouldUpdateText) return;
+    if (shouldUpdatePhase) {
+      run.streamPhaseTitle = phase.title;
+      setGenerationState(phase.title, phase.status, false);
+    }
+    if (shouldUpdateText) {
+      run.streamPreview = previewText;
+      run.lastPreviewAt = now;
+      setGenerationLive(previewText);
+    }
+  }, 420);
 }
 
 function startWaitingProgress(run) {
@@ -5812,6 +5838,7 @@ async function startGame() {
       hasStreamProgress: false,
       streamPhaseTitle: "",
       streamPreview: "",
+      lastPreviewAt: 0,
       stopGeneration,
     };
     activeOpening = run;
@@ -5828,7 +5855,7 @@ async function startGame() {
     setGenerationState("召唤已经回应~", "来客的身影正在圣堂中显现。", false, "配置已就绪，等待模型开始回应。");
     startWaitingProgress(run);
     const raw = await runGeneration(
-      generateFn({ user_input: prompt, should_stream: true, generation_id: generationId }),
+      generateFn({ user_input: prompt, should_stream: true, generation_id: generationId, max_chat_history: 0 }),
       run,
       GEN_TIMEOUT_MS,
     );
