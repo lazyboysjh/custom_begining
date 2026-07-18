@@ -5380,9 +5380,29 @@ function clipVoice(text, max = 96) {
 }
 
 function openingGoal(enc) {
-  const seed = String(enc.污秽类型 || "").trim();
-  if (seed) return "弄清污秽成因并压下症状，同时判断此处是否安全";
+  const seed = clipVoice(enc.污秽类型, 14);
+  if (seed) return `确认“${seed}”的来源与影响`;
   return "确认污秽来源并保全自身";
+}
+
+function openingInitialDisposition(config) {
+  const byMeeting = {
+    seeking_help: ["求助接触", "警惕"],
+    converging_targets: ["目标交汇", "审视"],
+    commissioned_meeting: ["委托接触", "审慎"],
+    trapped_together: ["暂时协作", "紧张"],
+    relic_draw: ["线索牵连", "疑惑"],
+    unexpected_aid: ["初步接触", "错愕"],
+    deliberate_visit: ["主动接触", "审视"],
+    shared_journey: ["临时同行", "警觉"],
+    public_manifestation: ["现场协作", "警觉"],
+    shared_dream: ["梦境相识", "疑惑"],
+    mistaken_confrontation: ["暂时对峙", "戒备"],
+    hidden_agenda_invitation: ["受邀接触", "提防"],
+  };
+  const values = byMeeting[String(config.meetingMode && config.meetingMode.id || "")]
+    || ["初识", "审慎"];
+  return { 与user关系: values[0], 心情: values[1] };
 }
 
 function openingInitialRoleState(config, persona, enc) {
@@ -5390,6 +5410,7 @@ function openingInitialRoleState(config, persona, enc) {
   const meeting = String(config.meetingMode && config.meetingMode.title || "初次会面").trim();
   const hero = persona.姓名 || "眼前的圣堂代表";
   const goal = openingGoal(enc);
+  const disposition = openingInitialDisposition(config);
   return {
     污秽度: 40,
     好感度: 0,
@@ -5398,8 +5419,8 @@ function openingInitialRoleState(config, persona, enc) {
     外貌: enc.外貌,
     当前状态: `身处${scene}，正围绕${meeting}观察局势`,
     心里想法: `先${goal}，再判断${hero}是否可信。`.slice(0, 40),
-    与user关系: "初识",
-    心情: "审慎",
+    与user关系: disposition.与user关系,
+    心情: disposition.心情,
   };
 }
 
@@ -5539,14 +5560,14 @@ function buildOpeningPrompt(config, persona, enc) {
       "<Analysis>Opening facts only; update visible state, mood and inner thought from this opening.</Analysis>",
       "<JSONPatch>",
       "[",
-      `  { "op": "replace", "path": "${rolePath}/当前状态", "value": "根据正文更新当前可观察状态" },`,
-      `  { "op": "replace", "path": "${rolePath}/心里想法", "value": "第一人称15-40字，基于角色实际知道的信息" },`,
-      `  { "op": "replace", "path": "${rolePath}/与user关系", "value": "1-4个汉字" },`,
-      `  { "op": "replace", "path": "${rolePath}/心情", "value": "1-4个汉字" }`,
+      `  { "op": "replace", "path": "${rolePath}/当前状态", "value": "__CURRENT_STATE__" },`,
+      `  { "op": "replace", "path": "${rolePath}/心里想法", "value": "__INNER_THOUGHT__" },`,
+      `  { "op": "replace", "path": "${rolePath}/与user关系", "value": "__RELATION__" },`,
+      `  { "op": "replace", "path": "${rolePath}/心情", "value": "__MOOD__" }`,
       "]",
       "</JSONPatch>",
       "</UpdateVariable>",
-      "如正文确有依据，也可追加同一路径下的外貌、污秽度、好感度、堕落值、受孕进度补丁；无依据则不要写数值变化。",
+      "把上述双下划线占位值替换为正文中的具体事实，禁止原样输出占位值。如正文确有依据，也可追加同一路径下的外貌、污秽度、好感度、堕落值、受孕进度补丁；无依据则不要写数值变化。",
     ].join("\n"),
   ].join("\n");
 }
@@ -5668,6 +5689,7 @@ function buildOpeningGenerationConfig(prompt, generationId, useRaw) {
   const base = {
     user_input: prompt,
     should_stream: true,
+    should_silence: true,
     generation_id: generationId,
     max_chat_history: 0,
   };
@@ -5688,7 +5710,15 @@ function buildOpeningGenerationConfig(prompt, generationId, useRaw) {
   }
   return {
     ...base,
+    injects: [{
+      role: "system",
+      content: "本次请求只生成一张角色卡的独立第一条消息，不承接任何聊天、续写指令或既有回答。直接输出正文和指定变量块。",
+      position: "in_chat",
+      depth: 0,
+      should_scan: false,
+    }],
     overrides: {
+      dialogue_examples: "",
       chat_history: { prompts: [], with_depth_entries: false, author_note: "" },
     },
   };
@@ -5754,12 +5784,32 @@ const OPENING_ROLE_FIELDS = Object.freeze([
   "污秽度", "好感度", "堕落值", "受孕进度",
 ]);
 
-function validOpeningField(key, value) {
-  if (["污秽度", "好感度", "堕落值", "受孕进度"].includes(key)) return Number.isFinite(Number(value));
-  return typeof value === "string" && value.trim().length > 0;
+const OPENING_TEMPLATE_VALUES = new Set([
+  "__CURRENT_STATE__", "__INNER_THOUGHT__", "__RELATION__", "__MOOD__",
+  "根据正文更新当前可观察状态", "第一人称15-40字，基于角色实际知道的信息", "1-4个汉字",
+]);
+
+function normalizeOpeningField(key, value) {
+  if (["污秽度", "好感度", "堕落值", "受孕进度"].includes(key)) {
+    const number = Number(value);
+    return Number.isFinite(number) ? Math.min(100, Math.max(0, number)) : null;
+  }
+  if (typeof value !== "string") return null;
+  const text = value.trim();
+  if (!text || OPENING_TEMPLATE_VALUES.has(text) || /^__.+__$/.test(text)) return null;
+  if (key === "与user关系" || key === "心情") {
+    const tag = Array.from(text.replace(/[^\p{Script=Han}]/gu, "")).slice(0, 4).join("");
+    return tag || null;
+  }
+  if (key === "心里想法") {
+    const chars = Array.from(text);
+    if (chars.length < 15) return null;
+    return chars.slice(0, 40).join("");
+  }
+  return Array.from(text).slice(0, key === "当前状态" ? 120 : 240).join("");
 }
 
-function mergeOpeningData(initializedData, candidates, roleName) {
+function mergeOpeningData(initializedData, candidates, roleName, blockedFields = new Set()) {
   const merged = cloneOpeningData(initializedData);
   for (const candidate of candidates) {
     if (!hasOpeningStatData(candidate)) continue;
@@ -5767,26 +5817,46 @@ function mergeOpeningData(initializedData, candidates, roleName) {
     const mergedRole = merged.stat_data.角色 && merged.stat_data.角色[roleName];
     if (!candidateRole || !mergedRole) continue;
     for (const key of OPENING_ROLE_FIELDS) {
-      if (validOpeningField(key, candidateRole[key])) mergedRole[key] = candidateRole[key];
+      if (blockedFields.has(key)) continue;
+      const normalized = normalizeOpeningField(key, candidateRole[key]);
+      if (normalized !== null) mergedRole[key] = normalized;
     }
-    if (typeof candidate.stat_data.世界.场景 === "string" && candidate.stat_data.世界.场景.trim()) {
-      merged.stat_data.世界.场景 = candidate.stat_data.世界.场景;
+    const candidateScene = candidate.stat_data.世界 && candidate.stat_data.世界.场景;
+    if (typeof candidateScene === "string" && candidateScene.trim() && !OPENING_TEMPLATE_VALUES.has(candidateScene.trim())) {
+      merged.stat_data.世界.场景 = Array.from(candidateScene.trim()).slice(0, 120).join("");
     }
   }
   return merged;
 }
 
-function applyOpeningJsonPatchFallback(message, oldData, roleName) {
+function parseOpeningJsonPatches(message) {
   const match = String(message || "").match(/<JSONPatch>\s*([\s\S]*?)\s*<\/JSONPatch>/i);
   if (!match) return null;
-  let patches;
   try {
-    patches = JSON.parse(match[1]);
+    const patches = JSON.parse(match[1]);
+    return Array.isArray(patches) ? patches : null;
   } catch (error) {
     console.warn("开场变量 JSONPatch 解析失败", error);
     return null;
   }
-  if (!Array.isArray(patches)) return null;
+}
+
+function openingTemplateFields(message, roleName) {
+  const blocked = new Set();
+  const patches = parseOpeningJsonPatches(message) || [];
+  for (const patch of patches) {
+    if (!patch || typeof patch.path !== "string" || typeof patch.value !== "string") continue;
+    const segments = jsonPointerSegments(patch.path);
+    if (segments.length !== 3 || segments[0] !== "角色" || segments[1] !== roleName) continue;
+    const value = patch.value.trim();
+    if (OPENING_TEMPLATE_VALUES.has(value) || /^__.+__$/.test(value)) blocked.add(segments[2]);
+  }
+  return blocked;
+}
+
+function applyOpeningJsonPatchFallback(message, oldData, roleName) {
+  const patches = parseOpeningJsonPatches(message);
+  if (!patches) return null;
   const next = cloneOpeningData(oldData);
   let changed = false;
   for (const patch of patches) {
@@ -5833,12 +5903,12 @@ function stopOpening(reason) {
   if (run.streamHandle && typeof run.streamHandle.stop === "function") {
     try { run.streamHandle.stop(); } catch (_) {}
   }
-  if (run.timer) clearTimeout(run.timer);
   if (run.progressTimer) clearTimeout(run.progressTimer);
   if (run.waitingTimer) clearTimeout(run.waitingTimer);
   if (typeof run.stopGeneration === "function") {
     try { run.stopGeneration(run.generationId); } catch (_) {}
   }
+  if (typeof run.cancelReject === "function") run.cancelReject(run.cancelReason);
   activeOpening = null;
 }
 
@@ -5892,16 +5962,26 @@ function startWaitingProgress(run) {
 
 function runGeneration(generatePromise, run, timeoutMs) {
   return new Promise((resolve, reject) => {
+    let settled = false;
+    const settle = (handler, value) => {
+      if (settled) return;
+      settled = true;
+      if (run.timer) clearTimeout(run.timer);
+      run.timer = null;
+      run.cancelReject = null;
+      handler(value);
+    };
+    run.cancelReject = reason => settle(reject, new Error(reason || "生成已取消"));
     run.timer = setTimeout(() => {
       if (typeof run.stopGeneration === "function") {
         try { run.stopGeneration(run.generationId); } catch (_) {}
       }
-      reject(new Error("开局生成超时（" + Math.round(timeoutMs / 1000) + "s）"));
+      settle(reject, new Error("开局生成超时（" + Math.round(timeoutMs / 1000) + "s）"));
     }, timeoutMs);
-    Promise.resolve(generatePromise).then(resolve, reject).finally(() => {
-      if (run.timer) clearTimeout(run.timer);
-      run.timer = null;
-    });
+    Promise.resolve(generatePromise).then(
+      value => settle(resolve, value),
+      error => settle(reject, error),
+    );
   });
 }
 
@@ -6009,6 +6089,7 @@ async function startGame() {
       timer: null,
       progressTimer: null,
       waitingTimer: null,
+      cancelReject: null,
       pendingLength: 0,
       pendingPreview: "",
       hasStreamProgress: false,
@@ -6027,6 +6108,7 @@ async function startGame() {
     }
 
     const oldData = await waitOpeningMvuData(Mvu, 6000);
+    assertOpeningCanCommit(run, getMsgs);
     const initializedData = applyOpeningInitialization(oldData, config, persona, enc);
     setGenerationState("召唤已经回应~", "来客的身影正在圣堂中显现。", false, "配置已就绪，等待模型开始回应。");
     startWaitingProgress(run);
@@ -6049,8 +6131,15 @@ async function startGame() {
     } catch (parseError) {
       console.warn("MVU 未能完整解析开场变量，将保留可用字段和本次开局语境", parseError);
     }
-    const fallbackData = applyOpeningJsonPatchFallback(text, initializedData, enc.姓名);
-    const finalData = mergeOpeningData(initializedData, [parsedData, fallbackData], enc.姓名);
+    const parsedChanged = parsedData && openingPatchChanged(initializedData, parsedData, enc.姓名);
+    const fallbackData = parsedChanged ? null : applyOpeningJsonPatchFallback(text, initializedData, enc.姓名);
+    const blockedFields = openingTemplateFields(text, enc.姓名);
+    const finalData = mergeOpeningData(
+      initializedData,
+      parsedChanged ? [parsedData] : [fallbackData],
+      enc.姓名,
+      blockedFields,
+    );
     if (!openingPatchChanged(initializedData, finalData, enc.姓名)) {
       console.warn("模型未返回可用的开场变量补丁，已使用本次开局配置生成的语境化初值");
     }
