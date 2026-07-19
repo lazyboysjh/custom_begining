@@ -6356,6 +6356,7 @@ function openingInitialRoleState(config, persona, enc) {
     好感度: 0,
     堕落值: 0,
     受孕进度: 0,
+    有孕: false,
     外貌: enc.外貌,
     当前状态: `身处${scene}，正围绕${meeting}观察局势`,
     心里想法: `先${goal}，再判断${hero}是否可信。`,
@@ -6574,7 +6575,7 @@ function buildOpeningPrompt(config, persona, enc) {
       "]",
       "</JSONPatch>",
       "</UpdateVariable>",
-      "把上述双下划线占位值替换为正文中的具体事实，禁止原样输出占位值。如正文确有依据，也可追加同一路径下的外貌、污秽度、好感度、堕落值、受孕进度补丁；无依据则不要写数值变化。",
+      "把上述双下划线占位值替换为正文中的具体事实，禁止原样输出占位值。如正文确有依据，也可追加同一路径下的外貌、污秽度、好感度、堕落值、受孕进度、有孕补丁；无依据则不要写变化。",
     ].join("\n"),
   ].join("\n");
 }
@@ -6938,13 +6939,13 @@ function openingPatchChanged(before, after, roleName) {
   const beforeRole = before && before.stat_data && before.stat_data.角色 && before.stat_data.角色[roleName];
   const afterRole = after && after.stat_data && after.stat_data.角色 && after.stat_data.角色[roleName];
   if (!beforeRole || !afterRole) return false;
-  return ["当前状态", "心里想法", "与user关系", "心情", "外貌", "污秽度", "好感度", "堕落值", "受孕进度"]
+  return ["当前状态", "心里想法", "与user关系", "心情", "外貌", "污秽度", "好感度", "堕落值", "受孕进度", "有孕"]
     .some(key => JSON.stringify(beforeRole[key]) !== JSON.stringify(afterRole[key]));
 }
 
 const OPENING_ROLE_FIELDS = Object.freeze([
   "当前状态", "心里想法", "与user关系", "心情", "外貌",
-  "污秽度", "好感度", "堕落值", "受孕进度",
+  "污秽度", "好感度", "堕落值", "受孕进度", "有孕",
 ]);
 
 const OPENING_TEMPLATE_VALUES = new Set([
@@ -6953,6 +6954,12 @@ const OPENING_TEMPLATE_VALUES = new Set([
 ]);
 
 function normalizeOpeningField(key, value) {
+  if (key === "有孕") {
+    if (value === true || value === false) return value;
+    if (value === "true") return true;
+    if (value === "false") return false;
+    return null;
+  }
   if (["污秽度", "好感度", "堕落值", "受孕进度"].includes(key)) {
     const number = Number(value);
     return Number.isFinite(number) ? Math.min(100, Math.max(0, number)) : null;
