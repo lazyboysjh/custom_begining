@@ -772,7 +772,7 @@ select:focus {
 .narrative-style-copy strong { display:block; color:#e7d7bc; font-size:12px; font-weight:500; }
 .style-segments {
   display:grid;
-  grid-template-columns:1fr 1fr;
+  grid-template-columns:repeat(3,minmax(0,1fr));
   min-width:0;
   padding:3px;
   border:1px solid rgba(226,192,138,.2);
@@ -785,7 +785,8 @@ select:focus {
   background:transparent;
   color:#aaa198;
   font:inherit;
-  font-size:11px;
+  font-size:10.5px;
+  white-space:nowrap;
   cursor:pointer;
   transition:color .2s ease, background .2s ease, box-shadow .2s ease;
 }
@@ -2339,6 +2340,7 @@ select:focus {
           <div class="style-segments" role="group" aria-label="叙事文风">
             <button class="style-option" type="button" data-narrative-style="light_novel" aria-pressed="true">日式轻小说</button>
             <button class="style-option" type="button" data-narrative-style="fetish" aria-pressed="false">恋物文风</button>
+            <button class="style-option" type="button" data-narrative-style="none" aria-pressed="false">关闭文风</button>
           </div>
         </div>
         <div class="ability-picker-row">
@@ -6427,7 +6429,7 @@ function inputText(id, fallback = "", maxLength = 80) {
   return (value || fallback).slice(0, maxLength);
 }
 
-const NARRATIVE_STYLE_IDS = Object.freeze(["light_novel", "fetish"]);
+const NARRATIVE_STYLE_IDS = Object.freeze(["light_novel", "fetish", "none"]);
 
 async function waitForStyleApi(names, timeoutMs = 3000) {
   const started = Date.now();
