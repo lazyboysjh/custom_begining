@@ -5292,9 +5292,9 @@ const STREAM_PHASES = Object.freeze([
 
 const WAITING_PHASES = Object.freeze([
   { after: 0, title: "正在召唤，请稍候~", status: "圣堂正在等待异界回应。" },
-  { after: 5000, title: "回响还在路上~", status: "连接仍在继续，请稍候。" },
-  { after: 15000, title: "正在辨认异界回响~", status: "完整回应抵达后会立即展开初遇。" },
-  { after: 30000, title: "召唤仍在继续~", status: "这次回应稍慢，圣堂仍保持连接。" },
+  { after: 5000, title: "完整开场仍在生成~", status: "当前连接暂未返回流式文字，请耐心等待完整开场。" },
+  { after: 15000, title: "正在等待完整回应~", status: "非流式或较慢的连接会在生成完成后一次性显示，请耐心等待；完整回应抵达后会立即展开初遇。" },
+  { after: 30000, title: "召唤仍在继续~", status: "模型仍在生成完整开场，请不要重复点击。" },
 ]);
 
 function streamPhaseForLength(length) {
@@ -5656,12 +5656,41 @@ function getApi(name) {
   return null;
 }
 
-async function waitMvu(timeout = 2500) {
-  const start = Date.now();
-  while (Date.now() - start < timeout) {
-    const Mvu = window.Mvu || (window.parent && window.parent.Mvu);
-    if (Mvu && Mvu.parseMessage) return Mvu;
-    await new Promise(r => setTimeout(r, 80));
+function resolveMvu() {
+  const roots = [];
+  try { roots.push(window); } catch (_) {}
+  try { if (window.parent && window.parent !== window) roots.push(window.parent); } catch (_) {}
+  try { if (window.top && window.top !== window) roots.push(window.top); } catch (_) {}
+  for (const root of roots) {
+    try {
+      if (root && root.Mvu && typeof root.Mvu.parseMessage === "function") return root.Mvu;
+    } catch (_) {}
+  }
+  return null;
+}
+
+async function waitMvu(timeout = 15000) {
+  const startedAt = Date.now();
+  const ready = resolveMvu();
+  if (ready) return ready;
+  const waitGlobal = getApi("waitGlobalInitialized");
+  if (waitGlobal) {
+    try {
+      const reserve = Math.min(1000, Math.max(50, timeout * 0.1));
+      const initialized = await Promise.race([
+        Promise.resolve(waitGlobal("Mvu")),
+        new Promise(resolve => setTimeout(() => resolve(null), Math.max(0, timeout - reserve))),
+      ]);
+      if (initialized && typeof initialized.parseMessage === "function") return initialized;
+    } catch (error) {
+      console.warn("等待 MVU 全局初始化失败，将继续检查运行时", error);
+    }
+  }
+  const deadline = Date.now() + Math.max(0, timeout - (Date.now() - startedAt));
+  while (Date.now() < deadline) {
+    const Mvu = resolveMvu();
+    if (Mvu) return Mvu;
+    await new Promise(resolve => setTimeout(resolve, 100));
   }
   return null;
 }
@@ -5673,11 +5702,17 @@ function hasOpeningStatData(data) {
 
 async function waitOpeningMvuData(Mvu, timeout = 5000) {
   const start = Date.now();
+  let lastError = null;
   while (Date.now() - start < timeout) {
-    const data = Mvu.getMvuData({ type: "message", message_id: 0 });
-    if (hasOpeningStatData(data)) return data;
+    try {
+      const data = Mvu.getMvuData({ type: "message", message_id: 0 });
+      if (hasOpeningStatData(data)) return data;
+    } catch (error) {
+      lastError = error;
+    }
     await new Promise(r => setTimeout(r, 100));
   }
+  if (lastError) console.warn("开局楼层变量尚未完成初始化", lastError);
   throw new Error("开局数据尚未就绪，请重新读取后再试。");
 }
 
@@ -5947,6 +5982,19 @@ function startWaitingProgress(run) {
   const update = () => {
     if (run.cancelled || activeOpening !== run || run.hasStreamProgress) return;
     const elapsed = performance.now() - startedAt;
+    if (!run.streamExpected && elapsed < 5000) {
+      if (currentTitle !== "正在生成完整开场~") {
+        currentTitle = "正在生成完整开场~";
+        setGenerationState(
+          currentTitle,
+          "当前环境会在生成完成后一次性返回内容，请耐心等待。",
+          false,
+          "没有流式文字属于正常情况，完整开场生成后会自动显示。",
+        );
+      }
+      run.waitingTimer = setTimeout(update, 500);
+      return;
+    }
     let phase = WAITING_PHASES[0];
     for (const item of WAITING_PHASES) {
       if (elapsed >= item.after) phase = item;
@@ -6067,9 +6115,10 @@ async function startGame() {
   const GEN_TIMEOUT_MS = 120000;
 
   try {
-    const Mvu = await waitMvu(5000);
+    setGenerationState("正在准备开局组件~", "正在等待 MVU 与开局变量完成初始化。", false, "首次载入或脚本较多时可能需要十几秒，请稍候。");
+    const Mvu = await waitMvu(15000);
     if (attemptId !== state.attemptId) throw new Error("生成已取消");
-    if (!Mvu) throw new Error("开局组件尚未就绪，请稍后重试。");
+    if (!Mvu) throw new Error("未检测到 MVU 变量框架，请确认已安装并启用 MVU，然后重新打开聊天。");
     if (!generateFn || !setMsgs || !getMsgs) throw new Error("当前环境暂不支持生成，请检查酒馆助手后重试。");
     const floor0 = (getMsgs(0, { include_swipes: false }) || [])[0];
     if (!floor0) throw new Error("无法读取当前开局页面，请重新打开后再试。");
@@ -6096,6 +6145,7 @@ async function startGame() {
       streamPhaseTitle: "",
       streamPreview: "",
       lastPreviewAt: 0,
+      streamExpected: typeof eventOn === "function",
       stopGeneration,
     };
     activeOpening = run;
@@ -6104,10 +6154,15 @@ async function startGame() {
         if (generationId !== run.generationId || run.cancelled) return;
         scheduleStreamProgress(run, fullText);
       };
-      run.streamHandle = eventOn(streamEvt, onStream);
+      try {
+        run.streamHandle = eventOn(streamEvt, onStream);
+      } catch (error) {
+        run.streamExpected = false;
+        console.warn("流式事件监听不可用，将等待完整回复", error);
+      }
     }
 
-    const oldData = await waitOpeningMvuData(Mvu, 6000);
+    const oldData = await waitOpeningMvuData(Mvu, 12000);
     assertOpeningCanCommit(run, getMsgs);
     const initializedData = applyOpeningInitialization(oldData, config, persona, enc);
     setGenerationState("召唤已经回应~", "来客的身影正在圣堂中显现。", false, "配置已就绪，等待模型开始回应。");
