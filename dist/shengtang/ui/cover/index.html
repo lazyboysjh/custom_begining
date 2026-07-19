@@ -5695,17 +5695,37 @@ async function waitMvu(timeout = 15000) {
   return null;
 }
 
+function openingMessageId() {
+  const getCurrentMessageId = getApi("getCurrentMessageId");
+  if (getCurrentMessageId) {
+    try {
+      const messageId = Number(getCurrentMessageId());
+      if (Number.isInteger(messageId) && messageId >= 0) return messageId;
+    } catch (error) {
+      console.warn("读取封面所在楼层失败，将按首楼兼容处理", error);
+    }
+  }
+  return 0;
+}
+
 function hasOpeningStatData(data) {
   const stat = data && data.stat_data;
   return !!(stat && stat.世界 && stat.主角 && stat.角色);
 }
 
-async function waitOpeningMvuData(Mvu, timeout = 5000) {
+async function waitOpeningMvuData(Mvu, messageId, getVariables, timeout = 5000) {
   const start = Date.now();
   let lastError = null;
   while (Date.now() - start < timeout) {
     try {
-      const data = Mvu.getMvuData({ type: "message", message_id: 0 });
+      if (getVariables) {
+        const variables = getVariables({ type: "message", message_id: messageId });
+        if (!hasOpeningStatData(variables)) {
+          await new Promise(r => setTimeout(r, 100));
+          continue;
+        }
+      }
+      const data = Mvu.getMvuData({ type: "message", message_id: messageId });
       if (hasOpeningStatData(data)) return data;
     } catch (error) {
       lastError = error;
@@ -5903,6 +5923,15 @@ function applyOpeningJsonPatchFallback(message, oldData, roleName) {
 }
 
 let activeOpening = null;
+let mvuReadyPromise = waitMvu(30000);
+
+async function getReadyMvu() {
+  let Mvu = await mvuReadyPromise;
+  if (Mvu) return Mvu;
+  mvuReadyPromise = waitMvu(15000);
+  Mvu = await mvuReadyPromise;
+  return Mvu;
+}
 
 function currentChatId() {
   try {
@@ -5918,9 +5947,9 @@ function currentChatId() {
 function assertOpeningCanCommit(run, getMsgs) {
   if (run.cancelled) throw new Error(run.cancelReason || "生成已取消");
   if (run.chatId && currentChatId() !== run.chatId) throw new Error("聊天已切换，开局未写入");
-  const latestFloor0 = (getMsgs(0, { include_swipes: false }) || [])[0];
-  if (!latestFloor0 || String(latestFloor0.message || "") !== run.originalMessage) {
-    throw new Error("0 楼内容已变化，开局未覆盖");
+  const latestOpening = (getMsgs(run.messageId, { include_swipes: false }) || [])[0];
+  if (!latestOpening || String(latestOpening.message || "") !== run.originalMessage) {
+    throw new Error("开局楼层内容已变化，未执行覆盖");
   }
 }
 
@@ -5932,6 +5961,12 @@ function stopOpening(reason) {
   state.revealResolve = null;
   const stage = $("#revealStage");
   if (stage) stage.classList.remove("summoning");
+  state.starting = false;
+  const startButton = $("#btnStart");
+  if (startButton) {
+    startButton.disabled = false;
+    setStartReady();
+  }
   if (!run) return;
   run.cancelled = true;
   run.cancelReason = reason || "已取消";
@@ -6108,6 +6143,7 @@ async function startGame() {
   const useRawGeneration = !!rawGenerateFn;
   const setMsgs = getApi("setChatMessages");
   const getMsgs = getApi("getChatMessages");
+  const getVariables = getApi("getVariables");
   const eventOn = getApi("eventOn");
   const stopGeneration = getApi("stopGenerationById");
   const streamEvt = (typeof iframe_events !== "undefined" && iframe_events.STREAM_TOKEN_RECEIVED_FULLY)
@@ -6116,22 +6152,25 @@ async function startGame() {
 
   try {
     setGenerationState("正在准备开局组件~", "正在等待 MVU 与开局变量完成初始化。", false, "首次载入或脚本较多时可能需要十几秒，请稍候。");
-    const Mvu = await waitMvu(15000);
+    const Mvu = await getReadyMvu();
     if (attemptId !== state.attemptId) throw new Error("生成已取消");
     if (!Mvu) throw new Error("未检测到 MVU 变量框架，请确认已安装并启用 MVU，然后重新打开聊天。");
     if (!generateFn || !setMsgs || !getMsgs) throw new Error("当前环境暂不支持生成，请检查酒馆助手后重试。");
-    const floor0 = (getMsgs(0, { include_swipes: false }) || [])[0];
-    if (!floor0) throw new Error("无法读取当前开局页面，请重新打开后再试。");
+    const messageId = openingMessageId();
+    const openingFloor = (getMsgs(messageId, { include_swipes: false }) || [])[0];
+    if (!openingFloor) throw new Error("无法读取当前开局页面，请重新打开后再试。");
 
     const generationId = "shengtang-opening-" + Date.now() + "-" + Math.random().toString(36).slice(2, 9);
     const run = {
       generationId,
       generation_id: generationId,
+      attemptId,
+      messageId,
       config: config,
       revealDone: false,
       generationDone: false,
       chatId: currentChatId(),
-      originalMessage: String(floor0.message || ""),
+      originalMessage: String(openingFloor.message || ""),
       cancelled: false,
       cancelReason: "",
       streamHandle: null,
@@ -6162,7 +6201,7 @@ async function startGame() {
       }
     }
 
-    const oldData = await waitOpeningMvuData(Mvu, 12000);
+    const oldData = await waitOpeningMvuData(Mvu, messageId, getVariables, 12000);
     assertOpeningCanCommit(run, getMsgs);
     const initializedData = applyOpeningInitialization(oldData, config, persona, enc);
     setGenerationState("召唤已经回应~", "来客的身影正在圣堂中显现。", false, "配置已就绪，等待模型开始回应。");
@@ -6182,7 +6221,7 @@ async function startGame() {
     assertOpeningCanCommit(run, getMsgs);
     let parsedData = null;
     try {
-      parsedData = await Mvu.parseMessage(text, initializedData);
+      parsedData = await Mvu.parseMessage(text, cloneOpeningData(initializedData));
     } catch (parseError) {
       console.warn("MVU 未能完整解析开场变量，将保留可用字段和本次开局语境", parseError);
     }
@@ -6202,13 +6241,14 @@ async function startGame() {
     if (run.streamHandle && typeof run.streamHandle.stop === "function") run.streamHandle.stop();
     if (run.progressTimer) clearTimeout(run.progressTimer);
     await setMsgs(
-      [{ message_id: 0, message: openingMessage(text), data: finalData }],
+      [{ message_id: run.messageId, message: openingMessage(text), data: finalData }],
       { refresh: "affected" },
     );
     activeOpening = null;
     state.starting = false;
     setGenerationState("来客已现身~", "初遇已展开，轮到你回应。", true, "开场白与人物状态均已就绪。");
   } catch (error) {
+    if (attemptId !== state.attemptId) return;
     stopOpening(error && error.message ? error.message : String(error));
     console.error(error);
     if (warn) warn.textContent = "召唤暂未回应，请返回后再次尝试。";
@@ -6240,9 +6280,6 @@ function init() {
   $("#btnStart").onclick = () => startGame();
   $("#btnCancelGeneration").onclick = () => {
     stopOpening("用户取消生成");
-    state.starting = false;
-    const startButton = $("#btnStart");
-    if (startButton) { startButton.disabled = false; setStartReady(); }
     setGenerationState("召唤尚未完成", "可以调整能力后再次尝试。", false, "没有写入正文或人物状态。");
     showPage(2);
   };

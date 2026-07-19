@@ -2669,6 +2669,19 @@ function paintCarousel(offsetPx) {
   track.style.transform = `translate3d(${x}px,0,0)`;
 }
 
+function renderedFactLineCount(text) {
+  if (!text || typeof document.createRange !== "function") return 0;
+  const range = document.createRange();
+  range.selectNodeContents(text);
+  const tops = [];
+  for (const rect of Array.from(range.getClientRects())) {
+    if (rect.width <= 0 || rect.height <= 0) continue;
+    if (!tops.some(top => Math.abs(top - rect.top) < 1)) tops.push(rect.top);
+  }
+  if (typeof range.detach === "function") range.detach();
+  return tops.length;
+}
+
 function exceedsFactLines(text, maxLines = 3) {
   if (!text || text.clientWidth <= 0) return false;
   const computed = getComputedStyle(text);
@@ -2678,10 +2691,13 @@ function exceedsFactLines(text, maxLines = 3) {
   text.style.setProperty("display", "block", "important");
   text.style.setProperty("-webkit-line-clamp", "unset", "important");
   text.style.setProperty("overflow", "visible", "important");
+  const renderedLines = renderedFactLineCount(text);
   const naturalHeight = text.scrollHeight;
   if (previousStyle === null) text.removeAttribute("style");
   else text.setAttribute("style", previousStyle);
-  return naturalHeight > lineHeight * maxLines + 1;
+  return renderedLines > 0
+    ? renderedLines > maxLines
+    : naturalHeight > lineHeight * maxLines + 1;
 }
 
 function markFactClamp(scope) {
