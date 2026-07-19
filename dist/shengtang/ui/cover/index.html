@@ -2139,7 +2139,7 @@ select:focus {
   backdrop-filter: blur(7px) saturate(.9);
   transition: opacity .58s var(--ease), transform .58s var(--ease), filter .58s;
 }
-.selection-brief.pending { opacity: 0; transform: translateX(16px); filter: blur(4px); pointer-events: none; }
+.selection-brief.pending { visibility: hidden; opacity: 0; transform: translateX(16px); filter: blur(4px); pointer-events: none; }
 .selection-brief.measuring { transform: none; }
 .selection-eyebrow { color: #d9b978; font-size: 10px; letter-spacing: .22em; text-shadow: 0 1px 3px #000; }
 .selection-brief h1 { margin: 8px 0; color: #fff2d8; font-size: clamp(27px, 4vw, 42px); text-shadow: 0 2px 12px rgba(0,0,0,.88); }
@@ -2198,17 +2198,26 @@ select:focus {
   #app .page[data-page="4"]::before { background-position: 55% 50%; }
   #app .page[data-page="1"] .page-body::before { right:-22%; top:8%; width:76vw; height:44vw; }
   #app .page[data-page="1"] .page-body::after { right:-8%; top:17%; width:54vw; height:34vw; }
-  .selection-shell { grid-template-columns: 1fr; align-content:start; gap:8px; padding:6px 0; overflow-y:auto; }
-  .selection-summon { min-height:330px; height:330px; flex:0 0 auto; }
+  .selection-shell {
+    height: calc(100% - 24px);
+    grid-template-columns: 1fr;
+    grid-template-rows: minmax(250px,1fr) auto;
+    align-content:stretch;
+    gap:6px;
+    padding:4px 0 0;
+    overflow:hidden;
+  }
+  .selection-summon { min-height:0; height:auto; }
   .selection-ritual { width:min(92vw,390px); }
   .selection-orbit { --selection-orbit-radius:min(31vw,140px); }
   .selection-orbit-node span { min-width:68px; max-width:102px; padding:4px 6px; font-size:8px; }
   .selection-card { width:min(86%,360px); min-height:180px; padding:20px; }
   .selection-reel { top:8%; font-size:12px; }
-  .selection-brief { padding:10px 12px 12px; border-left:0; border-top:1px solid rgba(226,192,138,.28); background:linear-gradient(180deg, rgba(5,6,8,.62), rgba(5,6,8,.28)); }
+  .selection-brief { padding:7px 10px 8px; border-left:0; border-top:1px solid rgba(226,192,138,.28); background:linear-gradient(180deg, rgba(5,6,8,.62), rgba(5,6,8,.28)); }
   .selection-brief h1, .selection-brief > p, .selection-count { display:none; }
-  .selection-facts { margin-top:2px; }
-  .selection-fact { padding:8px 0; }
+  .selection-eyebrow { display:none; }
+  .selection-facts { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:0 10px; margin-top:0; }
+  .selection-fact { grid-template-columns:4.8em minmax(0,1fr); gap:5px; padding:5px 0; line-height:1.4; }
   .opening-layout { grid-template-columns:1fr; align-content:start; gap:16px; padding:14px 7px; overflow-y:auto; overflow-x:hidden; }
   .opening-layout::before { right:-26%; top:8%; width:78vw; height:44vw; }
   .opening-confirmed { display:grid; grid-template-columns:52px minmax(0,1fr); column-gap:14px; padding:0 0 15px; border-right:0; border-bottom:1px solid rgba(255,255,255,.07); }
@@ -2224,7 +2233,23 @@ select:focus {
   #app .page[data-page="3"] > .foot [data-selection-back] { flex:0 0 42px !important; }
   #app .page[data-page="3"] > .foot [data-selection-back] .btn-label { display:none !important; }
 }
-@media (max-width: 760px) and (max-height: 460px) {
+@media (min-width: 500px) and (max-width: 760px) and (max-height: 460px) {
+  .selection-shell {
+    grid-template-columns:minmax(250px,1.2fr) minmax(190px,.8fr);
+    grid-template-rows:1fr;
+    align-items:center;
+    gap:8px;
+  }
+  .selection-summon { min-height:0; height:100%; }
+  .selection-ritual { width:min(54vw,310px); }
+  .selection-orbit { --selection-orbit-radius:min(18vw,112px); }
+  .selection-card { width:min(82%,300px); min-height:140px; padding:13px 16px 11px; }
+  .selection-work { margin-top:7px; }
+  .selection-name { font-size:27px; }
+  .selection-blurb { margin-top:7px; line-height:1.5; -webkit-line-clamp:2; }
+  .selection-brief { align-self:center; max-height:100%; padding:6px 8px; border-top:0; border-left:1px solid rgba(226,192,138,.28); overflow:hidden; }
+  .selection-facts { grid-template-columns:1fr; }
+  .selection-fact { grid-template-columns:4.8em minmax(0,1fr); padding:4px 0; }
   .opening-layout { gap:8px; padding-block:5px; }
   .opening-confirmed { grid-template-columns:44px minmax(0,1fr); column-gap:10px; padding-bottom:7px; }
   .opening-seal { width:44px; height:44px; font-size:19px; }
@@ -6201,6 +6226,23 @@ function streamPhaseForLength(length) {
   return phase;
 }
 
+function openingErrorCopy(error) {
+  const message = String(error && error.message ? error.message : error || "");
+  if (/compiling ejs|missing \) after argument list|ejs/i.test(message)) {
+    return "开场规则加载失败，请重新导入最新版角色卡后再试。本次没有写入正文或人物状态。";
+  }
+  if (/timed?\s*out|超时|120000/i.test(message)) {
+    return "模型等待时间较长，本次开场未能完成。请确认连接正常后重试，避免连续点击。";
+  }
+  if (/生成内容为空|empty/i.test(message)) {
+    return "模型没有返回可用正文，请重试。本次没有写入正文或人物状态。";
+  }
+  if (/MVU|开局数据尚未就绪|变量框架/i.test(message)) {
+    return "开局组件尚未准备完成，请稍候片刻后重试；若持续出现，请确认 MVU 已安装并启用。";
+  }
+  return "本次开场未能完成，请检查连接后重试。本次没有写入正文或人物状态。";
+}
+
 function asGenerationText(raw) {
   if (typeof raw === "string") {
     const value = raw.trim();
@@ -7357,9 +7399,10 @@ async function startGame(configOverride = state.selectionConfig) {
     if (attemptId !== state.attemptId) return;
     stopOpening(error && error.message ? error.message : String(error));
     console.error(error);
-    if (warn) warn.textContent = "召唤暂未回应，请返回后再次尝试。";
+    const errorCopy = openingErrorCopy(error);
+    if (warn) warn.textContent = errorCopy;
     $("#generationEyebrow").textContent = "NO RESPONSE";
-    setGenerationState("召唤暂未回应", "可以返回选角后再次尝试。", true, error && error.message ? error.message : "没有写入正文或人物状态。");
+    setGenerationState("召唤暂未回应", "可以返回选角后再次尝试。", true, errorCopy);
     resetButtons();
   }
 }

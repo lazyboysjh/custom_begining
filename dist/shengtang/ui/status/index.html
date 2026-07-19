@@ -28,7 +28,7 @@ html, body {
   margin: 0; padding: 0; width: 100%; overflow-x: hidden;
   background: transparent; color: var(--st-text);
   font-family: var(--st-sans); font-size: 13px; line-height: 1.5;
-  -webkit-font-smoothing: antialiased;
+  -webkit-font-smoothing: auto;
 }
 button { font: inherit; -webkit-tap-highlight-color: transparent; }
 .status-state {
@@ -155,16 +155,16 @@ button { font: inherit; -webkit-tap-highlight-color: transparent; }
 .carousel { overflow: hidden; touch-action: pan-y; cursor: grab; }
 .carousel:active { cursor: grabbing; }
 .carousel-track {
-  display: flex; will-change: transform;
+  display: flex;
   transition: transform .48s cubic-bezier(.22,1,.36,1);
 }
 .carousel-track.dragging { transition: none; }
 .slide {
   flex: 0 0 100%; width: 100%; padding: 10px 32px 8px; box-sizing: border-box;
-  opacity: .4; transform: scale(.97);
-  transition: opacity .42s var(--st-ease), transform .42s var(--st-ease);
+  opacity: .4;
+  transition: opacity .42s var(--st-ease);
 }
-.slide.is-active { opacity: 1; transform: scale(1); }
+.slide.is-active { opacity: 1; }
 
 .hero {
   margin: 0; padding: 2px 2px 12px;
@@ -3015,8 +3015,8 @@ function paintCarousel(offsetPx) {
   if (!track) return;
   const names = presentRoles(currentStat);
   const idx = Math.max(0, names.indexOf(activeRoleName));
-  const x = -idx * carouselWidth() + (offsetPx || 0);
-  track.style.transform = `translate3d(${x}px,0,0)`;
+  const x = Math.round(-idx * carouselWidth() + (offsetPx || 0));
+  track.style.transform = `translateX(${x}px)`;
 }
 
 function renderedFactLineCount(text) {
