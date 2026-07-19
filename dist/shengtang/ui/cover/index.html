@@ -6188,8 +6188,8 @@ const STREAM_PHASES = Object.freeze([
 
 const WAITING_PHASES = Object.freeze([
   { after: 0, title: "正在召唤，请稍候~", status: "圣堂正在等待异界回应。" },
-  { after: 5000, title: "完整开场仍在生成~", status: "当前连接暂未返回流式文字，请耐心等待完整开场。" },
-  { after: 15000, title: "正在等待完整回应~", status: "非流式或较慢的连接会在生成完成后一次性显示，请耐心等待；完整回应抵达后会立即展开初遇。" },
+  { after: 5000, title: "完整开场仍在生成~", status: "暂未收到可显示的文字，请耐心等待完整开场。" },
+  { after: 15000, title: "正在等待完整回应~", status: "模型可能仍在生成，也可能在完成后一次性返回；完整回应抵达后会立即展开初遇。" },
   { after: 30000, title: "召唤仍在继续~", status: "模型仍在生成完整开场，请不要重复点击。" },
 ]);
 
@@ -7085,19 +7085,6 @@ function startWaitingProgress(run) {
   const update = () => {
     if (run.cancelled || activeOpening !== run || run.hasStreamProgress) return;
     const elapsed = performance.now() - startedAt;
-    if (!run.streamExpected && elapsed < 5000) {
-      if (currentTitle !== "正在生成完整开场~") {
-        currentTitle = "正在生成完整开场~";
-        setGenerationState(
-          currentTitle,
-          "当前环境会在生成完成后一次性返回内容，请耐心等待。",
-          false,
-          "没有流式文字属于正常情况，完整开场生成后会自动显示。",
-        );
-      }
-      run.waitingTimer = setTimeout(update, 500);
-      return;
-    }
     let phase = WAITING_PHASES[0];
     for (const item of WAITING_PHASES) {
       if (elapsed >= item.after) phase = item;
@@ -7323,7 +7310,7 @@ async function startGame(configOverride = state.selectionConfig) {
     const oldData = await waitOpeningMvuData(Mvu, messageId, getVariables, 12000);
     assertOpeningCanCommit(run, getMsgs);
     const initializedData = applyOpeningInitialization(oldData, config, persona, enc);
-    setGenerationState("召唤已经回应~", "来客的身影正在圣堂中显现。", false, "配置已就绪，等待模型开始回应。");
+    setGenerationState("召唤请求已送出~", "圣堂正在等待异界回应。", false, "配置已就绪，正在等待模型开始生成。");
     startWaitingProgress(run);
     const raw = await runGeneration(
       generateFn(buildOpeningGenerationConfig(prompt, generationId, useRawGeneration)),
