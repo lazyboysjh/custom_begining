@@ -1858,6 +1858,358 @@ select:focus {
   .page[data-page="2"] .ability-picker-row { padding-bottom: 6px; }
   .page[data-page="2"] label.field { font-size: 10px; }
 }
+
+/* Four-page production flow. Page 3 owns the circular summon language; the
+   other pages use restrained linear geometry so their motion stays distinct. */
+#app { position: relative; isolation: isolate; }
+#app .page { position: relative; isolation: isolate; }
+#app .page::before,
+#app .page::after { pointer-events: none; }
+#app .page[data-page="2"]::before {
+  background:
+    linear-gradient(90deg, rgba(7,8,10,.26), rgba(7,8,10,.48) 45%, rgba(7,8,10,.9) 70%),
+    url("https://raw.githubusercontent.com/lazyboysjh/image/main/NAI-2026-07-19-16-11-19.png") 38% 42% / cover no-repeat;
+}
+#app .page[data-page="3"]::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  background:
+    linear-gradient(90deg, rgba(7,8,10,.92), rgba(7,8,10,.65) 43%, rgba(7,8,10,.3) 72%, rgba(7,8,10,.58)),
+    url("https://raw.githubusercontent.com/lazyboysjh/image/main/20260716184427370.png") 72% 48% / cover no-repeat;
+  animation: productionBgFocus 16s ease-in-out infinite alternate;
+}
+#app .page[data-page="4"]::before {
+  background:
+    linear-gradient(90deg, rgba(7,8,10,.92), rgba(7,8,10,.68) 44%, rgba(7,8,10,.28) 78%),
+    url("https://raw.githubusercontent.com/lazyboysjh/image/main/NAI-2026-07-17-21-00-21.png") 68% 50% / cover no-repeat;
+  animation: productionBgFocus 18s ease-in-out infinite alternate;
+}
+@keyframes productionBgFocus {
+  from { filter: saturate(.9) brightness(.94); transform: scale(1.012); }
+  to { filter: saturate(1.05) brightness(1.04); transform: scale(1.035); }
+}
+
+#app .page[data-page="1"] .page-body::before,
+#app .page[data-page="1"] .page-body::after {
+  content: "";
+  position: absolute;
+  z-index: 1;
+  pointer-events: none;
+}
+#app .page[data-page="1"] .page-body::before {
+  right: 2%;
+  top: 12%;
+  width: min(34vw, 440px);
+  height: min(25vw, 300px);
+  border-top: 1px solid rgba(238,205,145,.48);
+  border-right: 1px solid rgba(238,205,145,.3);
+  background: linear-gradient(145deg, transparent 49.7%, rgba(238,205,145,.18) 50%, transparent 50.3%);
+  clip-path: polygon(12% 0,100% 0,100% 76%,82% 76%,82% 30%,52% 30%,52% 100%,0 100%,0 88%,39% 88%,39% 18%,12% 18%);
+  animation: productionGeoDrift 6.8s ease-in-out infinite alternate;
+}
+#app .page[data-page="1"] .page-body::after {
+  right: 8%;
+  top: 20%;
+  width: min(24vw, 310px);
+  height: min(17vw, 205px);
+  border-left: 1px solid rgba(238,205,145,.25);
+  border-bottom: 1px solid rgba(238,205,145,.5);
+  animation: productionGeoTrace 5.2s ease-in-out infinite alternate;
+}
+#app .page[data-page="1"] .hero h1 { animation: productionTitleBreath 4s ease-in-out infinite; }
+@keyframes productionGeoDrift {
+  from { opacity: .22; transform: translate(-10px, 7px) skewY(-2deg); }
+  to { opacity: .7; transform: translate(10px, -7px) skewY(2deg); }
+}
+@keyframes productionGeoTrace {
+  from { opacity: .16; transform: translateX(-8px) skewX(-22deg) scale(.96); }
+  to { opacity: .58; transform: translateX(12px) skewX(-12deg) scale(1.02); }
+}
+@keyframes productionTitleBreath {
+  0%,100% { filter: drop-shadow(0 2px 18px rgba(0,0,0,.72)); }
+  50% { filter: drop-shadow(0 2px 18px rgba(0,0,0,.72)) drop-shadow(0 0 13px rgba(238,202,140,.23)); }
+}
+#app .page[data-page="2"] .section-title { position: relative; display: inline-block; }
+#app .page[data-page="2"] .section-title::after {
+  width: 44%;
+  transform-origin: left;
+  animation: productionTitleRule 3.6s var(--ease) infinite;
+}
+@keyframes productionTitleRule {
+  0%,100% { opacity: .28; transform: scaleX(.25); }
+  50% { opacity: .9; transform: scaleX(1); }
+}
+
+#app .page[data-page="3"] .page-body,
+#app .page[data-page="4"] .page-body {
+  padding: 8px 10px 0 !important;
+  overflow: hidden;
+}
+.selection-shell {
+  height: calc(100% - 32px);
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(300px, 1.15fr) minmax(260px, .85fr);
+  align-items: center;
+  gap: clamp(18px, 4vw, 58px);
+  padding: 8px clamp(4px, 3vw, 42px);
+}
+.selection-summon {
+  position: relative;
+  min-width: 0;
+  min-height: 300px;
+  height: 100%;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+}
+.selection-ritual {
+  position: absolute;
+  z-index: 1;
+  left: 50%;
+  top: 50%;
+  width: min(82%, 500px);
+  aspect-ratio: 1;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+.selection-ring {
+  position: absolute;
+  inset: 0;
+  border: 1px solid rgba(233,199,139,.58);
+  border-radius: 50%;
+  box-shadow: 0 0 34px rgba(210,151,103,.22), inset 0 0 28px rgba(212,175,105,.1);
+  animation: ringPulse 2.8s ease-in-out infinite;
+}
+.selection-ring.outer { inset: -9%; opacity: .58; animation-duration: 3.8s; }
+.selection-ring.mid { inset: 15%; border-style: dashed; animation: sigilTurn 20s linear infinite; }
+.selection-axis,
+.selection-axis::after {
+  position: absolute;
+  left: 50%;
+  top: 7%;
+  width: 1px;
+  height: 86%;
+  content: "";
+  background: linear-gradient(transparent, rgba(226,192,138,.42), transparent);
+}
+.selection-axis::after { left: 50%; top: 50%; width: min(74vw,390px); height: 1px; transform: translate(-50%,-50%); }
+.selection-card {
+  position: relative;
+  z-index: 3;
+  width: min(78%, 390px);
+  min-height: 190px;
+  padding: 22px 24px 18px;
+  overflow: hidden;
+  border: 1px solid rgba(226,192,138,.4);
+  border-radius: 8px;
+  background: linear-gradient(145deg, rgba(28,22,23,.94), rgba(13,13,16,.92));
+  box-shadow: 0 24px 58px rgba(0,0,0,.46), inset 0 1px rgba(255,255,255,.05);
+  text-align: center;
+}
+.selection-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(105deg, transparent 35%, rgba(255,240,210,.12) 50%, transparent 65%);
+  transform: translateX(-130%);
+  animation: sweep 3.2s var(--ease) 1s infinite;
+}
+.selection-kicker { color: #b49a69; font-size: 10px; letter-spacing: .18em; }
+.selection-work { margin-top: 14px; color: #99938a; font-size: 11px; }
+.selection-name { margin-top: 4px; color: var(--gold-2); font-size: clamp(28px, 4.2vw, 46px); line-height: 1.12; overflow-wrap: anywhere; }
+.selection-blurb { margin: 14px auto 0; color: #d0c9be; font-size: 12px; line-height: 1.7; }
+.selection-reveal { transition: opacity .42s var(--ease), transform .42s var(--ease), filter .42s; }
+.selection-reveal.pending { opacity: 0; transform: translateY(8px); filter: blur(2px); }
+.selection-reel {
+  position: absolute;
+  z-index: 4;
+  left: 50%;
+  top: 13%;
+  translate: -50% 0;
+  width: min(78%, 440px);
+  height: 24px;
+  overflow: hidden;
+  background: linear-gradient(90deg, transparent, rgba(7,8,10,.9) 15%, rgba(7,8,10,.9) 85%, transparent);
+  color: rgba(240,217,168,.72);
+  font: 13px/24px var(--font-display);
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent);
+}
+.selection-orbit {
+  --selection-orbit-radius: min(21vw, 220px);
+  position: absolute;
+  z-index: 2;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity .24s var(--ease);
+}
+.selection-summon.rolling .selection-orbit { opacity: 1; }
+.selection-orbit.flying { opacity: 0; }
+.selection-orbit-node { position: absolute; left: 50%; top: 50%; width: 0; height: 0; animation: selectionOrbit 4.8s linear infinite; animation-delay: var(--delay); }
+.selection-orbit-node span {
+  position: absolute;
+  left: var(--selection-orbit-radius);
+  top: 0;
+  min-width: 78px;
+  max-width: 128px;
+  padding: 4px 8px;
+  overflow: hidden;
+  border: 1px solid rgba(226,192,138,.28);
+  border-radius: 999px;
+  background: rgba(10,10,13,.8);
+  color: #ead4a5;
+  font-size: 9px;
+  line-height: 1.35;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  transform: translate(-50%,-50%);
+  animation: selectionCounter 4.8s linear infinite, orbitFieldPulse .42s ease-in-out infinite alternate;
+  animation-delay: var(--delay), 0s;
+}
+@keyframes selectionOrbit { to { transform: rotate(360deg); } }
+@keyframes selectionCounter { from { transform: translate(-50%,-50%) rotate(0); } to { transform: translate(-50%,-50%) rotate(-360deg); } }
+@keyframes orbitFieldPulse { from { opacity: .38; } to { opacity: .78; } }
+.selection-flight {
+  position: fixed;
+  z-index: 1000;
+  max-width: 138px;
+  padding: 4px 8px;
+  overflow: hidden;
+  border: 1px solid rgba(226,192,138,.5);
+  border-radius: 999px;
+  background: rgba(12,11,13,.95);
+  color: #f0d7a2;
+  font-size: 9px;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  pointer-events: none;
+}
+.selection-brief { min-width: 0; transition: opacity .58s var(--ease), transform .58s var(--ease), filter .58s; }
+.selection-brief.pending { opacity: 0; transform: translateX(16px); filter: blur(4px); pointer-events: none; }
+.selection-brief.measuring { transform: none; }
+.selection-eyebrow { color: #b39b6f; font-size: 10px; letter-spacing: .22em; }
+.selection-brief h1 { margin: 8px 0; color: #eee5d5; font-size: clamp(27px, 4vw, 42px); }
+.selection-brief > p { margin: 0; color: var(--muted); }
+.selection-facts { margin: 20px 0 0; border-top: 1px solid rgba(255,255,255,.07); }
+.selection-fact { display: grid; grid-template-columns: 72px minmax(0,1fr); gap: 12px; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,.06); font-size: 11px; }
+.selection-fact dt { color: #a88e61; }
+.selection-fact dd { min-width: 0; margin: 0; color: #d0c9be; overflow-wrap: anywhere; }
+.selection-count { margin-top: 14px; color: #837d75; font-size: 10px; }
+
+.opening-layout {
+  position: relative;
+  height: calc(100% - 32px);
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(220px,.62fr) minmax(360px,1.38fr);
+  align-items: center;
+  gap: clamp(24px, 5vw, 70px);
+  padding: clamp(14px, 4%, 42px) clamp(6px, 4vw, 50px);
+  overflow: hidden;
+}
+.opening-layout::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  right: 3%;
+  top: 12%;
+  width: min(34vw, 420px);
+  height: min(22vw, 260px);
+  border-top: 1px solid rgba(226,192,138,.22);
+  border-right: 1px solid rgba(226,192,138,.44);
+  background: linear-gradient(155deg, transparent 49.8%, rgba(226,192,138,.14) 50%, transparent 50.2%);
+  clip-path: polygon(0 0,100% 0,100% 100%,92% 100%,92% 18%,38% 18%,38% 72%,0 72%);
+  animation: openingLineDrift 6.2s ease-in-out infinite alternate;
+}
+.opening-confirmed { min-width: 0; padding-right: clamp(18px,4vw,52px); border-right: 1px solid rgba(255,255,255,.07); }
+.opening-seal { display: grid; place-items: center; width: 62px; height: 62px; margin-bottom: 18px; border: 1px solid rgba(226,192,138,.32); border-radius: 50%; color: var(--gold-2); font: 500 27px var(--font-display); box-shadow: 0 0 0 9px rgba(226,192,138,.025); }
+.opening-work { color: #99938a; font-size: 11px; }
+.opening-name { margin-top: 4px; color: var(--gold-2); font-size: clamp(27px,3.6vw,40px); overflow-wrap: anywhere; }
+.opening-blurb { margin: 13px 0 0; color: #cfc7bc; font-size: 12px; line-height: 1.75; }
+.opening-generation { min-width: 0; max-width: 650px; }
+.opening-generation .selection-eyebrow { display: flex; align-items: center; gap: 10px; }
+.opening-generation .selection-eyebrow::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--gold); animation: pulse 1.4s infinite; }
+.opening-generation h2 { margin-top: 10px; color: #eee5d5; font-size: clamp(28px,4vw,44px); animation: openingTitleFocus 3.8s ease-in-out infinite; }
+.opening-generation > p { margin: 4px 0 0; color: var(--muted); }
+.opening-generation .generation-live { height: auto; min-height: 94px; margin-top: 22px; padding: 16px 18px; font-size: 12px; line-height: 1.75; -webkit-line-clamp: 4; }
+.opening-generation .meter { height: 3px; margin-top: 20px; overflow: hidden; background: rgba(255,255,255,.08); }
+.opening-generation .meter i { display: block; width: 40%; height: 100%; background: linear-gradient(90deg, transparent, var(--gold), #c8897d, transparent); animation: loadingSweep 1.45s ease-in-out infinite; }
+.opening-generation .meter.is-done i { width: 100%; animation: none; background: linear-gradient(90deg, #b8893a, #f0d089); }
+@keyframes openingLineDrift { from { opacity:.18; transform:translate(-10px,7px) skewX(-3deg); } to { opacity:.62; transform:translate(12px,-7px) skewX(3deg); } }
+@keyframes openingTitleFocus { 0%,100% { transform:none; text-shadow:none; } 50% { transform:translateY(-2px); text-shadow:0 0 20px rgba(226,192,138,.18); } }
+
+@media (max-width: 760px) {
+  #app .page[data-page="2"]::before { background-position: 45% 14%; }
+  #app .page[data-page="3"]::before { background-position: 58% 42%; }
+  #app .page[data-page="4"]::before { background-position: 55% 50%; }
+  #app .page[data-page="1"] .page-body::before { right:-22%; top:8%; width:76vw; height:44vw; }
+  #app .page[data-page="1"] .page-body::after { right:-8%; top:17%; width:54vw; height:34vw; }
+  .selection-shell { grid-template-columns: 1fr; align-content:start; gap:8px; padding:6px 0; overflow-y:auto; }
+  .selection-summon { min-height:330px; height:330px; flex:0 0 auto; }
+  .selection-ritual { width:min(92vw,390px); }
+  .selection-orbit { --selection-orbit-radius:min(31vw,140px); }
+  .selection-orbit-node span { min-width:68px; max-width:102px; padding:4px 6px; font-size:8px; }
+  .selection-card { width:min(86%,360px); min-height:180px; padding:20px; }
+  .selection-reel { top:8%; font-size:12px; }
+  .selection-brief { padding:0 7px 10px; }
+  .selection-brief h1, .selection-brief > p, .selection-count { display:none; }
+  .selection-facts { margin-top:2px; }
+  .selection-fact { padding:8px 0; }
+  .opening-layout { grid-template-columns:1fr; align-content:start; gap:16px; padding:14px 7px; overflow-y:auto; overflow-x:hidden; }
+  .opening-layout::before { right:-26%; top:8%; width:78vw; height:44vw; }
+  .opening-confirmed { display:grid; grid-template-columns:52px minmax(0,1fr); column-gap:14px; padding:0 0 15px; border-right:0; border-bottom:1px solid rgba(255,255,255,.07); }
+  .opening-seal { grid-row:1/4; width:52px; height:52px; margin:0; font-size:22px; }
+  .opening-blurb { display:none; }
+  .opening-generation .generation-live { min-height:88px; margin-top:18px; }
+}
+@media (max-width: 350px) {
+  .selection-orbit { --selection-orbit-radius:96px; }
+  .selection-orbit-node span { min-width:58px; max-width:78px; font-size:7.5px; }
+  #app .page[data-page="3"] > .foot { gap:6px !important; }
+  #app .page[data-page="3"] > .foot .btn { padding-inline:7px !important; font-size:12px; }
+  #app .page[data-page="3"] > .foot [data-selection-back] { flex:0 0 42px !important; }
+  #app .page[data-page="3"] > .foot [data-selection-back] .btn-label { display:none !important; }
+}
+@media (max-width: 760px) and (max-height: 460px) {
+  .opening-layout { gap:8px; padding-block:5px; }
+  .opening-confirmed { grid-template-columns:44px minmax(0,1fr); column-gap:10px; padding-bottom:7px; }
+  .opening-seal { width:44px; height:44px; font-size:19px; }
+  .opening-name { margin-top:1px; font-size:25px; }
+  .opening-generation h2 { margin:4px 0 0; font-size:26px; }
+  .opening-generation > p { display:none; }
+  .opening-generation .generation-live { min-height:58px; margin-top:8px; padding:10px 14px; line-height:1.55; -webkit-line-clamp:2; }
+  .opening-generation .meter { margin-top:9px; }
+}
+@media (max-height: 620px) and (min-width: 761px) {
+  .selection-shell { padding-block:2px; }
+  .selection-summon { min-height:260px; }
+  .selection-card { min-height:150px; padding:15px 18px; }
+  .selection-blurb { margin-top:9px; display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; overflow:hidden; }
+  .opening-layout { padding-block:8px; }
+  .opening-generation .generation-live { min-height:70px; margin-top:12px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  #app .page::before,
+  #app .page[data-page="1"] .page-body::before,
+  #app .page[data-page="1"] .page-body::after,
+  #app .page[data-page="1"] .hero h1,
+  #app .page[data-page="2"] .section-title::after,
+  .selection-ring,
+  .selection-card::after,
+  .selection-orbit-node,
+  .selection-orbit-node span,
+  .opening-layout::before,
+  .opening-generation h2 { animation:none !important; }
+}
 </style>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -1927,42 +2279,75 @@ select:focus {
     <div class="foot">
       <div class="foot-msg" id="warn" role="status" aria-live="polite"></div>
       <button class="btn ghost" data-back="1" aria-label="返回"><svg class="ui-icon" data-icon="lucide-arrow-left" aria-hidden="true" viewBox="0 0 24 24"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg><span class="btn-label">返回</span></button>
-      <button class="btn primary" id="btnStart"><svg class="ui-icon" data-icon="lucide-play" aria-hidden="true" viewBox="0 0 24 24"><path d="m6 3 14 9-14 9z"/></svg><span class="btn-label">那就开始吧~</span></button>
+      <button class="btn primary" id="btnStart"><svg class="ui-icon" data-icon="lucide-play" aria-hidden="true" viewBox="0 0 24 24"><path d="m6 3 14 9-14 9z"/></svg><span class="btn-label">前往召唤</span></button>
     </div>
   </section>
 
-  <!-- PAGE 4 -->
+  <!-- PAGE 3: local-only character selection; no generation API is called here. -->
+  <section class="page" data-page="3">
+    <div class="page-body">
+      <div class="brand">SANCTUM SELECTION</div>
+      <div class="selection-shell">
+        <div class="selection-summon" id="revealStage">
+          <div class="selection-ritual" aria-hidden="true">
+            <div class="selection-ring outer"></div>
+            <div class="selection-ring"></div>
+            <div class="selection-ring mid"></div>
+            <div class="selection-axis"></div>
+          </div>
+          <div class="selection-reel" id="revealReel" aria-live="polite"></div>
+          <div class="selection-orbit" id="selectionOrbit" aria-hidden="true">
+            <div class="selection-orbit-node" style="--delay:0s"><span id="orbitMode"></span></div>
+            <div class="selection-orbit-node" style="--delay:-1.2s"><span id="orbitPlace"></span></div>
+            <div class="selection-orbit-node" style="--delay:-2.4s"><span id="orbitMeeting"></span></div>
+            <div class="selection-orbit-node" style="--delay:-3.6s"><span id="orbitStory"></span></div>
+          </div>
+          <article class="selection-card">
+            <div class="selection-kicker" id="revealKicker">万界回响正在交汇</div>
+            <div class="selection-work selection-reveal pending" id="revealWork"></div>
+            <h2 class="selection-name selection-reveal pending" id="revealName">尚未显现</h2>
+            <p class="selection-blurb selection-reveal pending" id="revealBlurb"></p>
+          </article>
+        </div>
+        <aside class="selection-brief pending" id="selectionBrief">
+          <div class="selection-eyebrow">THE CHOSEN ECHO</div>
+          <h1>门后会是谁？</h1>
+          <p>一道异界回响停在门外，等待你的选择。</p>
+          <dl class="selection-facts">
+            <div class="selection-fact"><dt>接入方式</dt><dd id="selectionMode">待显现</dd></div>
+            <div class="selection-fact"><dt>圣堂形态</dt><dd id="selectionPlace">待显现</dd></div>
+            <div class="selection-fact"><dt>相遇契机</dt><dd id="selectionMeeting">待显现</dd></div>
+            <div class="selection-fact"><dt>故事倾向</dt><dd id="selectionStory">待显现</dd></div>
+          </dl>
+          <div class="selection-count" id="selectionCount">正在辨认异界回响…</div>
+        </aside>
+      </div>
+    </div>
+    <div class="foot">
+      <button class="btn ghost" type="button" data-selection-back aria-label="返回设定"><svg class="ui-icon" data-icon="lucide-arrow-left" aria-hidden="true" viewBox="0 0 24 24"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg><span class="btn-label">返回设定</span></button>
+      <button class="btn ghost" type="button" id="btnReroll" disabled><svg class="ui-icon" data-icon="lucide-shuffle" aria-hidden="true" viewBox="0 0 24 24"><path d="m18 14 4 4-4 4"/><path d="M2 18h3.5c4 0 5-12 9-12H22"/></svg><span class="btn-label">换一位</span></button>
+      <button class="btn primary" type="button" id="btnConfirmCharacter" disabled><svg class="ui-icon" data-icon="lucide-check" aria-hidden="true" viewBox="0 0 24 24"><path d="m5 12 4 4L19 6"/></svg><span class="btn-label">就是她</span></button>
+    </div>
+  </section>
+
+  <!-- PAGE 4: confirmed selection and real opening generation. -->
   <section class="page" data-page="4">
     <div class="page-body">
       <div class="brand">SANCTUM OPENING</div>
-      <div class="ornament"></div>
-      <div class="summon-stage" id="revealStage" aria-live="polite">
-        <div class="summon-visual">
-          <div class="summon-fx" aria-hidden="true">
-            <div class="summon-beam"></div>
-            <div class="summon-ring outer"></div>
-            <div class="summon-ring"></div>
-            <div class="summon-ring mid"></div>
-            <div class="summon-sigil"></div>
-            <div class="summon-dust"><span></span><span></span><span></span><span></span></div>
-          </div>
-          <article class="summon-card">
-            <div class="reveal-kicker" id="revealKicker">召唤仪式进行中</div>
-            <div class="reveal-reel" id="revealReel" aria-hidden="true"></div>
-            <h2 class="reveal-name" id="revealName">异界回响正在聚形</h2>
-            <div class="reveal-work" id="revealWork"></div>
-            <p class="reveal-blurb" id="revealBlurb"></p>
-            <div class="reveal-context" id="revealContext"></div>
-          </article>
-        </div>
-        <div class="summon-progress">
-          <div class="summon-progress-copy">
-            <h2 id="generationTitle">正在召唤，请稍候~</h2>
-            <p id="generationStatus">圣堂正在回应异界回响。</p>
-          </div>
+      <div class="opening-layout">
+        <aside class="opening-confirmed">
+          <div class="opening-seal" id="openingSeal">界</div>
+          <div class="opening-work" id="openingWork"></div>
+          <h2 class="opening-name" id="openingName"></h2>
+          <p class="opening-blurb" id="openingBlurb"></p>
+        </aside>
+        <section class="opening-generation">
+          <div class="selection-eyebrow" id="generationEyebrow">OPENING IN PROGRESS</div>
+          <h2 id="generationTitle">初遇正在成形</h2>
+          <p id="generationStatus">两个世界的因果正在交汇。</p>
           <div class="generation-live" id="generationLive">正在读取本次初遇配置。</div>
           <div class="meter" id="generationMeter" aria-hidden="true"><i></i></div>
-        </div>
+        </section>
       </div>
     </div>
     <div class="foot">
@@ -5715,7 +6100,11 @@ const state = {
   page: 1,
   revealTimer: null,
   revealFinishTimer: null,
+  revealPhaseTimers: [],
   revealResolve: null,
+  fieldFlights: [],
+  selectionConfig: null,
+  selectionCount: 0,
   attemptId: 0,
   starting: false,
   chatChangeHandle: null,
@@ -5726,6 +6115,8 @@ const $$ = (s, el = document) => [...el.querySelectorAll(s)];
 
 function showPage(n) {
   state.page = n;
+  const app = $("#app");
+  if (app) app.dataset.activePage = String(n);
   $$(".page").forEach(p => p.classList.toggle("active", Number(p.dataset.page) === n));
   const active = $(`.page[data-page="${n}"]`);
   const body = active && $(".page-body", active);
@@ -6028,63 +6419,164 @@ function clearRevealTimers() {
   state.revealTimer = null;
   if (state.revealFinishTimer) clearTimeout(state.revealFinishTimer);
   state.revealFinishTimer = null;
+  while (state.revealPhaseTimers.length) clearTimeout(state.revealPhaseTimers.pop());
+  for (const item of state.fieldFlights) {
+    try { item.animation.cancel(); } catch (_) {}
+    if (item.ghost && item.ghost.remove) item.ghost.remove();
+  }
+  state.fieldFlights = [];
+  $$(".selection-flight").forEach(node => node.remove());
+  const orbit = $("#selectionOrbit");
+  if (orbit) orbit.classList.remove("flying");
+  const stage = $("#revealStage");
+  if (stage) stage.classList.remove("rolling");
 }
 
-function finishReveal(config) {
-  clearRevealTimers();
-  const character = config.character;
-  const kicker = $("#revealKicker");
-  if (kicker) kicker.textContent = "异界来客已显现";
+function selectionLater(callback, delay) {
+  const timer = setTimeout(callback, delay);
+  state.revealPhaseTimers.push(timer);
+  return timer;
+}
+
+function selectionContextFields(config) {
+  return [
+    { final: config.integrationMode.title, source: OPENING_OPTIONS.integration_modes, target: "#selectionMode", orbit: "#orbitMode" },
+    { final: config.sanctumForm.title, source: OPENING_OPTIONS.sanctum_forms, target: "#selectionPlace", orbit: "#orbitPlace" },
+    { final: config.meetingMode.title, source: MEETING_MODES, target: "#selectionMeeting", orbit: "#orbitMeeting" },
+    { final: config.storyType.title, source: OPENING_OPTIONS.story_types, target: "#selectionStory", orbit: "#orbitStory" },
+  ];
+}
+
+function flySelectionFields(fields, stage, brief) {
+  const orbit = $("#selectionOrbit");
+  const nodes = $$(".selection-orbit-node span");
+  if (!orbit || !stage || !brief || nodes.length !== fields.length) return Promise.resolve();
+  brief.classList.add("measuring");
+  const targets = fields.map(field => $(field.target).getBoundingClientRect());
+  brief.classList.remove("measuring");
+  if (globalThis.matchMedia && globalThis.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    orbit.classList.add("flying");
+    stage.classList.remove("rolling");
+    orbit.classList.remove("flying");
+    return Promise.resolve();
+  }
+  orbit.classList.add("flying");
+  stage.classList.remove("rolling");
+  const flights = nodes.map((node, index) => {
+    const start = node.getBoundingClientRect();
+    const target = targets[index];
+    const ghost = document.createElement("span");
+    ghost.className = "selection-flight";
+    ghost.textContent = node.textContent;
+    ghost.style.left = start.left + "px";
+    ghost.style.top = start.top + "px";
+    ghost.style.width = start.width + "px";
+    document.body.appendChild(ghost);
+    const dx = target.left + target.width / 2 - (start.left + start.width / 2);
+    const dy = target.top + target.height / 2 - (start.top + start.height / 2);
+    const animation = ghost.animate(
+      [
+        { transform: "translate(0,0) scale(1)", opacity: 1 },
+        { offset: .72, transform: `translate(${dx * .82}px,${dy * .82}px) scale(.88)`, opacity: .9 },
+        { transform: `translate(${dx}px,${dy}px) scale(.72)`, opacity: .08 },
+      ],
+      { duration: 520, delay: index * 38, easing: "cubic-bezier(.22,1,.36,1)", fill: "forwards" },
+    );
+    const item = { animation, ghost };
+    state.fieldFlights.push(item);
+    return animation.finished.catch(() => {}).then(() => ghost.remove());
+  });
+  return Promise.all(flights).then(() => {
+    state.fieldFlights = [];
+    orbit.classList.remove("flying");
+  });
+}
+
+function finishReveal(config, fields = selectionContextFields(config)) {
+  if (state.revealTimer) clearInterval(state.revealTimer);
+  state.revealTimer = null;
   const stage = $("#revealStage");
-  if (stage) {
-    stage.classList.remove("summoning");
-    stage.classList.add("summon-resolved");
-  }
+  const brief = $("#selectionBrief");
   const reel = $("#revealReel");
-  if (reel) {
-    reel.classList.remove("spinning");
-    reel.textContent = `${config.integrationMode.title} · ${config.sanctumForm.title}`;
-  }
-  $("#revealName").textContent = character.name;
-  $("#revealWork").textContent = character.work || "";
-  $("#revealBlurb").textContent = character.blurb || character.intro || "";
-  $("#revealContext").textContent = `${config.era.title} · ${config.storyType.title} · ${config.meetingMode.title} · ${config.ability.title}`;
-  if (activeOpening) activeOpening.revealDone = true;
+  fields.forEach(field => {
+    $(field.target).textContent = field.final;
+    $(field.orbit).textContent = field.final;
+  });
+  $("#revealName").textContent = config.character.name;
+  $("#revealName").classList.remove("pending");
+  if (reel) reel.textContent = `${config.integrationMode.title} · ${config.sanctumForm.title}`;
+  const kicker = $("#revealKicker");
+  if (kicker) kicker.textContent = "命运落定";
+  return flySelectionFields(fields, stage, brief).then(() => {
+    if (state.selectionConfig !== config) return;
+    brief.classList.remove("pending");
+    $("#selectionCount").textContent = `本轮已查看 ${state.selectionCount} 位来客`;
+    $("#btnReroll").disabled = false;
+    $("#btnConfirmCharacter").disabled = false;
+    if (typeof state.revealResolve === "function") state.revealResolve();
+    state.revealResolve = null;
+  });
 }
 
 function startReveal(config) {
+  if (typeof state.revealResolve === "function") state.revealResolve();
+  state.revealResolve = null;
   clearRevealTimers();
+  state.selectionConfig = config;
+  state.selectionCount += 1;
   const reduced = globalThis.matchMedia && globalThis.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  const reel = $("#revealReel");
   const stage = $("#revealStage");
-  if (stage) {
-    stage.classList.remove("summon-resolved");
-    stage.classList.add("summoning");
-  }
-  const kicker = $("#revealKicker");
-  if (kicker) kicker.textContent = "召唤仪式进行中";
-  $("#revealName").textContent = "异界回响正在聚形";
+  const brief = $("#selectionBrief");
+  const reel = $("#revealReel");
+  const fields = selectionContextFields(config);
+  const revealParts = $$(".selection-reveal");
+  stage.classList.add("rolling");
+  brief.classList.add("pending");
+  revealParts.forEach(part => part.classList.add("pending"));
+  $("#revealKicker").textContent = "万界回响正在交汇";
+  $("#revealName").textContent = "尚未显现";
   $("#revealWork").textContent = "";
-  $("#revealBlurb").textContent = "圣堂正在回应另一个世界的回声。";
-  $("#revealContext").textContent = `${config.era.title} · ${config.storyType.title} · ${config.meetingMode.title}`;
+  $("#revealBlurb").textContent = "";
+  $("#selectionCount").textContent = "正在辨认异界回响…";
+  $("#btnReroll").disabled = true;
+  $("#btnConfirmCharacter").disabled = true;
   if (reduced) {
-    finishReveal(config);
-    return Promise.resolve();
+    $("#revealWork").textContent = config.character.work || "";
+    $("#revealBlurb").textContent = config.character.blurb || "";
+    revealParts.forEach(part => part.classList.remove("pending"));
+    return new Promise(resolve => {
+      state.revealResolve = resolve;
+      finishReveal(config, fields);
+    });
   }
-  if (reel) reel.classList.add("spinning");
-  state.revealTimer = setInterval(() => {
-    const candidates = [];
-    for (let index = 0; index < 4; index += 1) candidates.push(pickOne(CHARACTERS).name);
-    if (reel) reel.textContent = candidates.join(" · ");
-  }, 150);
+  const candidates = CHARACTERS.filter(character => character.id !== config.character.id);
+  const spin = () => {
+    const names = Array.from({ length: 4 }, () => pickOne(candidates.length ? candidates : CHARACTERS).name);
+    if (reel) reel.textContent = names.join(" · ");
+    fields.forEach(field => {
+      const item = pickOne(field.source);
+      const value = item.title || item.name || "";
+      $(field.target).textContent = value;
+      $(field.orbit).textContent = value;
+    });
+  };
+  spin();
+  state.revealTimer = setInterval(spin, 92);
+  selectionLater(() => {
+    $("#revealWork").textContent = config.character.work || "";
+    $("#revealWork").classList.remove("pending");
+    $("#revealKicker").textContent = "回响正在聚形";
+  }, 1650);
+  selectionLater(() => {
+    $("#revealBlurb").textContent = config.character.blurb || "";
+    $("#revealBlurb").classList.remove("pending");
+  }, 1950);
   return new Promise(resolve => {
     state.revealResolve = resolve;
     state.revealFinishTimer = setTimeout(() => {
       state.revealFinishTimer = null;
-      state.revealResolve = null;
-      finishReveal(config);
-      resolve();
-    }, 1850);
+      finishReveal(config, fields);
+    }, 2320);
   });
 }
 
@@ -6418,6 +6910,10 @@ function stopOpening(reason) {
     startButton.disabled = false;
     setStartReady();
   }
+  const reroll = $("#btnReroll");
+  const confirm = $("#btnConfirmCharacter");
+  if (reroll && state.selectionConfig) reroll.disabled = false;
+  if (confirm && state.selectionConfig) confirm.disabled = false;
   if (!run) return;
   run.cancelled = true;
   run.cancelReason = reason || "已取消";
@@ -6523,7 +7019,7 @@ function setStartReady() {
   const button = $("#btnStart");
   if (!button || state.starting) return;
   const label = $(".btn-label", button);
-  if (label) label.textContent = "那就开始吧~";
+  if (label) label.textContent = "前往召唤";
 }
 
 function syncAbilityFromPreset(announce = false) {
@@ -6554,7 +7050,45 @@ function randomizeAbility() {
   }
 }
 
-async function startGame() {
+function sampleSelectionConfig() {
+  return sampleOpeningConfig({ randomAbility: false });
+}
+
+function enterSelection() {
+  const warn = $("#warn");
+  if (warn) warn.textContent = "";
+  let config;
+  try {
+    config = sampleSelectionConfig();
+  } catch (error) {
+    if (warn) warn.textContent = error.message || String(error);
+    return;
+  }
+  showPage(3);
+  startReveal(config);
+}
+
+function rerollSelection() {
+  if (state.starting) return;
+  let config;
+  try {
+    config = sampleSelectionConfig();
+  } catch (error) {
+    $("#selectionCount").textContent = error.message || String(error);
+    return;
+  }
+  startReveal(config);
+}
+
+function renderOpeningSelection(config) {
+  const character = config.character;
+  $("#openingSeal").textContent = Array.from(character.name || "界")[0] || "界";
+  $("#openingWork").textContent = character.work || "";
+  $("#openingName").textContent = character.name || "";
+  $("#openingBlurb").textContent = character.blurb || "";
+}
+
+async function startGame(configOverride = state.selectionConfig) {
   const warn = $("#warn");
   const startButton = $("#btnStart");
   const resetButtons = () => {
@@ -6563,15 +7097,18 @@ async function startGame() {
       startButton.disabled = false;
       setStartReady();
     }
+    const reroll = $("#btnReroll");
+    const confirm = $("#btnConfirmCharacter");
+    if (reroll) reroll.disabled = false;
+    if (confirm) confirm.disabled = false;
   };
   if (warn) warn.textContent = "";
   if (state.starting) return;
 
-  let config;
-  try {
-    config = sampleOpeningConfig({ randomAbility: false });
-  } catch (error) {
-    if (warn) warn.textContent = error.message || String(error);
+  const config = configOverride;
+  if (!config || !config.character || !config.ability) {
+    if (warn) warn.textContent = "请先完成召唤并确认一位来客。";
+    showPage(3);
     return;
   }
   const persona = openingPersona(config);
@@ -6585,9 +7122,14 @@ async function startGame() {
     const label = $(".btn-label", startButton);
     if (label) label.textContent = "正在召唤…";
   }
-  setGenerationState("正在召唤，请稍候~", "圣堂正在回应异界回响。", false, "正在读取本次初遇配置。");
+  const reroll = $("#btnReroll");
+  const confirm = $("#btnConfirmCharacter");
+  if (reroll) reroll.disabled = true;
+  if (confirm) confirm.disabled = true;
+  renderOpeningSelection(config);
+  $("#generationEyebrow").textContent = "OPENING IN PROGRESS";
+  setGenerationState("初遇正在成形", "两个世界的因果正在交汇。", false, "正在读取本次初遇配置。");
   showPage(4);
-  const revealPromise = startReveal(config);
 
   const rawGenerateFn = getApi("generateRaw") || getApi("GenerateRaw");
   const generateFn = rawGenerateFn || getApi("generate") || getApi("Generate");
@@ -6618,7 +7160,7 @@ async function startGame() {
       attemptId,
       messageId,
       config: config,
-      revealDone: false,
+      revealDone: true,
       generationDone: false,
       chatId: currentChatId(),
       originalMessage: String(openingFloor.message || ""),
@@ -6667,7 +7209,6 @@ async function startGame() {
     if (run.waitingTimer) clearTimeout(run.waitingTimer);
     run.waitingTimer = null;
     run.generationDone = true;
-    await revealPromise;
     setGenerationState("初遇正在成形~", "圣堂正在整理最后的回响。", false, "开场白已经完成，正在同步人物状态。");
     assertOpeningCanCommit(run, getMsgs);
     let parsedData = null;
@@ -6697,13 +7238,15 @@ async function startGame() {
     );
     activeOpening = null;
     state.starting = false;
+    $("#generationEyebrow").textContent = "OPENING COMPLETE";
     setGenerationState("来客已现身~", "初遇已展开，轮到你回应。", true, "开场白与人物状态均已就绪。");
   } catch (error) {
     if (attemptId !== state.attemptId) return;
     stopOpening(error && error.message ? error.message : String(error));
     console.error(error);
     if (warn) warn.textContent = "召唤暂未回应，请返回后再次尝试。";
-    setGenerationState("召唤暂未回应", "可以调整能力后再次尝试。", true, error && error.message ? error.message : "没有写入正文或人物状态。");
+    $("#generationEyebrow").textContent = "NO RESPONSE";
+    setGenerationState("召唤暂未回应", "可以返回选角后再次尝试。", true, error && error.message ? error.message : "没有写入正文或人物状态。");
     resetButtons();
   }
 }
@@ -6728,11 +7271,24 @@ function init() {
   if (custom) custom.addEventListener("input", () => { if (preset) preset.value = "custom"; });
   $("#btnRandomAbility").onclick = () => randomizeAbility();
   $("#btnEnter").onclick = () => showPage(2);
-  $("#btnStart").onclick = () => startGame();
+  $("#btnStart").onclick = () => enterSelection();
+  $("#btnReroll").onclick = () => rerollSelection();
+  $("#btnConfirmCharacter").onclick = () => startGame(state.selectionConfig);
+  $("[data-selection-back]").onclick = () => {
+    if (typeof state.revealResolve === "function") state.revealResolve();
+    state.revealResolve = null;
+    clearRevealTimers();
+    showPage(2);
+  };
   $("#btnCancelGeneration").onclick = () => {
     stopOpening("用户取消生成");
-    setGenerationState("召唤尚未完成", "可以调整能力后再次尝试。", false, "没有写入正文或人物状态。");
-    showPage(2);
+    $("#generationEyebrow").textContent = "OPENING PAUSED";
+    setGenerationState("召唤尚未完成", "可以重新选择来客后再次尝试。", false, "没有写入正文或人物状态。");
+    showPage(3);
+    const reroll = $("#btnReroll");
+    const confirm = $("#btnConfirmCharacter");
+    if (reroll) reroll.disabled = false;
+    if (confirm) confirm.disabled = false;
   };
   $$("[data-back]").forEach(b => b.onclick = () => showPage(Number(b.dataset.back)));
 }
