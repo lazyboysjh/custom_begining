@@ -6356,7 +6356,7 @@ function openingInitialRoleState(config, persona, enc) {
     受孕进度: 0,
     外貌: enc.外貌,
     当前状态: `身处${scene}，正围绕${meeting}观察局势`,
-    心里想法: `先${goal}，再判断${hero}是否可信。`.slice(0, 40),
+    心里想法: `先${goal}，再判断${hero}是否可信。`,
     与user关系: disposition.与user关系,
     心情: disposition.心情,
   };
@@ -6947,7 +6947,7 @@ const OPENING_ROLE_FIELDS = Object.freeze([
 
 const OPENING_TEMPLATE_VALUES = new Set([
   "__CURRENT_STATE__", "__INNER_THOUGHT__", "__RELATION__", "__MOOD__",
-  "根据正文更新当前可观察状态", "第一人称15-40字，基于角色实际知道的信息", "1-4个汉字",
+  "根据正文更新当前可观察状态", "第一人称15-80字，基于角色实际知道的信息", "1-4个汉字",
 ]);
 
 function normalizeOpeningField(key, value) {
@@ -6965,7 +6965,7 @@ function normalizeOpeningField(key, value) {
   if (key === "心里想法") {
     const chars = Array.from(text);
     if (chars.length < 15) return null;
-    return chars.slice(0, 40).join("");
+    return chars.slice(0, 120).join("");
   }
   return Array.from(text).slice(0, key === "当前状态" ? 120 : 240).join("");
 }
