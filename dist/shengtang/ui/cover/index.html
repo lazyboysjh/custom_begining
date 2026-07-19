@@ -761,6 +761,40 @@ select:focus {
   color: #f0d9a0;
   box-shadow: var(--st-btn-shadow), 0 0 0 3px rgba(218,184,119,.1);
 }
+.narrative-style-row {
+  display: grid;
+  grid-template-columns: minmax(0,1fr) minmax(220px, .9fr);
+  align-items: center;
+  gap: 12px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid rgba(255,255,255,.065);
+}
+.narrative-style-copy strong { display:block; color:#e7d7bc; font-size:12px; font-weight:500; }
+.style-segments {
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  min-width:0;
+  padding:3px;
+  border:1px solid rgba(226,192,138,.2);
+  background:rgba(0,0,0,.3);
+}
+.style-option {
+  min-width:0;
+  min-height:34px;
+  border:0;
+  background:transparent;
+  color:#aaa198;
+  font:inherit;
+  font-size:11px;
+  cursor:pointer;
+  transition:color .2s ease, background .2s ease, box-shadow .2s ease;
+}
+.style-option[aria-pressed="true"] {
+  color:#1b150d;
+  background:linear-gradient(180deg,#e7ca8d,#bf9858);
+  box-shadow:0 5px 14px rgba(0,0,0,.2);
+}
+.style-option:focus-visible { outline:2px solid #f0d9a0; outline-offset:2px; }
 .sr-only {
   position: absolute;
   width: 1px;
@@ -775,6 +809,7 @@ select:focus {
 @media (max-width: 560px) {
   .ability-picker-row { grid-template-columns: 1fr; }
   .ability-random { width: 100%; }
+  .narrative-style-row { grid-template-columns:1fr; gap:7px; }
 }
 .reveal-stage {
   width: min(100%, 720px);
@@ -1812,6 +1847,7 @@ select:focus {
   .page[data-page="2"] .hint { margin-top: 5px; line-height: 1.4; }
   .page[data-page="2"] .ability-panel { gap: 9px; padding: 11px 12px 10px; }
   .page[data-page="2"] .hero-fields { gap: 6px 9px; margin-bottom: 8px; padding-bottom: 9px; }
+  .page[data-page="2"] .narrative-style-row { gap:8px; padding-bottom:8px; }
   .page[data-page="2"] .ability-picker-row { gap: 8px; padding-bottom: 9px; }
   .page[data-page="2"] #abilityCustomField { margin-top: 0; }
   .page[data-page="2"] label.field { gap: 3px; font-size: 11px; }
@@ -1846,6 +1882,7 @@ select:focus {
   .page[data-page="2"] .section-title { font-size: 20px; }
   .page[data-page="2"] .section-title::after { display: none; }
   .page[data-page="2"] .ability-panel { padding: 8px 10px; }
+  .page[data-page="2"] .narrative-style-copy span { display:none; }
   .summon-visual { padding: 7px; }
   .summon-card { width: min(48%, 170px); padding: 8px; }
   .reveal-reel { display: none; }
@@ -2093,17 +2130,25 @@ select:focus {
   white-space: nowrap;
   pointer-events: none;
 }
-.selection-brief { min-width: 0; transition: opacity .58s var(--ease), transform .58s var(--ease), filter .58s; }
+.selection-brief {
+  min-width: 0;
+  padding: 20px 24px;
+  border-left: 1px solid rgba(226,192,138,.34);
+  background: linear-gradient(90deg, rgba(5,6,8,.7), rgba(5,6,8,.42) 68%, transparent);
+  box-shadow: -20px 0 36px rgba(0,0,0,.12);
+  backdrop-filter: blur(7px) saturate(.9);
+  transition: opacity .58s var(--ease), transform .58s var(--ease), filter .58s;
+}
 .selection-brief.pending { opacity: 0; transform: translateX(16px); filter: blur(4px); pointer-events: none; }
 .selection-brief.measuring { transform: none; }
-.selection-eyebrow { color: #b39b6f; font-size: 10px; letter-spacing: .22em; }
-.selection-brief h1 { margin: 8px 0; color: #eee5d5; font-size: clamp(27px, 4vw, 42px); }
-.selection-brief > p { margin: 0; color: var(--muted); }
-.selection-facts { margin: 20px 0 0; border-top: 1px solid rgba(255,255,255,.07); }
+.selection-eyebrow { color: #d9b978; font-size: 10px; letter-spacing: .22em; text-shadow: 0 1px 3px #000; }
+.selection-brief h1 { margin: 8px 0; color: #fff2d8; font-size: clamp(27px, 4vw, 42px); text-shadow: 0 2px 12px rgba(0,0,0,.88); }
+.selection-brief > p { margin: 0; color: #ddd6ca; text-shadow: 0 1px 3px #000; }
+.selection-facts { margin: 20px 0 0; border-top: 1px solid rgba(255,255,255,.14); }
 .selection-fact { display: grid; grid-template-columns: 72px minmax(0,1fr); gap: 12px; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,.06); font-size: 11px; }
-.selection-fact dt { color: #a88e61; }
-.selection-fact dd { min-width: 0; margin: 0; color: #d0c9be; overflow-wrap: anywhere; }
-.selection-count { margin-top: 14px; color: #837d75; font-size: 10px; }
+.selection-fact dt { color: #e2bd78; font-weight: 600; text-shadow: 0 1px 3px #000; }
+.selection-fact dd { min-width: 0; margin: 0; color: #f1ece3; font-weight: 500; overflow-wrap: anywhere; text-shadow: 0 1px 3px #000; }
+.selection-count { margin-top: 14px; color: #bbb2a5; font-size: 10px; text-shadow: 0 1px 3px #000; }
 
 .opening-layout {
   position: relative;
@@ -2160,7 +2205,7 @@ select:focus {
   .selection-orbit-node span { min-width:68px; max-width:102px; padding:4px 6px; font-size:8px; }
   .selection-card { width:min(86%,360px); min-height:180px; padding:20px; }
   .selection-reel { top:8%; font-size:12px; }
-  .selection-brief { padding:0 7px 10px; }
+  .selection-brief { padding:10px 12px 12px; border-left:0; border-top:1px solid rgba(226,192,138,.28); background:linear-gradient(180deg, rgba(5,6,8,.62), rgba(5,6,8,.28)); }
   .selection-brief h1, .selection-brief > p, .selection-count { display:none; }
   .selection-facts { margin-top:2px; }
   .selection-fact { padding:8px 0; }
@@ -2263,6 +2308,13 @@ select:focus {
           <label class="field wide">私下心思
             <textarea id="heroThought" maxlength="120" rows="2">性压抑的高中男生</textarea>
           </label>
+        </div>
+        <div class="narrative-style-row">
+          <div class="narrative-style-copy"><strong>叙事文风</strong></div>
+          <div class="style-segments" role="group" aria-label="叙事文风">
+            <button class="style-option" type="button" data-narrative-style="light_novel" aria-pressed="true">日式轻小说</button>
+            <button class="style-option" type="button" data-narrative-style="fetish" aria-pressed="false">恋物文风</button>
+          </div>
         </div>
         <div class="ability-picker-row">
           <label class="field ability-preset-field" id="abilityPresetField">已有能力
@@ -6105,6 +6157,9 @@ const state = {
   fieldFlights: [],
   selectionConfig: null,
   selectionCount: 0,
+  narrativeStyle: "light_novel",
+  styleWritePromise: Promise.resolve(),
+  styleSaveError: null,
   attemptId: 0,
   starting: false,
   chatChangeHandle: null,
@@ -6328,6 +6383,72 @@ function inputText(id, fallback = "", maxLength = 80) {
   const element = document.getElementById(id);
   const value = String(element && element.value || "").replace(/\s+/g, " ").trim();
   return (value || fallback).slice(0, maxLength);
+}
+
+const NARRATIVE_STYLE_IDS = Object.freeze(["light_novel", "fetish"]);
+
+async function waitForStyleApi(names, timeoutMs = 3000) {
+  const started = Date.now();
+  do {
+    for (const name of names) {
+      const api = getApi(name);
+      if (typeof api === "function") return { name, api };
+    }
+    await new Promise(resolve => setTimeout(resolve, 60));
+  } while (Date.now() - started < timeoutMs);
+  return null;
+}
+
+function renderNarrativeStyle() {
+  $$('[data-narrative-style]').forEach(button => {
+    button.setAttribute("aria-pressed", String(button.dataset.narrativeStyle === state.narrativeStyle));
+  });
+}
+
+async function hydrateNarrativeStyle() {
+  const resolved = await waitForStyleApi(["getVariables"], 1800);
+  if (!resolved) {
+    renderNarrativeStyle();
+    return;
+  }
+  try {
+    const variables = await Promise.resolve(resolved.api({ type: "chat" }));
+    const stored = variables && variables.圣堂初遇 && variables.圣堂初遇.文风;
+    if (NARRATIVE_STYLE_IDS.includes(stored)) state.narrativeStyle = stored;
+  } catch (_) {}
+  renderNarrativeStyle();
+}
+
+async function persistNarrativeStyle(style) {
+  const resolved = await waitForStyleApi(["insertOrAssignVariables", "updateVariablesWith"]);
+  if (resolved && resolved.name === "insertOrAssignVariables") {
+    await Promise.resolve(resolved.api({ 圣堂初遇: { 文风: style } }, { type: "chat" }));
+    return;
+  }
+  if (resolved && resolved.name === "updateVariablesWith") {
+    await Promise.resolve(resolved.api(variables => {
+      const next = variables && typeof variables === "object" ? variables : {};
+      next.圣堂初遇 = { ...(next.圣堂初遇 || {}), 文风: style };
+      return next;
+    }, { type: "chat" }));
+    return;
+  }
+  throw new Error("文风切换组件尚未就绪，请稍后重试。");
+}
+
+function chooseNarrativeStyle(style) {
+  if (!NARRATIVE_STYLE_IDS.includes(style) || style === state.narrativeStyle) return;
+  const previous = state.narrativeStyle;
+  state.narrativeStyle = style;
+  state.styleSaveError = null;
+  renderNarrativeStyle();
+  state.styleWritePromise = persistNarrativeStyle(style).catch(error => {
+    state.narrativeStyle = previous;
+    state.styleSaveError = error;
+    renderNarrativeStyle();
+    const warn = $("#warn");
+    if (warn) warn.textContent = error.message || String(error);
+  });
 }
 
 function openingPersona(config) {
@@ -7054,9 +7175,14 @@ function sampleSelectionConfig() {
   return sampleOpeningConfig({ randomAbility: false });
 }
 
-function enterSelection() {
+async function enterSelection() {
   const warn = $("#warn");
   if (warn) warn.textContent = "";
+  await state.styleWritePromise;
+  if (state.styleSaveError) {
+    if (warn) warn.textContent = state.styleSaveError.message || String(state.styleSaveError);
+    return;
+  }
   let config;
   try {
     config = sampleSelectionConfig();
@@ -7267,6 +7393,10 @@ function init() {
     });
   }
   syncAbilityFromPreset(false);
+  hydrateNarrativeStyle();
+  $$('[data-narrative-style]').forEach(button => {
+    button.onclick = () => chooseNarrativeStyle(button.dataset.narrativeStyle);
+  });
   const custom = $("#abilityCustom");
   if (custom) custom.addEventListener("input", () => { if (preset) preset.value = "custom"; });
   $("#btnRandomAbility").onclick = () => randomizeAbility();
