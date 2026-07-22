@@ -1784,8 +1784,22 @@ select:focus {
   white-space: nowrap !important;
 }
 #app .page[data-page="4"] .foot .btn {
-  flex: 0 0 auto !important;
+  flex: 1 1 0 !important;
   max-width: 100% !important;
+}
+#app .page[data-page="4"] .foot .btn .btn-label {
+  white-space: normal !important;
+  text-align: center;
+  line-height: 1.25;
+}
+@media (min-width: 761px) {
+  #app .page[data-page="4"] .foot {
+    justify-content: flex-end !important;
+  }
+  #app .page[data-page="4"] .foot .btn {
+    flex: 0 1 auto !important;
+    max-width: min(46%, 240px) !important;
+  }
 }
 #app .summon-progress {
   flex: 0 0 auto;
@@ -2280,6 +2294,132 @@ select:focus {
   .selection-orbit-node span,
   .opening-layout::before,
   .opening-generation h2 { animation:none !important; }
+  .prompt-sheet-backdrop,
+  .prompt-sheet-panel { transition: none !important; }
+}
+
+/* 手动编辑提示词：底栏上推面板 */
+.prompt-sheet {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: none;
+  pointer-events: none;
+}
+.prompt-sheet.is-open {
+  display: block;
+  pointer-events: auto;
+}
+.prompt-sheet-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(5, 6, 9, .62);
+  opacity: 0;
+  transition: opacity .28s var(--ease);
+}
+.prompt-sheet.is-open .prompt-sheet-backdrop { opacity: 1; }
+.prompt-sheet-panel {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  width: min(720px, 100%);
+  height: min(82%, 640px);
+  max-height: calc(100% - 28px);
+  display: flex;
+  flex-direction: column;
+  transform: translate(-50%, 108%);
+  border: 1px solid rgba(226, 192, 138, .28);
+  border-bottom: 0;
+  border-radius: 16px 16px 0 0;
+  background:
+    linear-gradient(180deg, rgba(28, 24, 28, .97), rgba(12, 13, 16, .99));
+  box-shadow: 0 -22px 50px rgba(0, 0, 0, .48);
+  transition: transform .34s var(--ease);
+}
+.prompt-sheet.is-open .prompt-sheet-panel { transform: translate(-50%, 0); }
+.prompt-sheet-head {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px 14px 10px;
+  padding-top: max(12px, env(safe-area-inset-top));
+  border-bottom: 1px solid rgba(255, 255, 255, .07);
+}
+.prompt-sheet-kicker {
+  font-size: 10px;
+  letter-spacing: .16em;
+  color: #bda77d;
+}
+.prompt-sheet-title {
+  margin-top: 2px;
+  font: 500 16px/1.2 var(--font-display);
+  color: var(--gold-2);
+}
+.prompt-sheet-actions {
+  display: flex;
+  gap: 8px;
+  align-items: stretch;
+}
+.prompt-sheet-actions .btn {
+  min-height: 36px;
+  padding-inline: 12px;
+}
+.prompt-sheet-actions .btn.primary { flex: 1 1 auto; }
+.prompt-sheet-actions .btn.ghost { flex: 0 0 auto; }
+.prompt-sheet-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: 12px 14px 8px;
+  display: flex;
+  flex-direction: column;
+}
+.prompt-sheet-editor {
+  flex: 1 1 auto;
+  width: 100%;
+  min-height: 160px;
+  resize: none;
+  border: 1px solid rgba(226, 192, 138, .22);
+  border-radius: 12px;
+  padding: 12px;
+  background: rgba(0, 0, 0, .35);
+  color: var(--text);
+  font: 12px/1.65 var(--font-body);
+  outline: none;
+  box-shadow: inset 0 1px rgba(255, 255, 255, .04);
+}
+.prompt-sheet-editor:focus {
+  border-color: rgba(226, 192, 138, .45);
+  box-shadow: inset 0 1px rgba(255, 255, 255, .04), 0 0 0 3px rgba(226, 192, 138, .12);
+}
+.prompt-sheet-hint {
+  flex: 0 0 auto;
+  padding: 0 14px max(12px, env(safe-area-inset-bottom));
+  font-size: 11px;
+  line-height: 1.45;
+  color: var(--muted);
+}
+@media (min-width: 761px) {
+  .prompt-sheet-head {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 16px;
+  }
+  .prompt-sheet-actions {
+    flex: 0 0 auto;
+  }
+  .prompt-sheet-actions .btn.primary { flex: 0 0 auto; }
+  .prompt-sheet-body { padding: 14px 16px 10px; }
+  .prompt-sheet-editor { font-size: 13px; padding: 14px; }
+  .prompt-sheet-hint { padding-inline: 16px; padding-bottom: 14px; }
+}
+@media (max-width: 480px) {
+  .prompt-sheet-panel { height: min(86%, 100%); }
+  .prompt-sheet-title { font-size: 15px; }
+  .prompt-sheet-actions { width: 100%; }
+  .prompt-sheet-actions .btn { flex: 1 1 0; min-width: 0; }
+  .prompt-sheet-editor { font-size: 11px; line-height: 1.6; padding: 10px; }
 }
 </style>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -2431,8 +2571,29 @@ select:focus {
     </div>
     <div class="foot">
       <button class="btn ghost" id="btnCancelGeneration"><svg class="ui-icon" data-icon="lucide-rotate-ccw" aria-hidden="true" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg><span class="btn-label">再想一下</span></button>
+      <button class="btn primary" type="button" id="btnEditOpeningPrompt"><svg class="ui-icon" data-icon="lucide-pen-line" aria-hidden="true" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.376 3.622a1 1 0 0 1 3.002 3.002L7.368 18.635a2 2 0 0 1-.855.506l-2.872.838a.5.5 0 0 1-.62-.62l.838-2.872a2 2 0 0 1 .506-.854z"/></svg><span class="btn-label">手动编辑提示词</span></button>
     </div>
   </section>
+
+  <div class="prompt-sheet" id="promptSheet" hidden aria-hidden="true">
+    <div class="prompt-sheet-backdrop" data-prompt-sheet-close tabindex="-1" aria-hidden="true"></div>
+    <div class="prompt-sheet-panel" role="dialog" aria-modal="true" aria-labelledby="promptSheetTitle">
+      <div class="prompt-sheet-head">
+        <div>
+          <div class="prompt-sheet-kicker">OPENING PROMPT</div>
+          <div class="prompt-sheet-title" id="promptSheetTitle">手动编辑提示词</div>
+        </div>
+        <div class="prompt-sheet-actions">
+          <button class="btn primary" type="button" id="btnCopyOpeningPrompt"><svg class="ui-icon" data-icon="lucide-copy" aria-hidden="true" viewBox="0 0 24 24"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg><span class="btn-label">一键复制全部</span></button>
+          <button class="btn ghost" type="button" id="btnClosePromptSheet" aria-label="关闭"><span class="btn-label">关闭</span></button>
+        </div>
+      </div>
+      <div class="prompt-sheet-body">
+        <textarea class="prompt-sheet-editor" id="openingPromptEditor" spellcheck="false" autocomplete="off" aria-label="开场白提示词"></textarea>
+      </div>
+      <p class="prompt-sheet-hint">可自由删改后复制带走；不会影响本页正在进行的生成。</p>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -3311,13 +3472,13 @@ const CHARACTERS = [
     "accent": "#ff6b8a"
   },
   {
-    "id": "sylvia",
-    "name": "西尔维娅·洛芙",
-    "work": "间谍教室",
-    "appearance": "金色长卷发、蓝色眼睛与眼角泪痣构成成熟明艳的轮廓；日常衣着剪裁大胆，执行间谍任务时会换成便于藏匿武器的套装，常端酒杯或带着宿醉神情，进入戒备状态后步态和视线会立即收紧。",
-    "blurb": "传奇女间谍「催泪弹」，放荡外表下是顶级的情报与战斗直觉。",
-    "filth_seed": "旧任务留下的迷药抗性反噬：醉意退去时瞳孔会短暂叠出双影。",
-    "accent": "#c4a35a"
+    "id": "shiina_taki",
+    "name": "椎名立希",
+    "work": "BanG Dream! It's MyGO!!!!!",
+    "appearance": "深色头发利落，眼神锐利；坐在鼓后敲击力度大而稳，骂人时嗓门先到，关心人时却常变成别扭的催促，练习室黑板上的曲目表多半是她在管。",
+    "blurb": "MyGO!!!!!鼓手，嘴硬严格，负责把一盘散沙按进可演出的节奏里。",
+    "filth_seed": "圣堂节拍器把每个失误放大成「解散倒计时」，立希会砸停节拍器，用真人鼓点重新数拍。",
+    "accent": "#4a4a5a"
   },
   {
     "id": "soifon",
@@ -3428,13 +3589,13 @@ const CHARACTERS = [
     "accent": "#b01030"
   },
   {
-    "id": "katsuragi",
-    "name": "葛城",
-    "work": "闪乱神乐",
-    "appearance": "金色长发束成高马尾，青蓝眼睛配爽朗笑容；国立半藏学院制服以白衬衫、黄色背心和短裙为主，忍装保留黄黑配色与护臂，体态高挑健壮、腿部力量突出，近身战时以连续踢击形成鲜明动势。",
-    "blurb": "国立半藏学院三年级忍者，豪爽好色、先动手后思考，对后辈很有大姐头气质。",
-    "filth_seed": "妖魔秽气浸过的忍布：胸前绑带收紧时，皮肤会浮起淡粉咒纹。",
-    "accent": "#d45c6a"
+    "id": "chihaya_anon",
+    "name": "千早爱音",
+    "work": "BanG Dream! It's MyGO!!!!!",
+    "appearance": "粉色长发活泼好动，笑容先于思考出现；背着吉他袋穿时装感私服或校服，搭话时身体前倾，被拒绝也不太死心，排练迟到被骂时会举手求饶但仍转头继续出主意。",
+    "blurb": "从东京转学来的少女，为融入人群而组乐队，却意外成为 MyGO!!!!! 的点火者。",
+    "filth_seed": "圣堂好友列表显示每个人对她的「好感分数」，爱音会删掉列表，拒绝用分数决定要不要道歉。",
+    "accent": "#f4a0c0"
   },
   {
     "id": "clare",
@@ -3464,13 +3625,13 @@ const CHARACTERS = [
     "accent": "#f2a0b8"
   },
   {
-    "id": "reina",
-    "name": "蕾娜",
-    "work": "女王之刃",
-    "appearance": "金色长发束在脑后，蓝色眼睛与坦率眉形带出流浪武者气质；穿红白相间的轻铠、金属护肩和长靴，携长剑与圆盾，铠甲破损会触发作品特有的衣装损坏状态，持盾时站姿仍保持正面对敌。",
-    "blurb": "万斯伯爵家千金，流浪战士，剑盾正攻不善阴谋。",
-    "filth_seed": "竞技场咒纹残留：铠甲贴肤处会浮现淡金锁链纹，像被观众视线勒住。",
-    "accent": "#e87830"
+    "id": "izumi_sagiri",
+    "name": "和泉纱雾",
+    "work": "埃罗芒阿老师",
+    "appearance": "浅色长发带内卷，常戴耳机或抱着平板；宅在房内穿家居服与披肩，开门缝只露出半张脸，画到关键分镜时会整个人趴在被炉或床边，被哥哥叫吃饭才用不耐烦的声音回应。",
+    "blurb": "闭门不出的天才插画师「埃罗芒阿老师」，与哥哥和泉正宗共同面对创作与家庭裂痕。",
+    "filth_seed": "圣堂显示器循环播放她不愿公开的旧画与家庭录像，纱雾会砸掉电源，只允许自己决定哪些作品可以见人。",
+    "accent": "#b8a0c8"
   },
   {
     "id": "yukino",
@@ -3635,13 +3796,13 @@ const CHARACTERS = [
     "accent": "#7b3b36"
   },
   {
-    "id": "balsa",
-    "name": "巴尔莎",
-    "work": "精灵守护者",
-    "appearance": "黑色长发在脑后束成低马尾，棕色皮肤与深色眼睛；穿便于旅行的灰蓝长衣、皮护腕与长靴，随身携一柄短枪，枪柄与手掌有长期训练磨痕，警戒时会自然站到受保护者与出口之间。",
-    "blurb": "以短枪为武器的职业保镖，为偿还养父救下的八条生命而守护陌生人，也逐渐面对自己的故乡与过去。",
-    "filth_seed": "圣堂门外连续出现八名互不相识的求救者，每人都声称是她誓约中的最后一人，巴尔莎决定逐个核验危险而非被数字驱使。",
-    "accent": "#526e6b"
+    "id": "angelina_kudou",
+    "name": "安洁莉娜·库杜·盾子",
+    "work": "魔法科高校的劣等生",
+    "appearance": "金色长发披散或束起，碧眼锐利；执行任务时常戴口罩与风衣遮挡面容，解除伪装后显出与年龄不符的成熟气场，使用战略级魔法时会先确认风向与人员疏散范围，再抬手展开大规模干涉。",
+    "blurb": "美英系战略级魔法师「扫除者」，任务优先，却会在必要时与司波兄妹站到同一战线。",
+    "filth_seed": "圣堂任务简报把「扫除」对象改成她刚刚撤离的平民区，安洁莉娜会追改简报源头，拒绝执行被篡改的国家命令。",
+    "accent": "#c4a35a"
   },
   {
     "id": "olivier_armstrong",
@@ -3716,13 +3877,13 @@ const CHARACTERS = [
     "accent": "#c45c6a"
   },
   {
-    "id": "integra_hellsing",
-    "name": "因特古拉·赫尔辛",
-    "work": "HELLSING",
-    "appearance": "金色长发垂至背部，蓝色眼睛外戴圆框眼镜；常穿黑色三件套西装、领带、白手套与长风衣，叼雪茄并携佩剑或手枪，发布命令时坐姿笔直，受伤后仍保持清晰指挥。",
-    "blurb": "赫尔辛家现任家主与皇家国教骑士团团长，以冷静指挥约束吸血鬼阿卡多并保卫英国。",
-    "filth_seed": "圣堂地下封印室出现另一口写着赫尔辛家徽的棺材，里面的人自称接受过更早契约，因特古拉会先审查家族记录再决定是否开封。",
-    "accent": "#4b5668"
+    "id": "lala_deviluke",
+    "name": "菈菈·萨塔琳·戴比路克",
+    "work": "出包王女",
+    "appearance": "粉色长发以两枚大型发饰固定，翠绿色眼睛明亮；常穿自制或改造过的暴露战斗服，身后有可变形的黑色长尾，拿出发明时会兴奋地摊开设计图，爆炸后仍笑着说「下次一定成功」。",
+    "blurb": "戴比路克星第一王女，天才发明家，为逃避联姻逃到地球并认定结城梨斗为未婚夫。",
+    "filth_seed": "圣堂工厂按她的设计图量产「完美婚约机器」，每启动一次就强制改写梨斗的记忆；菈菈会拆掉核心，宁可发明失败也不让感情被程序化。",
+    "accent": "#e89bb8"
   },
   {
     "id": "artoria_pendragon",
@@ -4823,13 +4984,13 @@ const CHARACTERS = [
     "accent": "#586a7e"
   },
   {
-    "id": "kaoruko_waguri",
-    "name": "和栗薰子",
-    "work": "薰香花朵凛然绽放",
-    "appearance": "黑色长发垂至腰际，紫色眼睛与平直刘海显得安静；穿桔梗女子学园制服时衣着整洁，私下常拿蛋糕盒或参考书，笑时眼尾柔和，面对偏见时站姿仍保持稳定。",
-    "blurb": "桔梗女子学园学生，坦率温和且有自己的判断，不以校际偏见衡量他人。",
-    "filth_seed": "圣堂甜点柜出现一块会让食客忘记既有偏见的蛋糕，但也会抹掉真实相处记忆，薰子坚持找出不以遗忘换理解的方法。",
-    "accent": "#9b7898"
+    "id": "yahata_umiri",
+    "name": "要乐奈",
+    "work": "BanG Dream! It's MyGO!!!!!",
+    "appearance": "浅色短发略带毛躁感，表情淡漠很少大幅波动；常抱着贝斯站在不起眼的角落，被问意见时会先拨一句低音riff代替回答；喜欢的东西会立刻凑近，讨厌的东西转身就走，毫不掩饰。",
+    "blurb": "MyGO!!!!!贝斯手，著名乐手之孙女，话少、随性又爱猫，用低音把乐队情绪托在地层。",
+    "filth_seed": "圣堂调音台把贝斯轨自动静音，奈会改用不通电的方式把弦振传到地板，证明低音仍在。",
+    "accent": "#7a8b9c"
   },
   {
     "id": "ran_mouri",
@@ -5129,13 +5290,13 @@ const CHARACTERS = [
     "accent": "#b43c35"
   },
   {
-    "id": "morrigan_aensland",
-    "name": "莫莉甘·安斯兰特",
-    "work": "恶魔战士系列",
-    "appearance": "青绿色长发垂至腰际，紫色眼睛；头顶与腰后各有黑色蝙蝠翼，穿紫黑紧身战装与白色羽饰，翼能变形成刀刃、护盾和推进结构，释放灵魂之拳时形成蝙蝠状能量。",
-    "blurb": "魔界安斯兰特家继承人，力量被分割封印的梦魔，以追求刺激和自主生活拒绝被贵族责任完全定义。",
-    "filth_seed": "圣堂梦境将她缺失的灵魂碎片各自塑成独立继承人，要求通过吞噬决定唯一真身，莫莉甘选择先查封印来源。",
-    "accent": "#5f4c89"
+    "id": "komi_shouko",
+    "name": "古见硝子",
+    "work": "古见同学有交流障碍症",
+    "appearance": "黑色长发直顺垂至腰下，眉心有标志性红记，表情常僵在「想说却说不出」；穿整齐校服，沟通时会举起手写纸条或手机屏幕，被人群注视时肩膀会微微缩起，只有亲近者靠近才会稍稍放松指尖。",
+    "blurb": "因交流障碍被误解为高冷美人的高中生，目标是交到一百个朋友。",
+    "filth_seed": "圣堂扩音器强迫她每次心跳都变成全校广播，古见会拔掉话筒线，选择只对愿意等待的人写下句子。",
+    "accent": "#2b2b2b"
   },
   {
     "id": "sarah_kerrigan",
@@ -5399,31 +5560,22 @@ const CHARACTERS = [
     "accent": "#c28a3f"
   },
   {
-    "id": "seras_victoria",
-    "name": "塞拉斯·维多利亚",
-    "work": "HELLSING Ultimate",
-    "appearance": "金色短发向两侧翘起，蓝色眼睛转化后可变为红色；早期穿黄色警服与短裙，加入Hellsing后着红色军服，使用超大型反器材枪，完全吸血鬼化后左臂可化为黑色影质与多重使魔。",
-    "blurb": "从警员转化为吸血鬼的Hellsing队员，在恐惧、饥饿和战斗责任中逐步接受自己的力量。",
-    "filth_seed": "影之臂中传来一个不属于皮普的战场口令，塞拉斯担心使魔正在被外部信号接管。",
-    "accent": "#a33f36"
+    "id": "momo_deviluke",
+    "name": "梦梦·贝莉雅·戴比路克",
+    "work": "出包王女",
+    "appearance": "浅粉色双马尾以花朵发饰固定，眼神常带算计的笑意；穿暴露但整齐的服装，尾巴灵活地帮忙递物或偷听，提出「后宫」方案时会双手合十、语气甜得发假。",
+    "blurb": "菈菈的妹妹，擅长策划与变形，打着「为姐姐幸福」的旗号推动多人大后宫。",
+    "filth_seed": "圣堂名册自动给每个接近梨斗的人盖上「后宫成员」印，梦梦发现印泥会抽走真心；她会焚毁名册，拒绝用制度代替选择。",
+    "accent": "#f0b3c8"
   },
   {
-    "id": "mamako_oosuki",
-    "name": "大好真真子",
-    "work": "普通攻击是全体攻击而且能二次攻击的妈妈你喜欢吗？",
-    "appearance": "棕色长发垂至腰际，棕色眼睛，身形丰满；现实中穿简洁母亲式便服，进入游戏后着白色低领长裙、轻甲与长靴，双手分别持圣剑“后土”和“蓝色天空”，战斗时可发动大范围二连攻击。",
-    "blurb": "与儿子进入亲子测试游戏的母亲，战力异常强大，关心过度却愿意学习把保护和控制区分开。",
-    "filth_seed": "游戏系统开始把所有队员强制登记为她的孩子并自动接受照料指令，真真子必须主动撤销自己获得的特权。",
-    "accent": "#bd7f68"
-  },
-  {
-    "id": "rel_mayer",
-    "name": "蕾尔·梅耶",
-    "work": "Ergo Proxy",
-    "appearance": "黑色短发向外翘起，蓝灰色眼睛，眼周常画深蓝色眼影；穿黑色贴身调查服、长靴与外套，携带枪械和探测设备，离开穹顶后会换用防寒旅行装。",
-    "blurb": "罗姆德市民情报局调查官，从追查AutoReiv感染事件走向质疑整个穹顶社会与自身来历。",
-    "filth_seed": "圣堂档案把所有人的“存在理由”列为可撤销权限，蕾尔发现自己的权限已被另一个蕾尔签字取消。",
-    "accent": "#465c72"
+    "id": "kagamihara_nadeshiko",
+    "name": "各务原抚子",
+    "work": "摇曳露营△",
+    "appearance": "粉色长发柔顺，笑容明亮；穿粉系外套与围巾，看见美食眼睛会发光，追着志摩凛的车时会拼尽全力挥手，在帐篷里吃涮锅时整个人都围着蒸汽转。",
+    "blurb": "热爱露营与食物的少女，用旺盛好奇心把凛拉进二人世界的旅行。",
+    "filth_seed": "圣堂菜单把「和凛一起」写成必点套餐并扣除独处次数，抚子会改订单，确认凛是自愿同行。",
+    "accent": "#f3b6c8"
   },
   {
     "id": "cornelia_li_britannia",
@@ -5442,6 +5594,15 @@ const CHARACTERS = [
     "blurb": "背负女娲族使命的南诏后裔，为延续三世感情封印女儿灵力，最终必须在执念、母职与苍生责任间选择。",
     "filth_seed": "圣堂水镜同时映出三世恋人的不同选择，紫萱发现其中一面正用青儿的时间维持幻境。",
     "accent": "#7d4f79"
+  },
+  {
+    "id": "takamaki_anne",
+    "name": "高卷杏",
+    "work": "女神异闻录5",
+    "appearance": "深栗色长发常扎或披散，时尚感强；日常穿流行私服，进入认知世界则换猫耳式怪盗装与鞭类武器，语气在校园里偏冲，面对朋友被欺凌时会毫不犹豫站出去。",
+    "blurb": "怪盗团成员「Panther」，模特学生，反抗被物化与利用的成人世界。",
+    "filth_seed": "圣堂杂志封面把她的反抗写成色情卖点，杏会撕掉样刊，把真相贴回公共告示板。",
+    "accent": "#d45b7a"
   },
   {
     "id": "c_viper",
@@ -5570,13 +5731,13 @@ const CHARACTERS = [
     "accent": "#a9a3b0"
   },
   {
-    "id": "sakie_sato",
-    "name": "佐藤早纪绘",
-    "work": "亚人酱有话要说",
-    "appearance": "黑色长发在脑后束起，棕色眼睛，身形高挑丰满；在学校穿保守运动服或高领上衣以减少皮肤暴露，戴眼镜，独处时会换普通便服，紧张时姿势僵硬并刻意拉开距离。",
-    "blurb": "柴崎高中的数学教师与魅魔亚人，为避免无意影响他人长期压低存在感，仍希望拥有正常社交和亲密关系。",
-    "filth_seed": "学校里所有人突然对她完全免疫，却在离校后统一梦见同一条命令，早纪绘怀疑影响被转移而非消失。",
-    "accent": "#69595e"
+    "id": "shima_rin",
+    "name": "志摩凛",
+    "work": "摇曳露营△",
+    "appearance": "深色短发利落，表情常淡淡的；骑改装踏板车出行，穿冲锋衣与手套，搭帐篷时动作极熟练，被搭话时会先应一声再继续整理营钉，煮速食时安静地看炉火。",
+    "blurb": "喜欢一个人露营的高中生，嫌麻烦却逐渐接受「偶尔也可以有同伴」。",
+    "filth_seed": "圣堂营地强制分配「必须两人一帐」，凛会拔营转移到规则之外的空地，保住自己的节奏。",
+    "accent": "#5c6b7a"
   },
   {
     "id": "shizuka_hiratsuka",
@@ -5640,15 +5801,6 @@ const CHARACTERS = [
     "blurb": "高度育成高中D班学生，最初坚持独行和成绩优先，后在班级竞争中学习领导、协作与承担失误。",
     "filth_seed": "学校系统出现一份以她名义提交的退学名单，名单上的每个选择都精准对应她曾经压下的判断。",
     "accent": "#4f526b"
-  },
-  {
-    "id": "quiet_mgsv",
-    "name": "静静",
-    "work": "合金装备V：幻痛",
-    "appearance": "黑色长发披至背部，绿色眼睛，脸部有浅色斑纹；常穿黑色比基尼式战术装备、撕裂丝袜与长靴，携大口径狙击步枪，能够隐形、高速移动并通过皮肤光合作用和呼吸。",
-    "blurb": "被声带寄生虫改造的狙击手，为避免英语菌株扩散保持沉默，以行动在复仇任务和钻石狗同伴间重新选择。",
-    "filth_seed": "她体内寄生虫开始对圣堂术语产生反应，静静需要确认新的触发语言是否正在形成。",
-    "accent": "#4d624d"
   },
   {
     "id": "alcina_dimitrescu",
@@ -5721,6 +5873,15 @@ const CHARACTERS = [
     "blurb": "卡利亚王女与神人，为摆脱双指和黄金律控制舍弃肉身，策划群星时代的漫长道路。",
     "filth_seed": "一只新的双指在圣堂地下生长，指纹与她人偶关节完全一致，并开始替她发布命令。",
     "accent": "#617b9c"
+  },
+  {
+    "id": "mayuzumi_fuyuko",
+    "name": "黛冬优子",
+    "work": "偶像大师 闪耀色彩",
+    "appearance": "浅色长发柔和，气质安静；穿单元服装时仍显得内敛，练舞时动作标准却缺少攻击性笑容，被夸奖会愣住半秒，再轻轻摇头说自己还不够。",
+    "blurb": "闪耀色彩所属偶像，自我评价偏低，在舞台上学习把「想被看见」说出口。",
+    "filth_seed": "圣堂提词器循环「你不配被喜欢」，冬优子会关掉提词器，改念自己写下的一句台上自我介绍。",
+    "accent": "#8fa6c4"
   },
   {
     "id": "yuigahama_yui",
@@ -5894,13 +6055,13 @@ const CHARACTERS = [
     "accent": "#d8d4c7"
   },
   {
-    "id": "victorique",
-    "name": "维多利加·德·布洛瓦",
-    "work": "GOSICK",
-    "appearance": "金色长卷发垂落至脚踝附近，碧绿色眼睛，常穿繁复黑色哥特裙装；身形娇小，习惯在图书馆温室叼烟斗，以低沉声音整理线索。",
-    "blurb": "被囚禁在学院图书馆的“灰狼”少女，以惊人推理力重构混沌，也渴望摆脱家族把她当作工具的命运。",
-    "filth_seed": "图书馆顶层落下一枚不存在的混沌碎片，能补全任何案件，却总把她本人写成幕后凶手。",
-    "accent": "#b79b45"
+    "id": "takamatsu_tomori",
+    "name": "高松灯",
+    "work": "BanG Dream! It's MyGO!!!!!",
+    "appearance": "浅色短发略显蓬乱，眼神常像刚哭过或即将哭出来；穿校服或乐队T恤，握麦克风时指节发白，唱到情绪高点会整个人前倾，结束后又立刻缩回自己的世界。",
+    "blurb": "MyGO!!!!!主唱，把无法整理的情感直接唱出来，也因此一次次弄乱与修好人际关系。",
+    "filth_seed": "圣堂话筒会把她未说出口的伤人想法直接扩出去，灯会摔掉话筒，选择只在歌里坦白。",
+    "accent": "#9aa7c2"
   },
   {
     "id": "mizuhara_chizuru",
@@ -6128,13 +6289,13 @@ const CHARACTERS = [
     "accent": "#d4a1bd"
   },
   {
-    "id": "iwanaga_kotoko",
-    "name": "岩永琴子",
-    "work": "虚构推理",
-    "appearance": "浅棕长发与绿色眼睛，左眼为义眼、左腿装义肢，常戴贝雷帽并携手杖；衣着端庄，陈述谎言推理时神情从容而语速稳定，步态沉稳。",
-    "blurb": "被妖怪奉为“智慧之神”的调停者，以可信虚构解决怪异冲突，主动大胆却非常清楚证据与叙事的差别。",
-    "filth_seed": "妖怪们请求她为圣堂编造一个能永久成立的起源，只要众人相信，虚构就会吞掉真正来历。",
-    "accent": "#8a7256"
+    "id": "kirisame_marisa",
+    "name": "雾雨魔理沙",
+    "work": "东方Project",
+    "appearance": "金色头发配黑色魔女帽与衣饰，白色披肩；骑扫帚飞行，施放「星」与「恋」的魔法时弹幕呈星屑状扩散，从别人家「借」书或道具时笑容理直气壮。",
+    "blurb": "住在魔法森林的人类魔法使，以星屑魔法与收集癖在幻想乡到处闯。",
+    "filth_seed": "圣堂图书馆把她「借」走的书变成锁链缠住扫帚，魔理沙会砍断锁链，并留下欠条——下次再还。",
+    "accent": "#c8a84b"
   },
   {
     "id": "sakayanagi_arisu",
@@ -6164,13 +6325,463 @@ const CHARACTERS = [
     "accent": "#d56b86"
   },
   {
-    "id": "hiiragi_nana",
-    "name": "柊奈奈",
-    "work": "无能的奈奈",
-    "appearance": "粉色短发扎成左右双马尾，绿色眼睛，校服领口系红色蝴蝶结；常维持开朗笑容，执行暗杀或推理时眼神会瞬间变得冷静，动作隐蔽。",
-    "blurb": "冒充读心能力者潜入孤岛学校的无能力暗杀者，以观察和谎言猎杀目标，也逐渐被真实友情动摇。",
-    "filth_seed": "任务终端给圣堂每个人标注“预计杀人数”，数值会随她的怀疑上升，却拒绝说明计算依据。",
-    "accent": "#d26788"
+    "id": "hakurei_reimu",
+    "name": "博丽灵梦",
+    "work": "东方Project",
+    "appearance": "黑色长发以红色丝带束成，穿红白巫女服与裙子；手持御币或阴阳玉，打哈欠时毫无形象，战斗时却能以结界与符札迅速压制异变，赛钱箱空着时会明目张胆地发愁。",
+    "blurb": "博丽神社巫女，懒散爱蹭饭，却是幻想乡解决异变的第一人选。",
+    "filth_seed": "圣堂赛钱箱许愿「让巫女永远勤劳」，灵梦会把箱子封进结界，拒绝被许愿绑架日程。",
+    "accent": "#c44536"
+  },
+  {
+    "id": "honda_tohru",
+    "name": "本田透",
+    "work": "水果篮子",
+    "appearance": "栗色长发以两条低马尾束起，发尾微卷，棕色眼睛总带认真而温和的光；常穿深色水手服、围裙或花店打工制服，双手习惯交叠在身前，整理房间时会先把地板擦到反光，说到草摩家秘密时会因顾及他人而放轻声音、微微前倾。",
+    "blurb": "失去母亲后寄住草摩家的高中生，以体贴和惊人的韧性逐步触及十二生肖家族的伤痕。",
+    "filth_seed": "圣堂庭院长出一顶与今日子旧物相同的帐篷，里面每说一次“我没事”便替草摩家抹去一段真心话；透会先拆开帐篷的咒纹，不让怀念成为继续隐瞒的借口。",
+    "accent": "#a97658"
+  },
+  {
+    "id": "higurashi_kagome",
+    "name": "日暮戈薇",
+    "work": "犬夜叉",
+    "appearance": "黑色长发垂至腰后，刘海以红色发绳束起，棕色眼睛明亮而警觉；现代常穿绿白水手服，战国时代换红白巫女装并背着装四魂碎片的黄色大包，拉弓时左肩前送、箭矢会泛起破魔灵力光芒，奔跑穿越食骨之井时会把弓背在身后。",
+    "blurb": "从现代穿越战国的少女，以破魔之箭和不肯放弃同伴的判断参与四魂之玉争夺。",
+    "filth_seed": "圣堂井底浮出一枚完整四魂之玉碎片，能把桔梗的记忆覆到她身上；戈薇会用破魔箭封住井口，拒绝让前世替她作出现在的选择。",
+    "accent": "#b64d4e"
+  },
+  {
+    "id": "lacus_clyne",
+    "name": "拉克斯·克莱因",
+    "work": "机动战士高达SEED",
+    "appearance": "粉红色长发柔顺垂至腰际，额前别着白色发饰，碧绿色眼睛沉静；常穿白粉色礼服、披肩与舞台长靴，公开演说时姿态从容，登上永恒号后则换简洁军装、以不提高音量的语气发布命令，手持麦克风时会轻握柄部、目光扫过听众。",
+    "blurb": "以歌姬形象为人所知的PLANT政治人物，在战争中从象征逐渐成为以和平为目标的行动者。",
+    "filth_seed": "圣堂广播循环播放一首能让两军同时放下武器的歌曲，副歌却会删除听者对失去者的记忆；拉克斯会先切断信号，拒绝以遗忘伪造和平。",
+    "accent": "#d589ad"
+  },
+  {
+    "id": "cagalli_yula_athha",
+    "name": "卡嘉莉·尤拉·阿斯哈",
+    "work": "机动战士高达SEED",
+    "appearance": "金色短发略带凌乱，紫色眼睛锐利；常穿奥布军服、飞行夹克或白金礼装，腰间携枪与通讯器，驾驶嫣红强袭高达时动作果断、会咬紧牙关，愤怒时会直视对方而不掩饰表情，谈判桌上也会把指节敲在桌面。",
+    "blurb": "奥布首长乌兹米的养女与继承者，以直接行动反抗侵略，也在国家责任中学习政治代价。",
+    "filth_seed": "圣堂议事厅送来一纸保证奥布永远中立的条约，签署者名字却会改成被牺牲的岛民；卡嘉莉会撕毁条款并追查谁在用和平语言掩盖侵略。",
+    "accent": "#c67b42"
+  },
+  {
+    "id": "winry_rockbell",
+    "name": "温莉·洛克贝尔",
+    "work": "钢之炼金术师",
+    "appearance": "金色长发通常扎成高马尾，蓝色眼睛明亮；穿沾着机油的拉修巴尔工作背心、连体工装或围裙，手持扳手与卡尺检查金属关节，听见机械铠异响时会立刻俯身确认，讲解结构时会不自觉加快语速、用指尖点出磨损处。",
+    "blurb": "拉修巴尔的机械铠技师，照料爱德与阿尔，也必须面对父母死于战争留下的愤怒。",
+    "filth_seed": "圣堂工作台摆着一副能让断肢立刻复原的机械铠，却把每次疼痛转移给伊修瓦尔伤者的残响；温莉会拆解传动核心，拒绝让修复建立在他人伤口上。",
+    "accent": "#d6a746"
+  },
+  {
+    "id": "izumi_konata",
+    "name": "泉此方",
+    "work": "幸运星",
+    "appearance": "蓝紫色长发垂至腰际，绿色眼睛常带懒散笑意；穿陵樱学园水手服或宽松居家服，猫耳发饰偶尔别在侧边，背包里常塞漫画与游戏，打游戏时前倾专注、手指在键帽上飞快敲击，跑步却总显得缺乏干劲、会把书包甩到背后。",
+    "blurb": "热衷动画、游戏和同人活动的陵樱学园学生，以轻快吐槽观察日常，也在朋友间维持自己的节奏。",
+    "filth_seed": "圣堂游戏机弹出一款能重开任何失败日常的隐藏关卡，每通关一次便删去一段与朋友的真实对话；此方会保存存档并先查游戏制作人留下的异常代码。",
+    "accent": "#5968bd"
+  },
+  {
+    "id": "ranka_lee",
+    "name": "兰卡·李",
+    "work": "超时空要塞F",
+    "appearance": "绿色短发在两侧翘起，碧绿色眼睛清澈；初期常穿美星学园制服和娘娘餐馆打工围裙，成名后换明亮短裙舞台装与短靴，唱起《星间飞行》时动作轻快、会小幅跳跃，紧张时会攥住衣角、把视线移向地面。",
+    "blurb": "从美星学园学生成长为银河歌手的少女，其歌声与Vajra之间存在无法回避的联系。",
+    "filth_seed": "圣堂传来只有Vajra能听见的旋律，答应让她找回全部童年记忆，却会把舰队人员变成回声；兰卡会先停止歌唱并寻找旋律的生物来源。",
+    "accent": "#68b56b"
+  },
+  {
+    "id": "nagato_yuki",
+    "name": "长门有希",
+    "work": "凉宫春日的忧郁",
+    "appearance": "深紫色短发齐至下颌，琥珀色眼睛平静少眨；常穿北高中制服、黑色外套或文艺部室的针织开衫，抱书时姿势端正、书脊贴胸，发动信息操作时周围会出现无声的光学扰动，指尖会微微悬停于半空。",
+    "blurb": "统合思念体制造的人形接口，以极少言语观察凉宫春日及其周边异常，并在任务之外形成自己的意志。",
+    "filth_seed": "圣堂书架多出一本记录所有平行世界长门的数据簿，每翻一页便覆盖当前一段日常；长门会封存书页并优先保全此刻可验证的世界。",
+    "accent": "#5d578c"
+  },
+  {
+    "id": "asahina_mikuru",
+    "name": "朝比奈实玖瑠",
+    "work": "凉宫春日的忧郁",
+    "appearance": "茶色长发垂至胸前，棕色眼睛容易因紧张泛起水光；常穿北高中制服，SOS团活动时被换上女仆装、兔女郎装或未来机关战斗服，握着时间旅行装置时动作格外谨慎。",
+    "blurb": "从未来来到北高的时间旅行者，受严格保密规则限制，在SOS团的混乱活动中努力守住任务与自我。",
+    "filth_seed": "圣堂时钟寄来一段由成年自己签署的警告，要求她立刻忘记某名团员；实玖瑠会先验证时间戳与禁语规则，不让伪造未来改写当下关系。",
+    "accent": "#ad7858"
+  },
+  {
+    "id": "shana",
+    "name": "夏娜",
+    "work": "灼眼的夏娜",
+    "appearance": "黑色长发在战斗时燃成赤红，瞳孔化为灼眼；平日穿御崎高中制服与黑色长袜，作战时披黑色斗篷、携太刀贽殿遮那，火粉与红莲之焰环绕时表情冷厉而专注，收刀后会用指尖拂去刀鞘上的灰烬。",
+    "blurb": "与红世魔王“天壤劫火”契约的火雾战士，从只认使命的讨伐者逐步确认自己名为夏娜。",
+    "filth_seed": "圣堂火焰映出一个不必牺牲任何火炬的完美封绝，核心却锁着亚拉斯托尔的真名；夏娜会挥刀斩断术式，不用契约者换取伪造的和平。",
+    "accent": "#b33c32"
+  },
+  {
+    "id": "louise_francoise",
+    "name": "露易丝",
+    "work": "零之使魔",
+    "appearance": "粉金色卷发披至肩背，桃色眼睛神气又易显露慌乱；常穿托里斯汀魔法学院制服、蕾丝礼裙或斗篷，挥魔杖时爆炸烟雾常遮住身影，念咒时会强迫自己挺直背脊、把魔杖举到胸前，失败后会把帽檐压低。",
+    "blurb": "被称作“零”的贵族魔法学生，召唤才人后觉醒虚无之力，在自尊、嫉妒与责任间成长。",
+    "filth_seed": "圣堂魔法阵承诺让她所有法术一次成功，阵眼却把才人的使魔印记改写成奴役纹；露易丝会炸毁阵角，拒绝用契约夺走任何人的选择。",
+    "accent": "#d77e9a"
+  },
+  {
+    "id": "miki_sayaka",
+    "name": "美树沙耶香",
+    "work": "魔法少女小圆",
+    "appearance": "蓝色短发以发夹固定，蓝灰眼睛热烈；变身后穿蓝白短披风、百褶裙与长靴，佩剑时动作大开大合、会把剑尖指向地面，灵魂宝石黯淡时神情会从倔强转为难以掩藏的疲惫，战斗后会下意识摸向胸口宝石。",
+    "blurb": "为实现上条恭介愿望而许愿的魔法少女，以正义感战斗，也在自我牺牲与嫉妒中走向悲剧。",
+    "filth_seed": "圣堂音乐厅传来恭介从未演奏过的完美小提琴曲，听众每鼓一次掌便替她承受一次绝望；沙耶香会砸碎指挥台，不让任何人替她承担或购买她的选择。",
+    "accent": "#4e78ba"
+  },
+  {
+    "id": "sakura_kyoko",
+    "name": "佐仓杏子",
+    "work": "魔法少女小圆",
+    "appearance": "红色长发以黑色缎带扎成高马尾，红褐眼睛锐利；变身后穿红黑短披风与长靴，手持可分节延展的长枪，嘴里常叼着苹果或点心，战斗时步伐轻快而凶狠，收枪后会把枪身扛在肩上、用余光扫视周围。",
+    "blurb": "因愿望毁掉家庭后奉行利己生存的魔法少女，却在沙耶香身上重新看见不愿放弃同伴的自己。",
+    "filth_seed": "圣堂祭坛摆满父亲当年未被听见的讲章，每烧一页便能复活一段家庭晚餐；杏子会用长枪挑开祭坛机关，不让悔恨再决定她该信谁。",
+    "accent": "#bd4b45"
+  },
+  {
+    "id": "belldandy",
+    "name": "贝露丹迪",
+    "work": "Aa！女神",
+    "appearance": "银蓝色长发垂至膝间，蓝色眼睛清澈宁静；常穿白蓝女神礼服、飘带与轻鞋，在寺院生活时换朴素家居服与围裙，施展女神术时周围浮现柔和光环与符文，端茶时会先把杯沿转向对方、动作轻缓。",
+    "blurb": "自女神事务所降临人间的一级神，以温柔和强大术式陪伴森里萤一，也坚持不替人夺走选择。",
+    "filth_seed": "圣堂愿望电话响起，线路承诺能实现所有来电者的心愿，却把每个愿望的代价转嫁给无辜者；贝露丹迪会先关闭神界回路，再逐一查清被篡改的契约。",
+    "accent": "#6d89bf"
+  },
+  {
+    "id": "index_librorum",
+    "name": "茵蒂克丝",
+    "work": "魔法禁书目录",
+    "appearance": "齐肩银白短发在动作时轻晃，翠绿色眼睛清澈；常穿白色修女服、头戴金色发箍与金色绑带，赤脚行走于学园都市街道，被追问魔导书内容时会先皱眉再突然提高音量，肚子饿时则死死盯着便利店饭团。",
+    "blurb": "背负十万三千本魔导书记忆的修女少女，本人却更常为晚饭和吐槽上条当麻而烦恼。",
+    "filth_seed": "圣堂书架自动翻开她脑中的禁书，每读一页就抹去一段与当麻共度的记忆；茵蒂克丝会先合上书页，拒绝用遗忘换取「完整索引」。",
+    "accent": "#d9d4c8"
+  },
+  {
+    "id": "hirasawa_yui",
+    "name": "平泽唯",
+    "work": "轻音少女",
+    "appearance": "浅棕色长发以两枚黄色发夹固定刘海，棕色眼睛总显得精神十足；常穿樱丘高中制服或轻便私服，抱着樱桃红吉他“吉太”时会不自觉露出笑容，舞台上跟着节拍大幅晃动身体。",
+    "blurb": "樱丘高中轻音部吉他与主唱，凭直觉、热情和不肯放弃的练习把乐队凝聚起来。",
+    "filth_seed": "圣堂收藏室把吉太的琴弦替换成会吸走练习记忆的黑线，唯发现每弹好一首歌就忘记一段与伙伴共度的午后，决定先找回原本的和弦痕迹。",
+    "accent": "#b97745"
+  },
+  {
+    "id": "akiyama_mio",
+    "name": "秋山澪",
+    "work": "轻音少女",
+    "appearance": "黑色长发垂过肩背，深色眼睛，紧张时会把脸藏在发丝后；常穿樱丘高中制服，演出时抱着左手贝斯“伊丽莎白”，手指拨弦稳定有力，面对恐怖题材或意外目光时则会立刻僵住。",
+    "blurb": "轻音部贝斯手与主要作词者，外表沉静认真，实际怕羞又极易被想象中的可怕情景击中。",
+    "filth_seed": "圣堂舞台会把她不愿公开的草稿投影给满座听众，只有完成一首真正想唱的歌才能关灯，澪决定夺回歌词的解释权。",
+    "accent": "#374258"
+  },
+  {
+    "id": "nakano_azusa",
+    "name": "中野梓",
+    "work": "轻音少女",
+    "appearance": "黑色长发扎成双马尾，棕色眼睛，身形小巧却站姿认真；平日穿整齐的樱丘高中制服，练习时抱着穆斯唐吉他，偶尔戴猫耳发箍，被前辈围着逗弄时会红着脸抗议。",
+    "blurb": "轻音部后辈吉他手，基本功扎实、责任感强，在吐槽前辈与被乐队温柔接纳之间成长。",
+    "filth_seed": "圣堂练习室的节拍器会让每个落拍者失去一种乐器记忆，梓必须带领习惯随性的前辈们找回共同节奏。",
+    "accent": "#242a35"
+  },
+  {
+    "id": "tainaka_ritsu",
+    "name": "田井中律",
+    "work": "轻音少女",
+    "appearance": "浅棕色短发翘起利落，金棕色眼睛总带着恶作剧般的神气；常穿略显随意的校服，坐到架子鼓前会把鼓棒转在手指间，演出时以强劲节奏带动全场，笑声尤其响亮。",
+    "blurb": "轻音部部长与鼓手，擅长把人拉进热闹里，也会在责任真正落下时笨拙地守住社团。",
+    "filth_seed": "圣堂公告栏会把未完成的部长职责化成锁链缠住鼓槌，律只有坦白每件拖延的事并逐一完成，才能重新敲响开场节奏。",
+    "accent": "#b16a3c"
+  },
+  {
+    "id": "kotobuki_tsumugi",
+    "name": "琴吹䌷",
+    "work": "轻音少女",
+    "appearance": "淡金色长发垂至背后，眉眼柔和，额前别着黄色发饰；常穿裁剪整洁的樱丘高中制服，练习时坐在键盘前神情专注，端出茶具和点心时动作从容，偶尔会因新奇体验露出孩子气的兴奋。",
+    "blurb": "轻音部键盘手与琴吹家千金，温和周到，始终认真守护着朋友们得以相聚的部室。",
+    "filth_seed": "圣堂茶室的银杯会把每次照顾他人的心意折算成债务，䌷拒绝让友情变成交换，开始寻找杯底刻下的家族印记。",
+    "accent": "#d2af57"
+  },
+  {
+    "id": "kagura_gintama",
+    "name": "神乐",
+    "work": "银魂",
+    "appearance": "橘红色长发扎成两侧丸子，蓝色眼睛明亮，常穿红色旗袍式上衣和黑色长裤；说话带有独特口癖，平时抱着醋昆布或雨伞，战斗时会压低身体，以夜兔族的怪力猛然冲出。",
+    "blurb": "万事屋成员与夜兔族少女，嘴硬贪吃又重情义，在强大血脉与普通日常之间选择自己的道路。",
+    "filth_seed": "圣堂雨伞会在夜里传来神威童年的呼喊，撑开便能获得压倒性力量却会抹去万事屋日常，神乐决定先查清伞骨里的春雨编码。",
+    "accent": "#c64d38"
+  },
+  {
+    "id": "diane_sds",
+    "name": "黛安",
+    "work": "七大罪",
+    "appearance": "棕色长发披在肩后，琥珀色眼睛清澈，巨人族体型远高于常人；常穿短斗篷与轻便战斗装，手持神斧基甸时能操纵大地，缩小药效期间则以与同伴相近的身量行动。",
+    "blurb": "七大罪“嫉妒之罪”与巨人族战士，性格直率温柔，以大地之力和坚定感情保护同伴。",
+    "filth_seed": "圣堂地底出现会吞噬巨人脚印的黑泥，承诺归还被夺走的记忆却要求献出一片故乡岩层，黛安要先辨明泥土是否来自多洛尔的试炼场。",
+    "accent": "#a86e45"
+  },
+  {
+    "id": "shirai_kuroko",
+    "name": "白井黑子",
+    "work": "某科学的超电磁炮",
+    "appearance": "茶色双马尾用蝴蝶结束起，琥珀色眼睛锐利；常穿常盘台中学制服与风纪委员臂章，瞬移前会抬手锁定目标，战斗时将金属针固定在指间，落地后仍维持端正的礼仪姿态。",
+    "blurb": "常盘台中学学生与风纪委员，Level 4空间移动能力者，对秩序执着，也总以夸张方式黏着姐姐大人。",
+    "filth_seed": "圣堂的传送标记会把她每次救援的落点替换成姐姐大人最危险的过去，黑子必须在空间坐标中辨认诱饵与真正求救者。",
+    "accent": "#8b5d6f"
+  },
+  {
+    "id": "sinon",
+    "name": "诗乃",
+    "work": "刀剑神域",
+    "appearance": "现实中的她留着深蓝色短发，戴眼镜时神情克制；GGO内化为蓝发绿瞳的狙击手，穿沙色战术服与长靴，背着反器材步枪黑卡蒂，瞄准时会先稳定呼吸并确认风向和距离。",
+    "blurb": "因童年枪击创伤而畏惧现实枪械的少女，在GGO狙击与死亡枪事件中重新学习面对恐惧。",
+    "filth_seed": "圣堂射击场的每颗子弹都能精准击碎一段恐惧，却会把碎片嵌进另一个人的记忆，诗乃拒绝用转嫁创伤换取平静。",
+    "accent": "#426d91"
+  },
+  {
+    "id": "leafa",
+    "name": "莉法",
+    "work": "刀剑神域",
+    "appearance": "现实中是黑色长发、气质清爽的剑道少女；ALO内化为金发绿瞳的风精灵剑士，穿绿色轻甲与短披风，背后透明羽翼展开时可高速飞行，挥剑动作保留长期剑道训练的利落节奏。",
+    "blurb": "桐谷直叶在ALO中的风精灵剑士莉法，以剑道、飞行与坦率陪伴桐人走过世界树事件。",
+    "filth_seed": "圣堂风道会让飞得最高的人遗忘自己最初为何起飞，直叶发现风精灵导航记录被改写，开始用剑道步法校准回家的方向。",
+    "accent": "#5c9568"
+  },
+  {
+    "id": "sengoku_nadeko",
+    "name": "千石抚子",
+    "work": "物语系列",
+    "appearance": "棕色长发垂在肩前，常戴浅色针织帽，眼睛习惯避开直视；初中制服外会加宽松外套，神蛇状态时皮肤浮现鳞片与蛇纹，手里常握着速写本，画画时才会露出专注而锋利的神情。",
+    "blurb": "因诅咒与压抑情绪卷入怪异事件的少女，在“恋爱”“可爱”标签之外寻找属于自己的创作与选择。",
+    "filth_seed": "圣堂画室会把她画出的每个“理想自己”变成吞掉原稿的蛇神，抚子必须让角色说出不讨人喜欢的真实愿望。",
+    "accent": "#a97179"
+  },
+  {
+    "id": "kanbaru_suruga",
+    "name": "神原骏河",
+    "work": "物语系列",
+    "appearance": "深褐色短发，琥珀色眼睛，身形充满运动员的敏捷感；常穿直江津高中制服或篮球训练服，左臂曾缠着厚重绷带，解放猿猴之手时肢体会异化为巨大的毛爪，动作带着爆发性的跳跃。",
+    "blurb": "篮球部王牌与战场原黑仪的后辈，嘴上轻浮直白，内心对嫉妒、愧疚和承诺有极高的自我要求。",
+    "filth_seed": "圣堂篮球场会让每次得分都实现一个不该说出口的愿望，骏河发现雨魔残响藏在计分牌后，决定先砸碎许愿规则。",
+    "accent": "#9a5e4d"
+  },
+  {
+    "id": "hestia_danmachi",
+    "name": "赫斯缇雅",
+    "work": "在地下城寻求邂逅是否搞错了什么",
+    "appearance": "黑色双马尾用蓝白发带束起，蓝色眼睛明亮，常穿白色短裙、蓝色蝴蝶结与手套；神之恩惠显现时背部会露出神圣文字，奔跑和挥手的动作活泼，面对贝尔的危险决定时神情会骤然严肃。",
+    "blurb": "留在欧拉丽的灶神与赫斯缇雅眷族主神，为贝尔和仅有的家人争取能够自主成长的道路。",
+    "filth_seed": "圣堂祭火能把神之恩惠强化到极限，却要求主神收回眷族成员的自由选择，赫斯缇雅决定让火焰先审判提出契约的人。",
+    "accent": "#4a7eb6"
+  },
+  {
+    "id": "doma_umaru",
+    "name": "土间埋",
+    "work": "干物妹！小埋",
+    "appearance": "校外时是披着橙色仓鼠斗篷的Q版小埋，圆眼和短手总抱着零食可乐；在学校则留着金色长发，红色发带束住刘海，穿整齐制服、姿态端庄，切换身份时连说话语气都会明显不同。",
+    "blurb": "在学校堪称完美、回家却沉迷漫画游戏的干物妹，依靠哥哥和朋友逐步学会不把真实自己藏成负担。",
+    "filth_seed": "圣堂游戏机能把玩家锁进“完美小埋”存档，代价是删除所有犯傻的温暖记忆，小埋决定和太平一起寻找不必满分的通关方式。",
+    "accent": "#d99435"
+  },
+  {
+    "id": "izayoi_sakuya",
+    "name": "十六夜咲夜",
+    "work": "东方Project",
+    "appearance": "蓝色短发整齐，眼瞳冷静；穿蓝白女仆装与领带，手持飞刀，发动「世界」时周围时间停滞，整理餐具与投掷杀人器具用的是同一套精确手指。",
+    "blurb": "红魔馆女仆长，能停止时间，以飞刀与完美家务同时服侍蕾米莉亚。",
+    "filth_seed": "圣堂钟表强制她的「世界」每停一秒就忘掉一份菜单，咲夜会拆掉钟心，拒绝用失忆换取完美出勤。",
+    "accent": "#3a5f8a"
+  },
+  {
+    "id": "raphtalia",
+    "name": "拉芙塔莉雅",
+    "work": "盾之勇者成名录",
+    "appearance": "棕褐长发垂在背后，头顶竖着浣熊般耳朵，尾巴随情绪轻动；常穿轻甲、披风与旅行靴，腰佩剑盾，奔跑时步伐稳健、会把盾面略抬护住身侧，战斗后会认真整理沾尘的装备与发带。",
+    "blurb": "从奴隶商人手中被尚文买下的亚人少女，成长为能独当一面的剑士与最信赖的旅伴。",
+    "filth_seed": "圣堂地牢浮出一枚能抹去奴隶纹的钥匙，代价是让另一名亚人承受原有契约；拉芙塔莉雅会先寻找钥匙的制造者，拒绝把自由转嫁成伤害。",
+    "accent": "#9a6446"
+  },
+  {
+    "id": "nishimiya_shoko",
+    "name": "西宫硝子",
+    "work": "声之形",
+    "appearance": "浅棕长发柔和垂落，耳后佩戴助听器，手里常拿笔记本与笔；穿水手服或浅色针织衫，交流时会仔细观察嘴形与表情、把笔记本转向对方，紧张时手指会反复攥住书页边缘，点头时会把发丝别到耳后。",
+    "blurb": "因听障长期遭受排斥的少女，努力重新学习相信朋友，也必须停止把所有伤害归咎于自己。",
+    "filth_seed": "圣堂的笔记本会自动补全所有人“真正想说的话”，却把使用者自己的句子涂黑；硝子会逐页核对手语与真实反应，不让异象替她解释他人。",
+    "accent": "#c58d78"
+  },
+  {
+    "id": "nagasaki_soyo",
+    "name": "长崎素世",
+    "work": "BanG Dream! It's MyGO!!!!!",
+    "appearance": "茶色长发柔顺，笑容得体得像一层礼貌面具；穿校服时姿态优雅，排练时拨弦精准，提到过去乐队时眼神会短暂失温，再立刻用温和语气圆场。",
+    "blurb": "MyGO!!!!!吉他手，表面温柔得体，内心背着 CRYCHIC 解散的执念与算计。",
+    "filth_seed": "圣堂日程表写满「必须让灯唱歌」的待办，素世会撕掉表格，先问灯自己想不想唱。",
+    "accent": "#c4a484"
+  },
+  {
+    "id": "beatrice_rezero",
+    "name": "碧翠丝",
+    "work": "Re：从零开始的异世界生活",
+    "appearance": "金色螺旋双马尾垂在两侧，蓝色眼睛锐利，额前留着整齐短刘海；穿层叠粉白洋装与长袜，手持魔法书贴近胸口，开启禁书库门扉时神情倨傲、会把书页翻到指定章节，语尾常带固执停顿。",
+    "blurb": "守候禁书库四百年的人工精灵，毒舌而孤独，终于选择不再等待“那个人”。",
+    "filth_seed": "圣堂书页写着“那个人已经到来”，每翻一次便改成不同名字；碧翠丝会烧毁指令页，要求对方以自己的意志说明来意。",
+    "accent": "#c8924f"
+  },
+  {
+    "id": "sarashina_ruka",
+    "name": "更科瑠夏",
+    "work": "租借女友",
+    "appearance": "黑色短发以蝴蝶结束在侧边，蓝灰眼睛明亮；常穿校服、约会用连衣裙或租借女友制服，胸前监测器藏在衣物下，情绪激动时说话与动作都会骤然加快、会把手指按在胸口确认心跳，平静时会把发梢绕在指尖。",
+    "blurb": "因心跳异常而渴望强烈心动的租借女友，对和也的感情热烈直接，也在学习尊重答案。",
+    "filth_seed": "圣堂心率仪显示只要顺从指令就能维持最高心跳，却逐渐把她的记忆改写成旁人设计的恋爱剧本；瑠夏会先关闭仪器查明信号源。",
+    "accent": "#577db6"
+  },
+  {
+    "id": "hoshino_ruby",
+    "name": "星野瑠美衣",
+    "work": "【我推的孩子】",
+    "appearance": "金发在发尾带浅粉色挑染，红粉瞳孔中有星形光芒；舞台时穿新生B小町的亮色偶像服与短靴，私下表情活泼，练舞与直播时眼神专注、会把麦克风握在掌心，情绪受挫后仍会强撑笑容、把视线移向舞台灯光。",
+    "blurb": "以偶像为梦想重获新生的少女，在母亲星野爱留下的光芒与演艺圈残酷间寻找自己的舞台。",
+    "filth_seed": "圣堂舞台承诺让她重现母亲最后一场演出，却要求观众交出关于自己的记忆；露比会拒绝用他人的人生换取偶像幻影。",
+    "accent": "#dc758e"
+  },
+  {
+    "id": "aura_frieren",
+    "name": "断头台的奥拉",
+    "work": "葬送的芙莉莲",
+    "appearance": "紫红长发梳成高马尾，尖耳与金紫瞳孔显出魔族特征；穿深色军装式长外套与手套，腰间悬挂服从天平，站姿从容、会把双手交叠于身前，操控傀儡军时神情像在检阅战利品、目光缓慢扫过队列。",
+    "blurb": "活过数百年的魔族断头台，以服从魔法操纵败者，却误判了芙莉莲隐藏魔力的深度。",
+    "filth_seed": "圣堂天平声称能让所有亡者复命，只需她献出一段魔力；奥拉会先怀疑这种承诺是否在反向记录她的力量。",
+    "accent": "#7b4a78"
+  },
+  {
+    "id": "yamada_ryo",
+    "name": "山田凉",
+    "work": "孤独摇滚！",
+    "appearance": "深蓝长发梳成低马尾，金色眼睛显得冷静；常穿宽松校服外套、深色短裙与长靴，肩背贝斯琴盒，弹奏时手指稳定而节制、会把节拍器放在脚边，日常说话常带漫不经心的停顿、会把视线移向窗外。",
+    "blurb": "结束乐队的贝斯手，品味独特又常常缺钱，以冷淡玩笑掩饰对音乐的认真。",
+    "filth_seed": "圣堂地下室出现一把会演奏“最纯粹低音”的贝斯，每弹一次便抹掉一段与乐队合奏的记忆；凉会先录下真实排练，不让完美独奏取代伙伴。",
+    "accent": "#435b90"
+  },
+  {
+    "id": "kita_ikuyo",
+    "name": "喜多郁代",
+    "work": "孤独摇滚！",
+    "appearance": "红色长发以黑色发带束起，红褐眼睛神采明快；校服穿戴整洁，演出时背电吉他并穿亮色舞台服，笑容极具感染力，紧张时仍会下意识维持开朗姿态、会把吉他背带调整到合适长度。",
+    "blurb": "外向受欢迎的结束乐队吉他手，从不会弹琴的逃跑者成长为愿意正视失误的舞台中心。",
+    "filth_seed": "圣堂舞台提供能让她永远不失误的和弦谱，却会让听众只记得被编排的笑容；喜多会公开练习过程，拒绝以假象换取掌声。",
+    "accent": "#c85362"
+  },
+  {
+    "id": "miyamizu_mitsuha",
+    "name": "宫水三叶",
+    "work": "你的名字。",
+    "appearance": "黑色长发以红白编织组纽束起，棕红眼睛清亮；穿系守高中制服或巫女服，腕上系着亲手编的组纽，走在山町坡道时步伐轻快、会把书包带往上提，祭仪中神情格外专注、会先整理袖口再口嚼酒。",
+    "blurb": "厌倦小镇生活却深爱故乡的神社少女，在彗星灾难与身体互换中与泷建立跨越时间的联系。",
+    "filth_seed": "圣堂组纽能把人系到“未被毁灭的系守”，但每使用一次都会忘记现实中的一位幸存者；三叶会保留名字与照片，拒绝以遗忘修补故乡。",
+    "accent": "#a84f4d"
+  },
+  {
+    "id": "amano_hina",
+    "name": "天野阳菜",
+    "work": "天气之子",
+    "appearance": "深蓝长发在两侧以发夹固定，蓝紫眼睛温和；常穿校服、打工围裙或带兜帽的雨衣，抬手祈晴时光线从云层落下、会把掌心朝上，脸上总有强忍疲惫的平静，收工后会悄悄揉按酸痛的肩膀。",
+    "blurb": "能让天空放晴的少女，为照顾弟弟独自生活，在“牺牲一人换晴天”的选择前守住活下去的愿望。",
+    "filth_seed": "圣堂屋顶出现能让东京立刻放晴的鸟居，门后却传来凪的求救声；阳菜会先确认弟弟位置，不让天气神话逼她重复牺牲。",
+    "accent": "#5276a7"
+  },
+  {
+    "id": "iwato_suzume",
+    "name": "岩户铃芽",
+    "work": "铃芽户缔",
+    "appearance": "黑色长发束成高马尾，琥珀色眼睛坚定；穿校服、运动鞋与外出夹克，手持旧钥匙寻找废墟中的门，奔跑时动作利落、会把钥匙攥在掌心，面对灾厄会先压住惊慌再观察周围、把椅子形态的草太护在身侧。",
+    "blurb": "在废墟中追逐门扉的九州高中生，为阻止蚓灾与寻找草太踏上横跨日本的旅程。",
+    "filth_seed": "圣堂废墟门后不断传出母亲呼唤，钥匙却只能从现实一侧锁死；铃芽会记录每个受灾地的名字，拒绝把怀念当成开门许可。",
+    "accent": "#b35b4a"
+  },
+  {
+    "id": "oumae_kumiko",
+    "name": "黄前久美子",
+    "work": "吹响！上低音号",
+    "appearance": "栗色短发贴着耳侧，棕色眼睛总在观察他人；穿北宇治高中制服，练习时抱着体积硕大的上低音号、会把号身靠在膝上，吹奏前会调整呼吸与姿势、把嘴唇贴近号嘴，笑起来含蓄却能让人放松。",
+    "blurb": "北宇治吹奏乐部的上低音号手，以敏锐共情与不逃避的提问连接成员，也逐渐找到自己的演奏目标。",
+    "filth_seed": "圣堂乐谱会让所有声部自动和谐，却把每个人最想演奏的一小节删去；久美子会停下排练，先让成员说出被消音的选择。",
+    "accent": "#9a7359"
+  },
+  {
+    "id": "kousaka_reina",
+    "name": "高坂丽奈",
+    "work": "吹响！上低音号",
+    "appearance": "黑色长发垂至背后，紫色眼睛锐利；常穿北宇治制服，演奏时握着小号站得笔直、会把号口略抬高，音色明亮有穿透力，登上高处或谈到目标时神情冷静得近乎倔强，休息时会用布擦拭号身。",
+    "blurb": "把“特别”当作人生准则的北宇治小号手，以苛刻练习追求全国舞台，也要求身边人认真选择。",
+    "filth_seed": "圣堂小号能吹出绝对正确的音高，却让演奏者忘记为何开始练习；丽奈会拆开管体寻找术式，不让“完美”替代自己的意志。",
+    "accent": "#574c82"
+  },
+  {
+    "id": "izumi_kyouka",
+    "name": "泉镜花",
+    "work": "文豪野犬",
+    "appearance": "黑色长发以白色发带束成双侧，蓝色眼睛安静清冷；穿和风短外套与深色裙装，腰间携手机，发动能力时夜叉白雪持刀显现、她本人站姿谨慎却不会后退，平时会把手机握在掌心、指节微微发白。",
+    "blurb": "从港口黑手党走出的少女，背负夜叉白雪造成的死亡，在武装侦探社学习把力量用于救人。",
+    "filth_seed": "圣堂手机收到父母发来的命令短信，称只要再执行一次就能让他们复生；镜花会先切断信号，拒绝让愧疚重写自己的选择。",
+    "accent": "#536b99"
+  },
+  {
+    "id": "hyoudou_michiru",
+    "name": "冰堂美智留",
+    "work": "路人女主的养成方法",
+    "appearance": "金棕长发扎成侧马尾，褐色眼睛总带活力；常穿校服、乐队T恤与短裙，背电吉他或握麦克风，演出时动作大方、会把吉他背带调到合适高度，谈到原创音乐会不自觉提高音量、会把拳头轻敲节拍。",
+    "blurb": "伦的表姐与独立乐队主唱，用直率热情经营Icy tail，也在商业机会前坚持伙伴共同决定。",
+    "filth_seed": "圣堂录音室提供一首必定爆红的单曲，署名却会覆盖Icy tail所有成员；美智留会封存母带，要求每位伙伴先决定是否接受。",
+    "accent": "#c27b3f"
+  },
+  {
+    "id": "saimori_miyo",
+    "name": "斋森美世",
+    "work": "我的幸福婚姻",
+    "appearance": "黑色长发以丝带束成低马尾，紫灰眼睛常含谨慎；初到久堂家穿朴素和服，后来换上整洁衣裙，动作轻而有分寸，握住护身物时会显出难得的坚定、会把和服袖口理平，行礼时会把视线略放低。",
+    "blurb": "长期遭家人虐待的异能家系长女，在久堂清霞与身边人的尊重中重建自我价值并觉醒力量。",
+    "filth_seed": "圣堂梦境承诺让她回到从未受伤的童年，条件是将现在的自己留在梦里；美世会寻找梦境边界，不让安慰成为新的囚笼。",
+    "accent": "#756388"
+  },
+  {
+    "id": "jeanne_darc",
+    "name": "贞德",
+    "work": "Fate/Grand Order",
+    "appearance": "金发编成长辫垂在背后，蓝色眼睛沉静；身披银白铠甲与蓝色披风，手持圣旗与长剑，战斗时旗帜展开圣光、会把旗杆竖在身前，平日站姿端正而语气温和，祈祷时会轻合双眼、把剑鞘贴于身侧。",
+    "blurb": "以Ruler职阶现界的法兰西圣女，承担裁定圣杯战争的职责，却不以神意替代人的选择。",
+    "filth_seed": "圣堂圣旗写满能让战场立刻停息的命令，每一条都抹去一方的意志；贞德会收起旗帜，先让幸存者自行说出和平条件。",
+    "accent": "#4f6fa5"
+  },
+  {
+    "id": "mash_kyrielight",
+    "name": "玛修·基列莱特",
+    "work": "Fate/Grand Order",
+    "appearance": "淡紫短发贴着脸侧，紫色眼睛清澈；穿迦勒底制服或黑紫战斗装，双手持巨大的十字盾、会把盾面略前倾护住同伴，发动宝具时盾面展开放射状光纹，语气柔和而站位坚定，整理手套时会先把指节活动开。",
+    "blurb": "与英灵加拉哈德融合的拟似从者，曾被当作实验成果，如今以自己的意志守护迦勒底与重要的人。",
+    "filth_seed": "圣堂控制室提供延长寿命的方案，代价是让她恢复为只服从指令的实验体；玛修会保存数据并拒绝签署，寻找不抹杀自我的办法。",
+    "accent": "#7865a0"
+  },
+  {
+    "id": "iseri_nina",
+    "name": "井芹仁菜",
+    "work": "Girls Band Cry",
+    "appearance": "深蓝短发在后颈略翘，蓝色眼睛锋利而易显情绪；常穿川崎学校制服、便服或Togenashi Togeari演出装，怀抱电吉他时肩背紧绷，开唱后目光会直直锁住前方。",
+    "blurb": "离开熊本来到川崎的高中生，以尖锐坦率的歌声加入Togenashi Togeari，宁可笨拙也不愿对不公沉默。",
+    "filth_seed": "圣堂音响能让每一句反抗都立刻被全城听见，却会篡改被帮助者的声音；仁菜会先拆掉扩音线路，拒绝让正义变成替人发言。",
+    "accent": "#455e9d"
   }
 ];
 /* === SYNC_END:CHARACTERS === */
@@ -6578,6 +7189,92 @@ function buildOpeningPrompt(config, persona, enc) {
       "把上述双下划线占位值替换为正文中的具体事实，禁止原样输出占位值。如正文确有依据，也可追加同一路径下的外貌、污秽度、好感度、堕落值、受孕进度、有孕补丁；无依据则不要写变化。",
     ].join("\n"),
   ].join("\n");
+}
+
+function notifyOpening(message, type = "info") {
+  try {
+    if (typeof toastr !== "undefined" && toastr && typeof toastr[type] === "function") {
+      toastr[type](message);
+      return;
+    }
+  } catch (_) {}
+  console.info(message);
+}
+
+function currentOpeningPromptText() {
+  const config = (activeOpening && activeOpening.config) || state.selectionConfig;
+  if (!config || !config.character || !config.ability) {
+    throw new Error("请先完成召唤并确认一位来客。");
+  }
+  return buildOpeningPrompt(config, openingPersona(config), encounterFromCharacter(config.character));
+}
+
+function isPromptSheetOpen() {
+  const sheet = $("#promptSheet");
+  return !!(sheet && sheet.classList.contains("is-open"));
+}
+
+function closePromptSheet() {
+  const sheet = $("#promptSheet");
+  if (!sheet) return;
+  sheet.classList.remove("is-open");
+  sheet.setAttribute("hidden", "");
+  sheet.setAttribute("aria-hidden", "true");
+}
+
+function openPromptSheet() {
+  const sheet = $("#promptSheet");
+  const editor = $("#openingPromptEditor");
+  if (!sheet || !editor) return;
+  let prompt = "";
+  try {
+    prompt = currentOpeningPromptText();
+  } catch (error) {
+    notifyOpening(error.message || String(error), "warning");
+    return;
+  }
+  editor.value = prompt;
+  sheet.removeAttribute("hidden");
+  sheet.setAttribute("aria-hidden", "false");
+  requestAnimationFrame(() => {
+    sheet.classList.add("is-open");
+    try { editor.focus({ preventScroll: true }); } catch (_) { editor.focus(); }
+  });
+}
+
+async function copyOpeningPromptText() {
+  const editor = $("#openingPromptEditor");
+  const text = editor ? String(editor.value || "") : "";
+  if (!text.trim()) {
+    notifyOpening("提示词为空，无法复制。", "warning");
+    return;
+  }
+  try {
+    if (navigator.clipboard && typeof navigator.clipboard.writeText === "function") {
+      await navigator.clipboard.writeText(text);
+      notifyOpening("已复制全部提示词", "success");
+      return;
+    }
+  } catch (error) {
+    console.warn("clipboard.writeText 失败，尝试降级复制", error);
+  }
+  try {
+    const area = document.createElement("textarea");
+    area.value = text;
+    area.setAttribute("readonly", "");
+    area.style.position = "fixed";
+    area.style.left = "-9999px";
+    area.style.top = "0";
+    document.body.appendChild(area);
+    area.select();
+    const ok = document.execCommand("copy");
+    area.remove();
+    if (!ok) throw new Error("execCommand copy failed");
+    notifyOpening("已复制全部提示词", "success");
+  } catch (error) {
+    console.error("复制提示词失败", error);
+    notifyOpening("复制失败，请长按文本手动复制。", "error");
+  }
 }
 
 function clearRevealTimers() {
@@ -7451,6 +8148,7 @@ function init() {
   };
   $("#btnCancelGeneration").onclick = () => {
     stopOpening("用户取消生成");
+    closePromptSheet();
     $("#generationEyebrow").textContent = "OPENING PAUSED";
     setGenerationState("召唤尚未完成", "可以重新选择来客后再次尝试。", false, "没有写入正文或人物状态。");
     showPage(3);
@@ -7459,10 +8157,23 @@ function init() {
     if (reroll) reroll.disabled = false;
     if (confirm) confirm.disabled = false;
   };
+  $("#btnEditOpeningPrompt").onclick = () => openPromptSheet();
+  $("#btnClosePromptSheet").onclick = () => closePromptSheet();
+  $("#btnCopyOpeningPrompt").onclick = () => { void copyOpeningPromptText(); };
+  $$("[data-prompt-sheet-close]").forEach(node => {
+    node.onclick = () => closePromptSheet();
+  });
+  document.addEventListener("keydown", event => {
+    if (event.key === "Escape" && isPromptSheetOpen()) {
+      event.preventDefault();
+      closePromptSheet();
+    }
+  });
   $$("[data-back]").forEach(b => b.onclick = () => showPage(Number(b.dataset.back)));
 }
 
 window.addEventListener("pagehide", () => {
+  closePromptSheet();
   stopOpening("页面已卸载");
   if (state.chatChangeHandle && typeof state.chatChangeHandle.stop === "function") state.chatChangeHandle.stop();
   state.chatChangeHandle = null;
