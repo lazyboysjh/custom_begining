@@ -2325,8 +2325,8 @@ select:focus {
   width: min(720px, 100%);
   height: min(82%, 640px);
   max-height: calc(100% - 28px);
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
   transform: translate(-50%, 108%);
   border: 1px solid rgba(226, 192, 138, .28);
   border-bottom: 0;
@@ -2338,7 +2338,7 @@ select:focus {
 }
 .prompt-sheet.is-open .prompt-sheet-panel { transform: translate(-50%, 0); }
 .prompt-sheet-head {
-  flex: 0 0 auto;
+  grid-row: 1;
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -2368,17 +2368,23 @@ select:focus {
 .prompt-sheet-actions .btn.primary { flex: 1 1 auto; }
 .prompt-sheet-actions .btn.ghost { flex: 0 0 auto; }
 .prompt-sheet-body {
-  flex: 1 1 auto;
+  grid-row: 2;
   min-height: 0;
+  height: 100%;
   padding: 12px 14px 8px;
-  display: flex;
-  flex-direction: column;
+  position: relative;
 }
 .prompt-sheet-editor {
-  flex: 1 1 auto;
-  width: 100%;
-  min-height: 160px;
-  resize: none;
+  position: absolute;
+  left: 14px;
+  right: 14px;
+  top: 12px;
+  bottom: 8px;
+  width: auto;
+  height: auto;
+  min-height: 0 !important;
+  max-height: none !important;
+  resize: none !important;
   border: 1px solid rgba(226, 192, 138, .22);
   border-radius: 12px;
   padding: 12px;
@@ -2393,7 +2399,7 @@ select:focus {
   box-shadow: inset 0 1px rgba(255, 255, 255, .04), 0 0 0 3px rgba(226, 192, 138, .12);
 }
 .prompt-sheet-hint {
-  flex: 0 0 auto;
+  grid-row: 3;
   padding: 0 14px max(12px, env(safe-area-inset-bottom));
   font-size: 11px;
   line-height: 1.45;
@@ -2411,7 +2417,14 @@ select:focus {
   }
   .prompt-sheet-actions .btn.primary { flex: 0 0 auto; }
   .prompt-sheet-body { padding: 14px 16px 10px; }
-  .prompt-sheet-editor { font-size: 13px; padding: 14px; }
+  .prompt-sheet-editor {
+    left: 16px;
+    right: 16px;
+    top: 14px;
+    bottom: 10px;
+    font-size: 13px;
+    padding: 14px;
+  }
   .prompt-sheet-hint { padding-inline: 16px; padding-bottom: 14px; }
 }
 @media (max-width: 480px) {
@@ -2419,7 +2432,15 @@ select:focus {
   .prompt-sheet-title { font-size: 15px; }
   .prompt-sheet-actions { width: 100%; }
   .prompt-sheet-actions .btn { flex: 1 1 0; min-width: 0; }
-  .prompt-sheet-editor { font-size: 11px; line-height: 1.6; padding: 10px; }
+  .prompt-sheet-editor {
+    left: 12px;
+    right: 12px;
+    top: 10px;
+    bottom: 8px;
+    font-size: 11px;
+    line-height: 1.6;
+    padding: 10px;
+  }
 }
 </style>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -2591,7 +2612,7 @@ select:focus {
       <div class="prompt-sheet-body">
         <textarea class="prompt-sheet-editor" id="openingPromptEditor" spellcheck="false" autocomplete="off" aria-label="开场白提示词"></textarea>
       </div>
-      <p class="prompt-sheet-hint">可自由删改后复制带走；不会影响本页正在进行的生成。</p>
+      <p class="prompt-sheet-hint">打开本页会停止当前召唤；可自由删改后复制带走。</p>
     </div>
   </div>
 </div>
@@ -7232,6 +7253,17 @@ function openPromptSheet() {
   } catch (error) {
     notifyOpening(error.message || String(error), "warning");
     return;
+  }
+  if (activeOpening && !activeOpening.cancelled) {
+    stopOpening("用户改为手动编辑提示词");
+    const eyebrow = $("#generationEyebrow");
+    if (eyebrow) eyebrow.textContent = "OPENING PAUSED";
+    setGenerationState(
+      "召唤已暂停",
+      "可手动编辑提示词后自行使用，或返回重选来客。",
+      true,
+      "生成已停止，不会写入正文或人物状态。",
+    );
   }
   editor.value = prompt;
   sheet.removeAttribute("hidden");
